@@ -1,0 +1,18 @@
+# all .DS_store files.
+*.DS_Store
+*/*.DS_Store
+
+# Any temporary python file
+*._py
+
+# Any temporary files
+*.ipynb_checkpoints
+
+# Relevant image files.
+*.png
+
+# Any datasets folder
+*/datasets
+
+# pyc files
+*.pyc
