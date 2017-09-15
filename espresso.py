@@ -194,10 +194,14 @@ class espresso(object):
     def __add__(self, other):
         from copy import copy as _deepcopy
         new_obj=_deepcopy(self) # Create a copy of the first espresso object to be summed.
+        obj_to_add=_deepcopy(other)
+
+        ##### EXTRACT ADDED LABELS FOR EACH OBJECT IF THEY EXIST.
+        ##### IF NOT ASSIGN EMPTY LIST TO DROP.
 
         # Concatenate and drop duplicates.
-        new_obj.flies=_pd.concat([self.flies,other.flies]).drop_duplicates()
-        new_obj.feeds=_pd.concat([self.feeds,other.feeds]).drop_duplicates()
+        new_obj.flies=_pd.concat([new_obj.flies,obj_to_add.flies]).drop_duplicates()
+        new_obj.feeds=_pd.concat([new_obj.feeds,obj_to_add.feeds]).drop_duplicates()
 
         new_labels=[]
         for o in [new_obj,other]:
