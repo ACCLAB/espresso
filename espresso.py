@@ -166,25 +166,115 @@ class espresso(object):
 
             self.flies=allflies
             self.feeds=allfeeds
-            self.feedlog_count=len(feedlogs)
+            self.feedlog_count=len(feedlogs_in_folder)
             self.genotypes=allflies.Genotype.unique()
             self.temperatures=allflies.Temperature.unique()
             self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
 
+      ####  ##### #    # ###### #####     #####  #    # # #      ##### # #    #  ####
+     #    #   #   #    # #      #    #    #    # #    # # #        #   # ##   # #
+     #    #   #   ###### #####  #    #    #####  #    # # #        #   # # #  #  ####
+     #    #   #   #    # #      #####     #    # #    # # #        #   # #  # #      #
+     #    #   #   #    # #      #   #     #    # #    # # #        #   # #   ## #    #
+      ####    #   #    # ###### #    #    #####   ####  # ######   #   # #    #  ####
+
     def __repr__(self):
-        return '{0} feedlog(s) with a total of {1} flies.\n{2} genotype(s) detected {3}.\n{4} temperature(s) detected {5}.\n{6} foodtype(s) detected {7}.'.format( self.feedlog_count,len(self.flies),
+        rep_str="{0} feedlog(s) with a total of {1} flies.\n{2} genotype(s) detected {3}.\n{4} temperature(s) detected {5}.\n{6} foodtype(s) detected {7}.".format( self.feedlog_count,len(self.flies),
                                                     len(self.genotypes),self.genotypes,
                                                     len(self.temperatures),self.temperatures,
                                                     len(self.foodtypes),self.foodtypes )
+
+        if hasattr(self, "added_labels"):
+            rep_str=rep_str+"\n{0} labels have been added: {1}".format( len(self.added_labels),
+                                                                        self.added_labels )
+
+        return rep_str
 
     def __add__(self, other):
         newflies=_pd.concat([self.flies,other.flies])
         newfeeds=_pd.concat([self.feeds,other.feeds])
 
-        return espresso(flies_df=newflies,feeds_df=newfeeds)
+        new_obj=espresso(flies_df=newflies,feeds_df=newfeeds)
+        new_obj.feedlog_count=self.feedlog_count+other.feedlog_count
+        new_obj.feedlogs.extend(self.feedlogs)
+        new_obj.feedlogs.extend(other.feedlogs)
+
+        return new_obj
 
     def __radd__(self, other):
         if other==0:
             return self
         else:
             return self.__add__(other)
+
+       ##   #####  #####     #    # ###### #####   ##   #####    ##   #####   ##
+      #  #  #    # #    #    ##  ## #        #    #  #  #    #  #  #    #    #  #
+     #    # #    # #    #    # ## # #####    #   #    # #    # #    #   #   #    #
+     ###### #    # #    #    #    # #        #   ###### #    # ######   #   ######
+     #    # #    # #    #    #    # #        #   #    # #    # #    #   #   #    #
+     #    # #####  #####     #    # ######   #   #    # #####  #    #   #   #    #
+
+    def add_label(self, label_name,
+                    label_value=None,
+                    label_from_cols=None,
+                    sep=','):
+        """
+        Add a custom label to metadata and feedlogthe espresso object.
+
+        Keywords
+        --------
+
+        label_name: string
+            The new category name.
+
+        label_value: default None
+            Assigns a custom value to the label for all flies in the espresso object.
+            You can assign any type of Python object. The label will be converted
+            into a pandas Categorical variable.
+
+        label_from_cols: list, default None
+            Assigns a value to all flies in this espresso object by concatenating
+            existing metadata columns of the espresso object. The list order is the
+            concatenation order.
+
+        sep: string, default ','
+            The seperator used to denote the joined columns if `label_from_cols` is passed.
+        """
+
+        # Sanity check for keywords passed.
+        label_name=str(label_name)
+
+        if label_value is None and label_from_cols is None:
+            raise ValueError("Please specify either `label_value` or `label_from_cols`.")
+        if label_value is not None and label_from_cols is not None:
+            raise ValueError("You have specified both `label_value` or `label_from_cols`. Please only specify one.")
+        if label_from_cols is not None and isinstance(label_from_cols, list) is False:
+            raise TypeError("`label_from_cols` is not a list. Please check again.")
+
+        if label_value is not None:
+            for obj in [self.flies, self.feeds]:
+                obj[label_name]=_np.repeat(str(label_value), len(obj))
+                # turn into Categorical.
+                obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
+
+        else:
+            for col in label_from_cols:
+                col=str(col)
+                if col not in self.flies.columns:
+                    raise KeyError( "{0} is not found in the metadata. Please check.".format(col) )
+            for obj in [self.flies, self.feeds]:
+                # See https://stackoverflow.com/questions/33098383/merge-multiple-column-values-into-one-column-in-python-pandas
+                obj[label_name]=obj[label_from_cols].apply(lambda x: sep.join(x.dropna().astype(str)),axis=1)
+                # turn into Categorical.
+                obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
+
+
+        if hasattr(self, 'added_labels'):
+            self.added_labels.extend(label_name)
+        else:
+            self.added_labels=[label_name]
+
+        if label_value is not None:
+            print("{0} has been added as a new label, with {1} as the custom value.".format(label_name, label_value))
+        else:
+            print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
