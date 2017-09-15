@@ -30,10 +30,8 @@ class espresso(object):
     --------
 
     folder: string
-        Path to a folder with at least one FeedLog its corresponding MetaData.
-
-    flies_df, feeds_df: pandas DataFrame
-        Supply if you want to combine pre-munged FeedLogs and MetaData.
+        Path to a folder with at least one FeedLog, along with its corresponding MetaData.
+        
     """
     import plot # This will give access to plotting functions via espresso_object.plot.
 
