@@ -24,23 +24,39 @@ class espresso(object):
     Creates an `espresso` object for analysis.
 
     Supply either a folder with raw feedlog(s) and corresponding metadata file(s) in CSV format from CRITTA,
-    or a pre-processed feedlog DataFrame and its corresponding metadata DataFrame.
-    """
-    import plot
+    or a pre-processed FeedLog DataFrame and its corresponding MetaData DataFrame.
 
-    def __init__(self,folder=None,flies_df=None,feeds_df=None,
-                 metadata_group=None,):
+    Keywords
+    --------
+
+    folder: string
+        Path to a folder with at least one FeedLog its corresponding MetaData.
+
+    flies_df, feeds_df: pandas DataFrame
+        Supply if you want to combine pre-munged FeedLogs and MetaData.
+    """
+    import plot # This will give access to plotting functions via espresso_object.plot.
+
+     #       #    #       #       #####
+     #       ##   #       #         #
+     #       # #  #       #         #
+     #       #  # #       #         #
+     #       #   ##       #         #
+     #       #    #       #         #
+
+    def __init__(self,folder=None,flies_df=None,feeds_df=None):
         if folder is None:
             if flies_df is not None and feeds_df is not None:
                 self.flies=flies_df
                 self.feeds=feeds_df
+                self.feedlogs=[]
                 self.feedlog_count=1
                 self.genotypes=flies_df.Genotype.unique()
                 self.temperatures=flies_df.Temperature.unique()
                 self.foodtypes=_np.unique( flies_df.dropna(axis=1).filter(regex='Tube') )
 
             else:
-                raise ValueError('Please check the arguments you passed.')
+                raise ValueError('Insufficient arguments to passed. Please check.')
 
         else:
             allflies=[]
@@ -49,10 +65,11 @@ class espresso(object):
             non_feeding_flies=[]
 
             files=_os.listdir(folder)
-            feedlogs=_np.sort( [csv for csv in files if csv.endswith('.csv') and csv.startswith('FeedLog')] )
+            self.feedlogs=[csv for csv in files if csv.endswith('.csv') and csv.startswith('FeedLog')]
+            feedlogs_in_folder=_np.array(self.feedlogs)
 
             # check that each feedlog has a corresponding metadata CSV.
-            for feedlog in feedlogs:
+            for feedlog in feedlogs_in_folder:
                 expected_metadata=feedlog.replace('FeedLog','MetaData')
                 if expected_metadata not in files:
                     raise NameError('A MetaData file for '+feedlog+' cannot be found.\n'+\
@@ -63,7 +80,7 @@ class espresso(object):
             metadata_list=list()
             fly_counter=0
 
-            for j, feedlog in enumerate(feedlogs):
+            for j, feedlog in enumerate(feedlogs_in_folder):
 
                 ## Read in metadata.
                 path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
