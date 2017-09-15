@@ -16,3 +16,6 @@
 
 # pyc files
 *.pyc
+
+# pycache
+__pycache*
