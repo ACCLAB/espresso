@@ -152,9 +152,16 @@ class espresso(object):
                 df.reset_index(drop=True,inplace=True)
 
             # Record which flies did not feed.
-            allflies['fed_during_assay']=_np.repeat(True,len(allflies))
+            allflies['AtLeastOneFeed']=_np.repeat(True,len(allflies))
             allflies.set_index('FlyID',inplace=True,drop=True)
-            allflies.loc[non_feeding_flies,'fed_during_assay']=False
+            allflies.loc[non_feeding_flies,'AtLeastOneFeed']=False
+
+            ## Change relevant columns to categorical.
+            for catcol in ['Genotype','FoodChoice','Temperature']:
+                try:
+                    allfeeds[catcol]=allfeeds.loc[:,catcol].astype('category',ordered=True)
+                except KeyError:
+                    pass
 
             self.flies=allflies
             self.feeds=allfeeds
