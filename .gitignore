@@ -2,10 +2,8 @@
 *.DS_Store
 */*.DS_Store
 
-# Any temporary python file
+# Any temporary python/jupyter files
 *._py
-
-# Any temporary files
 *.ipynb_checkpoints
 
 # Relevant image files.
