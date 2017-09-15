@@ -28,7 +28,8 @@ class espresso(object):
     """
     import plot
 
-    def __init__(self,folder=None,flies_df=None,feeds_df=None):
+    def __init__(self,folder=None,flies_df=None,feeds_df=None,
+                 metadata_group=None,):
         if folder is None:
             if flies_df is not None and feeds_df is not None:
                 self.flies=flies_df
