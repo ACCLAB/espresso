@@ -31,7 +31,7 @@ class espresso(object):
 
     folder: string
         Path to a folder with at least one FeedLog, along with its corresponding MetaData.
-        
+
     """
     import plot # This will give access to plotting functions via espresso_object.plot.
 
@@ -186,8 +186,8 @@ class espresso(object):
                                                     len(self.foodtypes),self.foodtypes )
 
         if hasattr(self, "added_labels"):
-            rep_str=rep_str+"\n{0} labels have been added: {1}".format( len(self.added_labels),
-                                                                        self.added_labels )
+            rep_str=rep_str+"\n{0} label(s) have been added: {1}".format( len(self.added_labels),
+                                                                         self.added_labels )
 
         return rep_str
 
@@ -202,7 +202,10 @@ class espresso(object):
         new_labels=[]
         for o in [new_obj,other]:
             if hasattr(o, "added_labels"):
-                new_labels=new_labels+o.added_labels
+                if isinstance(o.added_labels, list):
+                    new_labels=new_labels+o.added_labels
+                elif isinstance(o.added_labels, str):
+                    new_labels.append(o.added_labels)
         new_labels=list( set(new_labels) )
         if len(new_labels)>0:
             new_obj.added_labels=new_labels
@@ -291,6 +294,6 @@ class espresso(object):
             self.added_labels=[label_name]
 
         if label_value is not None:
-            print("{0} has been added as a new label, with {1} as the custom value.".format(label_name, label_value))
+            print("{0} has been added as a new label, with '{1}' as the custom value.".format(label_name, label_value))
         else:
             print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
