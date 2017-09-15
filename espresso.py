@@ -208,13 +208,28 @@ class espresso(object):
         return rep_str
 
     def __add__(self, other):
-        newflies=_pd.concat([self.flies,other.flies])
-        newfeeds=_pd.concat([self.feeds,other.feeds])
+        from copy import copy as _deepcopy
+        new_obj=_deepcopy(self) # Create a copy of the first espresso object to be summed.
 
-        new_obj=espresso(flies_df=newflies,feeds_df=newfeeds)
-        new_obj.feedlog_count=self.feedlog_count+other.feedlog_count
-        new_obj.feedlogs.extend(self.feedlogs)
-        new_obj.feedlogs.extend(other.feedlogs)
+        # Concatenate and drop duplicates.
+        new_obj.flies=_pd.concat([self.flies,other.flies]).drop_duplicates()
+        new_obj.feeds=_pd.concat([self.feeds,other.feeds]).drop_duplicates()
+
+        new_labels=[]
+        for o in [new_obj,other]:
+            if hasattr(o, "added_labels"):
+                new_labels=new_labels+o.added_labels
+        new_labels=list( set(new_labels) )
+        if len(new_labels)>0:
+            new_obj.added_labels=new_labels
+
+        new_obj.feedlogs=list( set(self.feedlogs+other.feedlogs) )
+        new_obj.feedlog_count=len(new_obj.feedlogs)
+
+        new_obj.genotypes=new_obj.flies.Genotype.unique()
+        new_obj.temperatures=new_obj.flies.Temperature.unique()
+
+        new_obj.foodtypes=_np.unique( new_obj.flies.dropna(axis=1).filter(regex='Tube') )
 
         return new_obj
 
