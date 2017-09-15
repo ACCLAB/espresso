@@ -3,12 +3,14 @@
 # Author: Joses Ho
 # Email : joseshowh@gmail.com
 
-import sys
-import os
+import sys as _sys
+import os as _os
 
-import numpy as np
-import scipy as sp
-import pandas as pd
+import numpy as _np
+import scipy as _sp
+import pandas as _pd
+
+import munge
 
 ######  ####  #####  #####  ######  ####   ####   ####      ####  #####       # ######  ####  #####
 #      #      #    # #    # #      #      #      #    #    #    # #    #      # #      #    #   #
@@ -32,7 +34,7 @@ class espresso(object):
                 self.feedlog_count=1
                 self.genotypes=flies_df.Genotype.unique()
                 self.temperatures=flies_df.Temperature.unique()
-                self.foodtypes=np.unique( flies_df.dropna(axis=1).filter(regex='Tube') )
+                self.foodtypes=_np.unique( flies_df.dropna(axis=1).filter(regex='Tube') )
 
             else:
                 raise ValueError('Please check the arguments you passed.')
@@ -43,8 +45,8 @@ class espresso(object):
             allmetadata=[]
             non_feeding_flies=[]
 
-            files=os.listdir(folder)
-            feedlogs=np.sort( [csv for csv in files if csv.endswith('.csv') and csv.startswith('FeedLog')] )
+            files=_os.listdir(folder)
+            feedlogs=_np.sort( [csv for csv in files if csv.endswith('.csv') and csv.startswith('FeedLog')] )
 
             # check that each feedlog has a corresponding metadata CSV.
             for feedlog in feedlogs:
@@ -61,98 +63,50 @@ class espresso(object):
             for j, feedlog in enumerate(feedlogs):
 
                 ## Read in metadata.
-                metadata=feedlog.replace('FeedLog','MetaData')
-                metadata_csv=pd.read_csv( os.path.join(folder,metadata) )
-                ## Check that the metadata has a nonzero number of rows.
-                if len(metadata_csv)==0:
-                    raise ValueError(metadata+' has 0 rows. Please check!!!')
+                path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
+                metadata_csv=munge.metadata(path_to_metadata)
+                ## Track the flycount.
                 if j>0:
                     metadata_csv.ID=metadata_csv.ID+fly_counter
                 metadata_csv['FlyID']='Fly'+metadata_csv.ID.astype(str)
-                metadata_csv.rename(columns={"Food 1":"Tube1", "Food 2":"Tube2","#Flies":"FlyCountInChamber"},
-                                    inplace=True)
-                # # Turn N/A in Food 1 or Food 2 to an empty string.
-                # for c in ['Tube1','Tube2']:
-                #     metadata_csv.loc[:,c]=metadata_csv[c].fillna(value='')
-                # Then rename food types, as appropriate.
-                for c in ['Tube1','Tube2']:
-                    try:
-                        metadata_csv.loc[:,c]=metadata_csv[c]\
-                        .str.replace('5%S','5% sucrose ')\
-                        .str.replace('5%YE',' 5% yeast extract')
-                    except AttributeError:
-                        pass
-                # Turn N/A in #Flies to 0.'
-                metadata_csv.loc[:,'FlyCountInChamber']=metadata_csv.FlyCountInChamber.fillna(value=1)
-                metadata_csv.loc[:,'FlyCountInChamber']=metadata_csv.FlyCountInChamber.astype(int)
+                ## Add current fly count to fly_counter.
+                fly_counter+=len(metadata_csv)
+
                 ## Save the munged metadata.
                 metadata_list.append(metadata_csv)
                 ## Save the fly IDs.
                 allflies.append( metadata_csv.loc[:,'FlyID'].copy() )
 
-
-
                 ## Read in feedlog.
-                feedlog_csv=pd.read_csv( os.path.join(folder,feedlog) )
-                feedlog_csv.rename(columns={"Food 1":"Tube1",
-                                            "Food 2":"Tube2",
-                                            'Volume-mm3':'FeedVol_µl',
-                                            'Duration-ms':'FeedDuration_ms',
-                                            'RelativeTime-s':'RelativeTime_s'},
-                                    inplace=True)
-                ## Check that the feedlog has a nonzero number of rows.
-                if len(feedlog_csv)==0:
-                    raise ValueError(feedlog+' has 0 rows. Please check!!!')
-                ## Drop the feed events where `AviFile` is "Null", as well as events that have a negative `RelativeTime-s`.
-                feedlog_csv.drop(feedlog_csv[feedlog_csv.AviFile=='Null'].index, inplace=True)
-                feedlog_csv.drop(feedlog_csv[feedlog_csv['RelativeTime_s']<0].index, inplace=True)
-                ## You have to ADD 1 to match the feedlog FlyID with the corresponding FlyID in `metadata_csv`.
-                ## Also, increment each FlyID by the total number of flies in previous feedlogs.
-                feedlog_csv.FlyID=feedlog_csv.FlyID+1
+                path_to_feedlog=_os.path.join(folder,feedlog)
+                feedlog_csv=munge.feedlog(path_to_feedlog)
+
+                ## Increment each FlyID by the total number of flies in previous feedlogs.
                 if j>0:
                     feedlog_csv.FlyID=feedlog_csv.FlyID+fly_counter
                 feedlog_csv.loc[:,'FlyID']='Fly'+feedlog_csv.FlyID.astype(str)
-                ## Add current fly count to fly_counter.
-                fly_counter+=len(metadata_csv)
-
-
 
                 ## Define 2 padrows per fly, per food choice (in this case, only one),
                 ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
-                for flyid in metadata_csv.FlyID.unique():
-                    ## Identify flies that did not have any feed events. Were these chambers empty? Or the flies dead?
-                    if flyid not in feedlog_csv.FlyID.unique():
-                        non_feeding_flies.append(flyid)
-                    for choice in feedlog_csv.ChoiceIdx.unique():
-                        padrows=pd.DataFrame( [ [np.nan,np.nan,choice,
-                                                 flyid,choice,'NIL',
-                                                 np.nan,np.nan,np.nan,
-                                                 False,0.5,'PAD', # 0.5 seconds
-                                                ],
-                                               [np.nan,np.nan,choice,
-                                                flyid,choice,'NIL',
-                                                np.nan,np.nan,np.nan,
-                                                False,21891,'PAD', # 6 hrs, 5 min, 1 sec in seconds.
-                                               ] ]
-                                            )
-                        padrows.columns=feedlog_csv.columns
-                    # Add the padrows to `temp`. There is no `inplace` argument for append.
-                    feedlog_csv=feedlog_csv.append(padrows,ignore_index=True)
+                feedlog_csv=munge.add_padrows(metadata_csv, feedlog_csv)
+
+                ## Add columns in nanoliters.
+                feedlog_csv=munge.compute_nanoliter_cols(feedlog_csv)
+                ## Add columns for RelativeTime_s and FeedDuration_s.
+                feedlog_csv=munge.compute_nanoliter_cols(feedlog_csv)
+
                 ## Save the munged feedlog.
                 feedlogs_list.append(feedlog_csv)
 
-
+                ## Detect non-feeding flies, add to the appropriate list.
+                non_feeding_flies.extend( munge.detect_non_feeding_flies(metadata_csv,feedlog_csv) )
 
 
             # Join all processed feedlogs and metadata into respective DataFrames.
-            allflies=pd.concat(metadata_list).reset_index(drop=True)
-            allfeeds=pd.concat(feedlogs_list).reset_index(drop=True)
+            allflies=_pd.concat(metadata_list).reset_index(drop=True)
+            allfeeds=_pd.concat(feedlogs_list).reset_index(drop=True)
             # merge metadata with feedlogs.
-            allfeeds=pd.merge(allfeeds,allflies,left_on='FlyID',right_on='FlyID')
-
-
-
-
+            allfeeds=_pd.merge(allfeeds,allflies,left_on='FlyID',right_on='FlyID')
 
             # rename columns and food types as is appropriate.
             for df in [allflies,allfeeds]:
@@ -161,7 +115,7 @@ class espresso(object):
             # Discard superfluous columns.
             allfeeds.drop('ID',axis=1,inplace=True)
 
-            ## Assign feed choice to the allfeeds DataFrame.
+            # Assign feed choice to the allfeeds DataFrame.
             choice1=allfeeds['Tube1'].unique()
             choice2=allfeeds['Tube2'].unique()
 
@@ -171,17 +125,17 @@ class espresso(object):
                 choice1=choice1[0]
                 choice2=choice2[0]
                 try:
-                    there_is_no_second_tube=np.isnan(choice2)
+                    there_is_no_second_tube=_np.isnan(choice2)
                     if there_is_no_second_tube:
-                        # Drop anomalous feed events from Tube2 (aka ChoiceIdx=1),
-                        # where there was no feed tube in the first place.
+                        ## Drop anomalous feed events from Tube2 (aka ChoiceIdx=1),
+                        ## where there was no feed tube in the first place.
                         feeds_to_drop_count=len(allfeeds[allfeeds.ChoiceIdx==1])
                 except TypeError:
-                    allfeeds['FoodChoice']=np.repeat('xx',len(allfeeds))
-                    allfeeds.loc[np.where(allfeeds.ChoiceIdx==0)[0],'FoodChoice']=choice1
-                    allfeeds.loc[np.where(allfeeds.ChoiceIdx==1)[0],'FoodChoice']=choice2
+                    allfeeds['FoodChoice']=_np.repeat('xx',len(allfeeds))
+                    allfeeds.loc[_np.where(allfeeds.ChoiceIdx==0)[0],'FoodChoice']=choice1
+                    allfeeds.loc[_np.where(allfeeds.ChoiceIdx==1)[0],'FoodChoice']=choice2
                     ## Add column to identify which FeedLog file the feed data came from.
-                    allfeeds['FeedLog_rawfile']=np.repeat(feedlog, len(allfeeds))
+                    allfeeds['FeedLog_rawfile']=_np.repeat(feedlog, len(allfeeds))
                     ## Turn the 'Valid' column into integers.
                     ## 1 -- True; 0 -- False
                     allfeeds['Valid']=allfeeds.Valid.astype('int')
@@ -189,15 +143,6 @@ class espresso(object):
             allfeeds.drop(allfeeds[allfeeds.ChoiceIdx==1].index,inplace=True)
             allfeeds.reset_index(drop=True,inplace=True)
 
-            # Compute feed volume in nanoliters for convenience.
-            allfeeds['FeedVol_nl']=allfeeds['FeedVol_µl']*1000
-            # Compute feeding speed.
-            allfeeds['FeedSpeed_nl/s']=allfeeds['FeedVol_nl']/(allfeeds['FeedDuration_ms']/1000)
-            # Duplicate `RelativeTime_s` as non-DateTime object.
-            allfeeds['FeedTime_s']=allfeeds['RelativeTime_s']
-            # Convert `RelativeTime_s` to DateTime object.
-            allfeeds['RelativeTime_s']=pd.to_datetime(allfeeds['RelativeTime_s'],unit='s')
-            allfeeds['FeedDuration_s']=allfeeds.FeedDuration_ms/1000
             # Sort by FlyID, then by RelativeTime
             allfeeds.sort_values(['FlyID','RelativeTime_s'],inplace=True)
 
@@ -206,7 +151,7 @@ class espresso(object):
                 df.reset_index(drop=True,inplace=True)
 
             # Record which flies did not feed.
-            allflies['fed_during_assay']=np.repeat(True,len(allflies))
+            allflies['fed_during_assay']=_np.repeat(True,len(allflies))
             allflies.set_index('FlyID',inplace=True,drop=True)
             allflies.loc[non_feeding_flies,'fed_during_assay']=False
 
@@ -215,7 +160,7 @@ class espresso(object):
             self.feedlog_count=len(feedlogs)
             self.genotypes=allflies.Genotype.unique()
             self.temperatures=allflies.Temperature.unique()
-            self.foodtypes=np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
+            self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
 
     def __repr__(self):
         return '{0} feedlog(s) with a total of {1} flies.\n{2} genotype(s) detected {3}.\n{4} temperature(s) detected {5}.\n{6} foodtype(s) detected {7}.'.format( self.feedlog_count,len(self.flies),
@@ -224,8 +169,8 @@ class espresso(object):
                                                     len(self.foodtypes),self.foodtypes )
 
     def __add__(self, other):
-        newflies=pd.concat([self.flies,other.flies])
-        newfeeds=pd.concat([self.feeds,other.feeds])
+        newflies=_pd.concat([self.flies,other.flies])
+        newfeeds=_pd.concat([self.feeds,other.feeds])
 
         return espresso(flies_df=newflies,feeds_df=newfeeds)
 
@@ -263,8 +208,8 @@ def normalize_ylims(ax_arr,include_zero=False,draw_zero_line=False):
         ymax=ax.get_ylim()[1]
         ymins.append(ymin)
         ymaxs.append(ymax)
-    new_min=np.min(ymins)
-    new_max=np.max(ymaxs)
+    new_min=_np.min(ymins)
+    new_max=_np.max(ymaxs)
     if include_zero:
         if new_max<0:
             new_max=0
@@ -307,7 +252,7 @@ def sci_nota(num, decimal_digits=2, precision=None, exponent=None):
     Found on https://stackoverflow.com/questions/21226868/superscript-in-python-plots
     """
     if not exponent:
-        exponent = int(np.floor(np.log10(abs(num))))
+        exponent = int(_np.floor(_np.log10(abs(num))))
     coeff = round(num / float(10**exponent), decimal_digits)
     if not precision:
         precision = decimal_digits
@@ -320,18 +265,18 @@ def compute_percent_feeding(metadata,feeds,group_by,start=0,end=30):
     a processed dataset of feedlogs.
     """
     fly_counts=metadata.groupby(group_by).count().FlyID
-    data_timewin=feeds[(feeds.RelativeTime_s>pd.to_datetime(start*60, unit='s')) &
-                            (feeds.RelativeTime_s<pd.to_datetime(end*60, unit='s'))
+    data_timewin=feeds[(feeds.RelativeTime_s>_pd.to_datetime(start*60, unit='s')) &
+                            (feeds.RelativeTime_s<_pd.to_datetime(end*60, unit='s'))
                             ]
     # To count total flies that fed, I adapted the methods here:
     # https://stackoverflow.com/questions/8364674/python-numpy-how-to-count-the-number-of-true-elements-in-a-bool-array
-    feed_boolean_by_fly=~np.isnan( data_timewin.groupby([group_by,'FlyID']).sum()['FeedVol_µl'] )
-    fly_feed_counts=feed_boolean_by_fly.apply(np.count_nonzero).groupby(group_by).sum()
+    feed_boolean_by_fly=~_np.isnan( data_timewin.groupby([group_by,'FlyID']).sum()['FeedVol_µl'] )
+    fly_feed_counts=feed_boolean_by_fly.apply(_np.count_nonzero).groupby(group_by).sum()
     # Proportion code taken from here:
     # https://onlinecourses.science.psu.edu/stat100/node/56
     percent_feeding=(fly_feed_counts/fly_counts)*100
-    half95ci=np.sqrt( (percent_feeding*(100-percent_feeding))/fly_counts )
-    percent_feeding_summary=pd.DataFrame([percent_feeding,
+    half95ci=_np.sqrt( (percent_feeding*(100-percent_feeding))/fly_counts )
+    percent_feeding_summary=_pd.DataFrame([percent_feeding,
                                           percent_feeding-half95ci,
                                           percent_feeding+half95ci]).T
     percent_feeding_summary.columns=['percent_feeding','ci_lower','ci_upper']
@@ -344,22 +289,22 @@ def latency_ingestion_plots(feeds,first_x_min=180):
     """
     allfeeds_timewin=feeds[feeds.feed_time_s<first_x_min*60]
 
-    latency=pd.DataFrame(allfeeds_timewin[['FlyID','starved_time',
+    latency=_pd.DataFrame(allfeeds_timewin[['FlyID','starved_time',
                                            'feed_time_s','feed_duration_s']].\
                          dropna().\
                          groupby(['starved_time','FlyID']).\
-                         apply(np.min).drop(['starved_time','FlyID','feed_duration_s'],axis=1).\
+                         apply(_np.min).drop(['starved_time','FlyID','feed_duration_s'],axis=1).\
                          to_records())
     latency['feed_time_min']=latency['feed_time_s']/60
     latency.rename(columns={"feed_time_min": "Latency to\nfirst feed (min)"}, inplace=True)
-    max_latency=np.round(latency.max()["Latency to\nfirst feed (min)"],decimals=-2)
+    max_latency=_np.round(latency.max()["Latency to\nfirst feed (min)"],decimals=-2)
 
-    total_ingestion=pd.DataFrame(allfeeds_timewin[['FlyID','starved_time','FeedVol_nl']].\
+    total_ingestion=_pd.DataFrame(allfeeds_timewin[['FlyID','starved_time','FeedVol_nl']].\
                                  dropna().\
                                  groupby(['starved_time','FlyID']).\
                                  sum().to_records())
     total_ingestion.rename(columns={"FeedVol_nl": "Total Ingestion (nl)"}, inplace=True)
-    max_ingestion=np.round(total_ingestion.max()["Total Ingestion (nl)"],decimals=-2)
+    max_ingestion=_np.round(total_ingestion.max()["Total Ingestion (nl)"],decimals=-2)
 
     f1,b1=bs.contrastplot(data=latency,x='starved_time',y="Latency to\nfirst feed (min)",
                           swarm_ylim=(-20,max_latency),
