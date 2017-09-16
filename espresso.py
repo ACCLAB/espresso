@@ -62,19 +62,22 @@ class espresso(object):
         # Prepare variables.
         feedlogs_list=list()
         metadata_list=list()
-        fly_counter=0
+        # fly_counter=0
 
         for j, feedlog in enumerate(feedlogs_in_folder):
+            datetime_exptname='_'.join( feedlog.strip('.csv').split('_')[1:3] )
 
             ## Read in metadata.
             path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
             metadata_csv=munge.metadata(path_to_metadata)
-            ## Track the flycount.
-            if j>0:
-                metadata_csv.ID=metadata_csv.ID+fly_counter
-            metadata_csv['FlyID']='Fly'+metadata_csv.ID.astype(str)
-            ## Add current fly count to fly_counter.
-            fly_counter+=len(metadata_csv)
+            # ## Track the flycount.
+            # if j>0:
+            #     metadata_csv.ID=metadata_csv.ID+fly_counter
+            metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
+
+            # ## Add current fly count to fly_counter.
+            # ## Probably don't need this anymore if we are including the datetime_exptname.
+            # fly_counter+=len(metadata_csv)
 
             ## Save the munged metadata.
             metadata_list.append(metadata_csv)
@@ -85,10 +88,10 @@ class espresso(object):
             path_to_feedlog=_os.path.join(folder,feedlog)
             feedlog_csv=munge.feedlog(path_to_feedlog)
 
-            ## Increment each FlyID by the total number of flies in previous feedlogs.
-            if j>0:
-                feedlog_csv.FlyID=feedlog_csv.FlyID+fly_counter
-            feedlog_csv.loc[:,'FlyID']='Fly'+feedlog_csv.FlyID.astype(str)
+            # ## Increment each FlyID by the total number of flies in previous feedlogs.
+            # if j>0:
+            #     feedlog_csv.FlyID=feedlog_csv.FlyID+fly_counter
+            feedlog_csv.loc[:,'FlyID']=datetime_exptname+'_Fly'+feedlog_csv.FlyID.astype(str)
 
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
