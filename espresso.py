@@ -106,8 +106,7 @@ class espresso(object):
             feedlogs_list.append(feedlog_csv)
 
             ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies.extend( munge.detect_non_feeding_flies(metadata_csv,feedlog_csv) )
-
+            non_feeding_flies=non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
 
         # Join all processed feedlogs and metadata into respective DataFrames.
         allflies=_pd.concat(metadata_list).reset_index(drop=True)
@@ -158,7 +157,6 @@ class espresso(object):
 
         # Record which flies did not feed.
         allflies['AtLeastOneFeed']=_np.repeat(True,len(allflies))
-        allflies.set_index('FlyID',inplace=True,drop=True)
         allflies.loc[non_feeding_flies,'AtLeastOneFeed']=False
 
         ## Change relevant columns to categorical.
@@ -167,6 +165,10 @@ class espresso(object):
                 allfeeds[catcol]=allfeeds.loc[:,catcol].astype('category',ordered=True)
             except KeyError:
                 pass
+
+        # ## Should we set the FlyID as the index for the (combined) metadata?
+        # allflies.set_index('FlyID',inplace=True,drop=True)
+        allflies.drop('ID',axis=1,inplace=True) # Discard superfluous 'ID' column.
 
         self.flies=allflies
         self.feeds=allfeeds
@@ -196,18 +198,21 @@ class espresso(object):
 
     def __add__(self, other):
         from copy import copy as _deepcopy
-        new_obj=_deepcopy(self) # Create a copy of the first espresso object to be summed.
-        obj_to_add=_deepcopy(other)
+        self_copy=_deepcopy(self) # Create a copy of the first espresso object to be summed.
+        other_copy=_deepcopy(other) # Create a copy of the other espresso object.
 
         ##### EXTRACT ADDED LABELS FOR EACH OBJECT IF THEY EXIST.
         ##### IF NOT ASSIGN EMPTY LIST TO DROP.
 
-        # Concatenate and drop duplicates.
-        new_obj.flies=_pd.concat([new_obj.flies,obj_to_add.flies]).drop_duplicates()
-        new_obj.feeds=_pd.concat([new_obj.feeds,obj_to_add.feeds]).drop_duplicates()
+        # Merge the flies and feeds attributes.
+        self_copy.flies=_pd.merge(self_copy.flies, other_copy.flies, how='outer')
+        self_copy.feeds=_pd.merge(self_copy.feeds, other_copy.feeds, how='outer')
+
+        # self_copy.flies=_pd.concat([self_copy.flies,obj_to_add.flies]).drop_duplicates()
+        # self_copy.feeds=_pd.concat([self_copy.feeds,obj_to_add.feeds]).drop_duplicates()
 
         new_labels=[]
-        for o in [new_obj,other]:
+        for o in [self_copy,other_copy]:
             if hasattr(o, "added_labels"):
                 if isinstance(o.added_labels, list):
                     new_labels=new_labels+o.added_labels
@@ -215,17 +220,17 @@ class espresso(object):
                     new_labels.append(o.added_labels)
         new_labels=list( set(new_labels) )
         if len(new_labels)>0:
-            new_obj.added_labels=new_labels
+            self_copy.added_labels=new_labels
 
-        new_obj.feedlogs=list( set(self.feedlogs+other.feedlogs) )
-        new_obj.feedlog_count=len(new_obj.feedlogs)
+        self_copy.feedlogs=list( set(self_copy.feedlogs+other_copy.feedlogs) )
+        self_copy.feedlog_count=len(self_copy.feedlogs)
 
-        new_obj.genotypes=new_obj.flies.Genotype.unique()
-        new_obj.temperatures=new_obj.flies.Temperature.unique()
+        self_copy.genotypes=self_copy.flies.Genotype.unique()
+        self_copy.temperatures=self_copy.flies.Temperature.unique()
 
-        new_obj.foodtypes=_np.unique( new_obj.flies.dropna(axis=1).filter(regex='Tube') )
+        self_copy.foodtypes=_np.unique( self_copy.flies.dropna(axis=1).filter(regex='Tube') )
 
-        return new_obj
+        return self_copy
 
     def __radd__(self, other):
         if other==0:
