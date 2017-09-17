@@ -80,11 +80,10 @@ class espresso(object):
             ## Read in feedlog.
             path_to_feedlog=_os.path.join(folder,feedlog)
             feedlog_csv=munge.feedlog(path_to_feedlog)
-
-            # ## Increment each FlyID by the total number of flies in previous feedlogs.
-            # if j>0:
-            #     feedlog_csv.FlyID=feedlog_csv.FlyID+fly_counter
             feedlog_csv.loc[:,'FlyID']=datetime_exptname+'_Fly'+feedlog_csv.FlyID.astype(str)
+
+            ## Detect non-feeding flies, add to the appropriate list.
+            non_feeding_flies=non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
 
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
@@ -137,18 +136,16 @@ class espresso(object):
                 ## 1 -- True; 0 -- False
                 allfeeds['Valid']=allfeeds.Valid.astype('int')
 
-        allfeeds.reset_index(drop=True,inplace=True)
-
-        # Sort by FlyID, then by RelativeTime
-        allfeeds.sort_values(['FlyID','RelativeTime_s'],inplace=True)
-
         # Reset the indexes.
         for df in [allflies,allfeeds]:
             df.reset_index(drop=True,inplace=True)
 
+        # Sort by FlyID, then by RelativeTime
+        allfeeds.sort_values(['FlyID','RelativeTime_s'],inplace=True)
         # Record which flies did not feed.
         allflies['AtLeastOneFeed']=_np.repeat(True,len(allflies))
-        allflies.loc[non_feeding_flies,'AtLeastOneFeed']=False
+        non_feeding_flies_idx=allflies[allflies.FlyID.isin(non_feeding_flies)].index
+        allflies.loc[non_feeding_flies_idx,'AtLeastOneFeed']=False
 
         ## Change relevant columns to categorical.
         for catcol in ['Genotype','FoodChoice','Temperature']:
