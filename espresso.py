@@ -70,14 +70,7 @@ class espresso(object):
             ## Read in metadata.
             path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
             metadata_csv=munge.metadata(path_to_metadata)
-            # ## Track the flycount.
-            # if j>0:
-            #     metadata_csv.ID=metadata_csv.ID+fly_counter
             metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
-
-            # ## Add current fly count to fly_counter.
-            # ## Probably don't need this anymore if we are including the datetime_exptname.
-            # fly_counter+=len(metadata_csv)
 
             ## Save the munged metadata.
             metadata_list.append(metadata_csv)
@@ -105,8 +98,6 @@ class espresso(object):
             ## Save the munged feedlog.
             feedlogs_list.append(feedlog_csv)
 
-            ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies=non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
 
         # Join all processed feedlogs and metadata into respective DataFrames.
         allflies=_pd.concat(metadata_list).reset_index(drop=True)
