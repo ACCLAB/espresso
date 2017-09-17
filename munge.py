@@ -187,22 +187,31 @@ def compute_time_cols(feedlog_df):
 
     return f
 
- #####  ###### ##### ######  ####  #####         #    #  ####  #    #         ###### ###### ###### #####  # #    #  ####          ###### #      # ######  ####
- #    # #        #   #      #    #   #           ##   # #    # ##   #         #      #      #      #    # # ##   # #    #         #      #      # #      #
- #    # #####    #   #####  #        #           # #  # #    # # #  #         #####  #####  #####  #    # # # #  # #              #####  #      # #####   ####
- #    # #        #   #      #        #           #  # # #    # #  # #         #      #      #      #    # # #  # # #  ###         #      #      # #           #
- #    # #        #   #      #    #   #           #   ## #    # #   ##         #      #      #      #    # # #   ## #    #         #      #      # #      #    #
- #####  ######   #   ######  ####    #           #    #  ####  #    #         #      ###### ###### #####  # #    #  ####          #      ###### # ######  ####
-                                         #######                      #######                                             #######
+ #####  ###### ##### ######  ####  #####
+ #    # #        #   #      #    #   #
+ #    # #####    #   #####  #        #
+ #    # #        #   #      #        #
+ #    # #        #   #      #    #   #
+ #####  ######   #   ######  ####    #
+ #    #  ####  #    #    ###### ###### ###### #####  # #    #  ####
+ ##   # #    # ##   #    #      #      #      #    # # ##   # #    #
+ # #  # #    # # #  #    #####  #####  #####  #    # # # #  # #
+ #  # # #    # #  # #    #      #      #      #    # # #  # # #  ###
+ #   ## #    # #   ##    #      #      #      #    # # #   ## #    #
+ #    #  ####  #    #    #      ###### ###### #####  # #    #  ####
+ ###### #      # ######  ####
+ #      #      # #      #
+ #####  #      # #####   ####
+ #      #      # #           #
+ #      #      # #      #    #
+ #      ###### # ######  ####
 
 def detect_non_feeding_flies(metadata_df,feedlog_df):
     """
     Detects non-feeding flies.
 
-    Pass along a munged metadata and corresponding munged feedlog. Returns the non-feeding flies as a list.
+    Pass along a munged metadata and corresponding munged feedlog.
+    Returns the non-feeding flies as a list.
     """
-    non_feeding_flies=[]
-    for flyid in metadata_df.FlyID.unique():
-        if flyid not in feedlog_df.FlyID.unique():
-            non_feeding_flies.append(flyid)
+    non_feeding_flies=[ flyid for flyid in metadata_df.FlyID.unique() if flyid not in feedlog_df.dropna().FlyID.unique() ]
     return non_feeding_flies
