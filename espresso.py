@@ -21,10 +21,10 @@ import munge
 
 class espresso(object):
     """
-    Creates an `espresso` object for analysis.
+    Creates an `espresso` experiment for analysis.
 
-    Supply either a folder with raw feedlog(s) and corresponding metadata file(s) in CSV format from CRITTA,
-    or a pre-processed FeedLog DataFrame and its corresponding MetaData DataFrame.
+    Supply either a folder with raw feedlog(s) and corresponding metadata file(s) in CSV format from
+    CRITTA, or a pre-processed FeedLog DataFrame and its corresponding MetaData DataFrame.
 
     Keywords
     --------
@@ -242,19 +242,20 @@ class espresso(object):
         else:
             return self.__add__(other)
 
-       ##   #####  #####     #    # ###### #####   ##   #####    ##   #####   ##
-      #  #  #    # #    #    ##  ## #        #    #  #  #    #  #  #    #    #  #
-     #    # #    # #    #    # ## # #####    #   #    # #    # #    #   #   #    #
-     ###### #    # #    #    #    # #        #   ###### #    # ######   #   ######
-     #    # #    # #    #    #    # #        #   #    # #    # #    #   #   #    #
-     #    # #####  #####     #    # ######   #   #    # #####  #    #   #   #    #
+   ##   #####  #####           #        ##   #####  ###### #       ####
+  #  #  #    # #    #          #       #  #  #    # #      #      #
+ #    # #    # #    #          #      #    # #####  #####  #       ####
+ ###### #    # #    #          #      ###### #    # #      #           #
+ #    # #    # #    #          #      #    # #    # #      #      #    #
+ #    # #####  #####           ###### #    # #####  ###### ######  ####
 
     def add_label(self, label_name,
                     label_value=None,
                     label_from_cols=None,
                     sep=','):
         """
-        Add a custom label to metadata and feedlogthe espresso object.
+        Add a custom label to the metadata and feedlog of an espresso experiment.
+        The espresso object is modified in place.
 
         Keywords
         --------
@@ -263,12 +264,12 @@ class espresso(object):
             The new category name.
 
         label_value: default None
-            Assigns a custom value to the label for all flies in the espresso object.
+            Assigns a custom value to the label for all flies in the espresso experiment.
             You can assign any type of Python object. The label will be converted
             into a pandas Categorical variable.
 
         label_from_cols: list, default None
-            Assigns a value to all flies in this espresso object by concatenating
+            Assigns a value to all flies in this espresso experiment by concatenating
             existing metadata columns of the espresso object. The list order is the
             concatenation order.
 
