@@ -304,12 +304,73 @@ class espresso(object):
                 obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
 
 
+        labels=[label_name] # convert to single-member list.
         if hasattr(self, 'added_labels'):
-            self.added_labels.extend(label_name)
+            self.added_labels.extend(labels)
         else:
-            self.added_labels=[label_name]
+            self.added_labels=labels
 
         if label_value is not None:
             print("{0} has been added as a new label, with '{1}' as the custom value.".format(label_name, label_value))
         else:
             print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
+
+ #####  ###### #    #  ####  #    # ######       #        ##   #####  ###### #       ####
+ #    # #      ##  ## #    # #    # #            #       #  #  #    # #      #      #
+ #    # #####  # ## # #    # #    # #####        #      #    # #####  #####  #       ####
+ #####  #      #    # #    # #    # #            #      ###### #    # #      #           #
+ #   #  #      #    # #    #  #  #  #            #      #    # #    # #      #      #    #
+ #    # ###### #    #  ####    ##   ######       ###### #    # #####  ###### ######  ####
+
+    def remove_labels(self, labels):
+        """
+        Removes the label(s) from the `flies` and `feeds` DataFrames of an espresso experiment.
+        The espresso experiment is modified in place.
+
+        Keywords
+        --------
+
+        labels: string or list.
+            A single label to remove, or a list of labels to remove.
+        """
+        # Sanity checks.
+        if 'added_labels' not in self.__dict__:
+            raise KeyError('This espresso experimenthas no added labels.')
+
+        # Handle labels depending if string or list.
+        if isinstance(labels, str):
+            labels=[labels] # convert to single-member list.
+
+        if isinstance(labels,list):
+            in_added=[str(l) for l in labels if l in self.added_labels]
+
+            if len(in_added)==0:
+                raise KeyError("Not all labels in {0} is not an added label. Please check.".format(labels))
+
+        self.flies.drop(labels,axis=1,inplace=True)
+        self.feeds.drop(labels,axis=1,inplace=True)
+
+        # check if we need to remove the added_labels attribute.
+        if labels==self.added_labels:
+            del self.__dict__['added_labels']
+
+        return "{0} has been dropped.".format(labels)
+
+
+    def remove_all_added_labels(self):
+        """
+        Removes add added label(s) from the `flies` and `feeds` DataFrames of an espresso experiment.
+        The espresso experiment is modified in place.
+        """
+        # Sanity checks.
+        if 'added_labels' not in self.__dict__:
+            raise KeyError('This espresso experiment has no added labels.')
+
+        dropped=self.added_labels
+
+        for attr in [self.flies, self.feeds]:
+            attr.drop(dropped,axis=1,inplace=True)
+
+        del self.__dict__['added_labels']
+
+        return "All added labels {0} have been dropped.".format(dropped)
