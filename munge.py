@@ -180,9 +180,8 @@ def compute_time_cols(feedlog_df):
     """
     f=feedlog_df.copy()
     # Duplicate `RelativeTime_s` as non-DateTime object.
-    f['FeedTime_s']=f['RelativeTime_s']
-    # Convert `RelativeTime_s` to DateTime object.
-    f['RelativeTime_s']=_pd.to_datetime(f['RelativeTime_s'],unit='s')
+    # f['FeedTime_s']=f['RelativeTime_s']
+    # f['RelativeTime_s']=_pd.to_datetime(f['RelativeTime_s'],unit='s')
     f['FeedDuration_s']=f.FeedDuration_ms/1000
 
     return f
