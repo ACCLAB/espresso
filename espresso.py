@@ -190,7 +190,12 @@ class espresso(object):
             plural_list[0],plural_list[1],plural_list[2],plural_list[3])
 
         if hasattr(self, "added_labels"):
-            rep_str=rep_str+"\n{0} label(s) have been added: {1}".format( len(self.added_labels),
+            if value>1:
+                plural_label='s have'
+            else:
+                plural_label=' has'
+            rep_str=rep_str+"\n{0} label{1} been added: {2}".format( len(self.added_labels),
+                                                                         plural_label,
                                                                          self.added_labels )
 
         return rep_str
