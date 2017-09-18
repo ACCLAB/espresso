@@ -92,7 +92,7 @@ class espresso(object):
             ## Add columns in nanoliters.
             feedlog_csv=_munge.compute_nanoliter_cols(feedlog_csv)
             ## Add columns for RelativeTime_s and FeedDuration_s.
-            feedlog_csv=_munge.compute_nanoliter_cols(feedlog_csv)
+            feedlog_csv=_munge.compute_time_cols(feedlog_csv)
 
             ## Save the _munged feedlog.
             feedlogs_list.append(feedlog_csv)
