@@ -178,7 +178,7 @@ class espresso(object):
         for value in [self.feedlog_count,len(self.genotypes),
                       len(self.temperatures),len(self.foodtypes)]:
             if value>1:
-                plural_list.append('(s)')
+                plural_list.append('s')
             else:
                 plural_list.append('')
 
