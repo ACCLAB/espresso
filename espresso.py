@@ -158,19 +158,24 @@ class espresso(object):
         # allflies.set_index('FlyID',inplace=True,drop=True)
         allflies.drop('ID',axis=1,inplace=True) # Discard superfluous 'ID' column.
 
+
         self.flies=allflies
         self.feeds=allfeeds
+
+        self.flies.original_labels=allflies.columns
+        self.feeds.original_labels=allfeeds.columns
+
         self.feedlog_count=len(feedlogs_in_folder)
         self.genotypes=allflies.Genotype.unique()
         self.temperatures=allflies.Temperature.unique()
         self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
 
-      ####  ##### #    # ###### #####     #####  #    # # #      ##### # #    #  ####
-     #    #   #   #    # #      #    #    #    # #    # # #        #   # ##   # #
-     #    #   #   ###### #####  #    #    #####  #    # # #        #   # # #  #  ####
-     #    #   #   #    # #      #####     #    # #    # # #        #   # #  # #      #
-     #    #   #   #    # #      #   #     #    # #    # # #        #   # #   ## #    #
-      ####    #   #    # ###### #    #    #####   ####  # ######   #   # #    #  ####
+ #####  ###### #####  #####
+ #    # #      #    # #    #
+ #    # #####  #    # #    #
+ #####  #      #####  #####
+ #   #  #      #      #   #
+ #    # ###### #      #    #
 
     def __repr__(self):
 
@@ -200,6 +205,13 @@ class espresso(object):
 
         return rep_str
 
+   ##   #####  #####       ##   #    # #####     #####    ##   #####  #####
+  #  #  #    # #    #     #  #  ##   # #    #    #    #  #  #  #    # #    #
+ #    # #    # #    #    #    # # #  # #    #    #    # #    # #    # #    #
+ ###### #    # #    #    ###### #  # # #    #    #####  ###### #    # #    #
+ #    # #    # #    #    #    # #   ## #    #    #   #  #    # #    # #    #
+ #    # #####  #####     #    # #    # #####     #    # #    # #####  #####
+
     def __add__(self, other):
         from copy import copy as _deepcopy
         self_copy=_deepcopy(self) # Create a copy of the first espresso object to be summed.
@@ -211,9 +223,9 @@ class espresso(object):
         # Merge the flies and feeds attributes.
         self_copy.flies=_pd.merge(self_copy.flies, other_copy.flies, how='outer')
         self_copy.feeds=_pd.merge(self_copy.feeds, other_copy.feeds, how='outer')
-
-        # self_copy.flies=_pd.concat([self_copy.flies,obj_to_add.flies]).drop_duplicates()
-        # self_copy.feeds=_pd.concat([self_copy.feeds,obj_to_add.feeds]).drop_duplicates()
+        # carry over the original_labels attrib.
+        self_copy.flies.original_labels=self.flies.original_labels
+        self_copy.feeds.original_labels=self.feeds.original_labels
 
         new_labels=[]
         for o in [self_copy,other_copy]:
