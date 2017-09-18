@@ -370,7 +370,7 @@ class espresso(object):
         return "{0} has been dropped.".format(labels)
 
 
-    def remove_all_added_labels(self):
+    def remove_all_labels(self):
         """
         Removes add added label(s) from the `flies` and `feeds` DataFrames of an espresso experiment.
         The espresso experiment is modified in place.
