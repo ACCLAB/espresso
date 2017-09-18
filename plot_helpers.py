@@ -85,10 +85,11 @@ def compute_percent_feeding(metadata,feeds,group_by,start=0,end=30):
     Used to compute the percent of flies feeding from
     a processed dataset of feedlogs.
     """
+    feeds_plot=feeds.copy()
+
     fly_counts=metadata.groupby(group_by).count().FlyID
-    data_timewin=feeds[(feeds.RelativeTime_s>_pd.to_datetime(start*60, unit='s')) &
-                            (feeds.RelativeTime_s<_pd.to_datetime(end*60, unit='s'))
-                            ]
+    data_timewin=feeds_plot[ (feeds_plot.RelativeTime_s > start*60) &
+                             (feeds_plot.RelativeTime_s < end*60) ]
     # To count total flies that fed, I adapted the methods here:
     # https://stackoverflow.com/questions/8364674/python-numpy-how-to-count-the-number-of-true-elements-in-a-bool-array
     feed_boolean_by_fly=~_np.isnan( data_timewin.groupby([group_by,'FlyID']).sum()['FeedVol_µl'] )
@@ -101,7 +102,7 @@ def compute_percent_feeding(metadata,feeds,group_by,start=0,end=30):
                                           percent_feeding-half95ci,
                                           percent_feeding+half95ci]).T
     percent_feeding_summary.columns=['percent_feeding','ci_lower','ci_upper']
-    return( percent_feeding_summary )
+    return percent_feeding_summary
 
 def latency_ingestion_plots(feeds,first_x_min=180):
     """
