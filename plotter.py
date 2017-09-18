@@ -37,10 +37,6 @@ class EspressoPlotter:
     def __init__(self,espresso): # pass along an espresso instance.
         self._flies=espresso.flies
         self._feeds=espresso.feeds
-        self._bsc_kwargs=dict(fig_size=(12,9),
-                                float_contrast=False,
-                                font_scale=1.4,
-                                swarmplot_kwargs={'size':6})
 
  ##### ######  ####  #####     ####  #    #   ##   #####  #    # #####  #       ####  #####
    #   #      #        #      #      #    #  #  #  #    # ##  ## #    # #      #    #   #
@@ -96,7 +92,7 @@ class EspressoPlotter:
         Keywords
         --------
         group_by: string, categorical
-            The column or label indicating the
+            The column or label indicating the categorical grouping on the x-axis.
 
         time_start, time_end: integer, default 0 and 360 respectively
             The time window (in minutes) during which to compute and display the
@@ -129,11 +125,11 @@ class EspressoPlotter:
             color_palette=self._make_sequential_palette(group_by)
 
         # Set style.
-        _sns.set(style='ticks',context='poster',font_scale=1.1)
+        _sns.set(style='ticks',context='talk',font_scale=1.1)
 
         # Initialise figure.
         f,ax=_plt.subplots(1,figsize=(8,5))
-        ax.set_ylim(0,100)
+        ax.set_ylim(0,110)
         # Plot 95CI first.
         ax.fill_between(range(0,len(percent_feeding_summary)),
                         cilow,cihigh,
@@ -149,13 +145,15 @@ class EspressoPlotter:
         # Aesthetic tweaks.
         ax.xaxis.set_ticks( [i for i in range( 0,len(percent_feeding_summary) )] )
         ax.xaxis.set_ticklabels( percent_feeding_summary.index.tolist() )
+
         xmax=ax.xaxis.get_ticklocs()[-1]
         ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
+        _bsc.rotate_ticks(ax, angle=45, alignment='right')
         _sns.despine(ax=ax,trim=True,offset={'left':1})
-
         ax.set_ylabel('Percent Feeding')
 
-        return ax, percent_feeding_summary
+        f.tight_layout()
+        return f, percent_feeding_summary
 
 
  ###### ###### ###### #####      ####   ####  #    # #    # #####    #####  ###### #####     ###### #      #   #
@@ -165,25 +163,54 @@ class EspressoPlotter:
  #      #      #      #    #    #    # #    # #    # #   ##   #      #      #      #   #     #      #        #
  #      ###### ###### #####      ####   ####   ####  #    #   #      #      ###### #    #    #      ######   #
 
-    # def feed_count_per_fly(self, group_by, palette_type='categorical'):
-    #
-    #     # Select palette.
-    #     if palette_type=='categorical':
-    #         color_palette=self._make_categorial_palette(group_by)
-    #     elif palette_type=='sequential':
-    #         color_palette=self._make_sequential_palette(group_by)
-    #
-    #     total_feeds=_pd.DataFrame(self._feeds[['FlyID',group_by,'FeedVol_nl']].\
-    #                                 groupby([group_by,'FlyID']).count().\
-    #                                 to_records())
-    #     total_feeds.columns=[group_by,'FlyID','Total feed count\nper fly']
-    #     max_feeds=_np.round(total_feeds.max()['Total feed count\nper fly'],decimals=-2)
-    #
-    #     f,b=_bsc.contrastplot(data=total_feeds,
-    #                           x=group_by,y='Total feed count\nper fly',
-    #                           idx=_np.sort(total_feeds.loc[:,group_by].unique()),
-    #                           **self._bsc_kwargs )
-    #
-    #     f.suptitle('Contrast Plot Total Feed Count Per Fly')
-    #
-    #     return f,b
+    def feed_count_per_fly(self, group_by, palette_type='categorical',contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the feed counts between groups.
+        Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, categorical
+            The column or label indicating the categorical grouping on the x-axis.
+
+        palette_type: string, 'categorical' or 'sequential'.
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Axes instance, and a pandas DataFrame with the statistics.
+        """
+
+        default_kwargs=dict(fig_size=(12,9),
+                            float_contrast=False,
+                            font_scale=1.4,
+                            swarmplot_kwargs={'size':6})
+        if contrastplot_kwargs is None:
+            contrastplot_kwargs=default_kwargs
+        else:
+            contrastplot_kwargs=_bsc.merge_two_dicts(default_kwargs,contrastplot_kwargs)
+
+        # Select palette.
+        if palette_type=='categorical':
+            color_palette=self._make_categorial_palette(group_by)
+        elif palette_type=='sequential':
+            color_palette=self._make_sequential_palette(group_by)
+
+        total_feeds=_pd.DataFrame(self._feeds[['FlyID',group_by,'FeedVol_nl']].\
+                                    groupby([group_by,'FlyID']).count().\
+                                    to_records())
+        total_feeds.columns=[group_by,'FlyID','Total feed count\nper fly']
+        max_feeds=_np.round(total_feeds.max()['Total feed count\nper fly'],decimals=-2)
+
+        f,b=_bsc.contrastplot(data=total_feeds,
+                              x=group_by,y='Total feed count\nper fly',
+                              idx=_np.sort(total_feeds.loc[:,group_by].unique()),
+                              **contrastplot_kwargs)
+
+        f.suptitle('Contrast Plot Total Feed Count Per Fly')
+
+        return f,b

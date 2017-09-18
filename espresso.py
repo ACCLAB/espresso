@@ -17,7 +17,9 @@ import pandas as _pd
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
-import munge
+from plotter import EspressoPlotter as _plotter
+import plot_helpers as _pth
+import munge as _munge
 
 class espresso(object):
     """
@@ -33,14 +35,12 @@ class espresso(object):
         Path to a folder with at least one FeedLog, along with its corresponding MetaData.
 
     """
-    import plot # This will give access to plotting functions via espresso_object.plot.
-
-     #       #    #       #       #####
-     #       ##   #       #         #
-     #       # #  #       #         #
-     #       #  # #       #         #
-     #       #   ##       #         #
-     #       #    #       #         #
+    #       #    #       #       #####
+    #       ##   #       #         #
+    #       # #  #       #         #
+    #       #  # #       #         #
+    #       #   ##       #         #
+    #       #    #       #         #
 
     def __init__(self,folder):
         allflies=[]
@@ -69,32 +69,32 @@ class espresso(object):
 
             ## Read in metadata.
             path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
-            metadata_csv=munge.metadata(path_to_metadata)
+            metadata_csv=_munge.metadata(path_to_metadata)
             metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
 
-            ## Save the munged metadata.
+            ## Save the _munged metadata.
             metadata_list.append(metadata_csv)
             ## Save the fly IDs.
             allflies.append( metadata_csv.loc[:,'FlyID'].copy() )
 
             ## Read in feedlog.
             path_to_feedlog=_os.path.join(folder,feedlog)
-            feedlog_csv=munge.feedlog(path_to_feedlog)
+            feedlog_csv=_munge.feedlog(path_to_feedlog)
             feedlog_csv.loc[:,'FlyID']=datetime_exptname+'_Fly'+feedlog_csv.FlyID.astype(str)
 
             ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies=non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
+            non_feeding_flies=non_feeding_flies + _munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
 
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
-            feedlog_csv=munge.add_padrows(metadata_csv, feedlog_csv)
+            feedlog_csv=_munge.add_padrows(metadata_csv, feedlog_csv)
 
             ## Add columns in nanoliters.
-            feedlog_csv=munge.compute_nanoliter_cols(feedlog_csv)
+            feedlog_csv=_munge.compute_nanoliter_cols(feedlog_csv)
             ## Add columns for RelativeTime_s and FeedDuration_s.
-            feedlog_csv=munge.compute_nanoliter_cols(feedlog_csv)
+            feedlog_csv=_munge.compute_nanoliter_cols(feedlog_csv)
 
-            ## Save the munged feedlog.
+            ## Save the _munged feedlog.
             feedlogs_list.append(feedlog_csv)
 
 
@@ -158,7 +158,6 @@ class espresso(object):
         # allflies.set_index('FlyID',inplace=True,drop=True)
         allflies.drop('ID',axis=1,inplace=True) # Discard superfluous 'ID' column.
 
-
         self.flies=allflies
         self.feeds=allfeeds
 
@@ -169,6 +168,8 @@ class espresso(object):
         self.genotypes=allflies.Genotype.unique()
         self.temperatures=allflies.Temperature.unique()
         self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
+
+        self.plot=_plotter(self)
 
  #####  ###### #####  #####
  #    # #      #    # #    #
@@ -245,6 +246,7 @@ class espresso(object):
         self_copy.temperatures=self_copy.flies.Temperature.unique()
 
         self_copy.foodtypes=_np.unique( self_copy.flies.dropna(axis=1).filter(regex='Tube') )
+        self_copy.plot=_plotter(self_copy)
 
         return self_copy
 
