@@ -173,10 +173,21 @@ class espresso(object):
       ####    #   #    # ###### #    #    #####   ####  # ######   #   # #    #  ####
 
     def __repr__(self):
-        rep_str="{0} feedlog(s) with a total of {1} flies.\n{2} genotype(s) detected {3}.\n{4} temperature(s) detected {5}.\n{6} foodtype(s) detected {7}.".format( self.feedlog_count,len(self.flies),
-                                                    len(self.genotypes),self.genotypes,
-                                                    len(self.temperatures),self.temperatures,
-                                                    len(self.foodtypes),self.foodtypes )
+
+        plural_list=[]
+        for value in [self.feedlog_count,len(self.genotypes),
+                      len(self.temperatures),len(self.foodtypes)]:
+            if value>1:
+                plural_list.append('(s)')
+            else:
+                plural_list.append('')
+
+        rep_str="{0} feedlog{8} with a total of {1} flies.\n{2} genotype{9} detected {3}.\n{4} temperature{10} detected {5}.\n{6} foodtype{11} detected {7}.".format(
+            self.feedlog_count,len(self.flies),
+            len(self.genotypes),self.genotypes,
+            len(self.temperatures),self.temperatures,
+            len(self.foodtypes),self.foodtypes,
+            plural_list[0],plural_list[1],plural_list[2],plural_list[3])
 
         if hasattr(self, "added_labels"):
             rep_str=rep_str+"\n{0} label(s) have been added: {1}".format( len(self.added_labels),
