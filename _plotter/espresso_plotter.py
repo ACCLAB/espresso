@@ -30,9 +30,9 @@ import matplotlib.ticker as _tk
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
-import plot_helpers as _pth
+from . import plot_helpers as _pth
 
-class EspressoPlotter:
+class espresso_plotter:
     """
     Plotting class for espresso object.
     """

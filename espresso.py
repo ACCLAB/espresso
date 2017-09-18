@@ -17,8 +17,8 @@ import pandas as _pd
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
-from plotter import EspressoPlotter as _plotter
-import plot_helpers as _pth
+from _plotter import espresso_plotter as _esp_plotter
+from _plotter import plot_helpers as _pth
 import munge as _munge
 
 class espresso(object):
@@ -169,7 +169,7 @@ class espresso(object):
         self.temperatures=allflies.Temperature.unique()
         self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
 
-        self.plot=_plotter(self) # Passes an instance of `self` to plotter.
+        self.plot=_esp_plotter.espresso_plotter(self) # Passes an instance of `self` to plotter.
 
  #####  ###### #####  #####
  #    # #      #    # #    #
@@ -246,7 +246,7 @@ class espresso(object):
         self_copy.temperatures=self_copy.flies.Temperature.unique()
 
         self_copy.foodtypes=_np.unique( self_copy.flies.dropna(axis=1).filter(regex='Tube') )
-        self_copy.plot=_plotter(self_copy)
+        self_copy.plot=_esp_plotter.espresso_plotter(self_copy)
 
         return self_copy
 
