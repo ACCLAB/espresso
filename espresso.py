@@ -169,7 +169,7 @@ class espresso(object):
         self.temperatures=allflies.Temperature.unique()
         self.foodtypes=_np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
 
-        self.plot=_plotter(self)
+        self.plot=_plotter(self) # Passes an instance of `self` to plotter.
 
  #####  ###### #####  #####
  #    # #      #    # #    #
@@ -317,7 +317,6 @@ class espresso(object):
                 obj[label_name]=obj[label_from_cols].apply(lambda x: sep.join(x.dropna().astype(str)),axis=1)
                 # turn into Categorical.
                 obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
-
 
         labels=[label_name] # convert to single-member list.
         if hasattr(self, 'added_labels'):
