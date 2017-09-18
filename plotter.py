@@ -38,22 +38,6 @@ class EspressoPlotter:
         self._flies=espresso.flies
         self._feeds=espresso.feeds
 
- ##### ######  ####  #####     ####  #    #   ##   #####  #    # #####  #       ####  #####
-   #   #      #        #      #      #    #  #  #  #    # ##  ## #    # #      #    #   #
-   #   #####   ####    #       ####  #    # #    # #    # # ## # #    # #      #    #   #
-   #   #           #   #           # # ## # ###### #####  #    # #####  #      #    #   #
-   #   #      #    #   #      #    # ##  ## #    # #   #  #    # #      #      #    #   #
-   #   ######  ####    #       ####  #    # #    # #    # #    # #      ######  ####    #
-
-    def _swarm(self):
-        _sns.set(style='ticks',context='talk')
-        x=_np.random.random(10)
-        y=_np.random.random(10)
-        df=_pd.DataFrame([x,y]).T
-        ax=_sns.swarmplot(data=df)
-
-        return ax
-
  #    #   ##   #    # ######    #####    ##   #      ###### ##### ##### ######  ####
  ##  ##  #  #  #   #  #         #    #  #  #  #      #        #     #   #      #
  # ## # #    # ####   #####     #    # #    # #      #####    #     #   #####   ####
