@@ -190,7 +190,7 @@ class espresso(object):
             plural_list[0],plural_list[1],plural_list[2],plural_list[3])
 
         if hasattr(self, "added_labels"):
-            if value>1:
+            if len(self.added_labels)>1:
                 plural_label='s have'
             else:
                 plural_label=' has'
