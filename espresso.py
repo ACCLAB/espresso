@@ -366,6 +366,9 @@ class espresso(object):
         # check if we need to remove the added_labels attribute.
         if labels==self.added_labels:
             del self.__dict__['added_labels']
+        else:
+            for l in labels:
+                self.added_labels.remove(l)
 
         return "{0} has been dropped.".format(labels)
 
