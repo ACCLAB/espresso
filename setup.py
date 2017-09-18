@@ -15,7 +15,10 @@ except ImportError:
 
 def check_dependencies():
     to_install=[]
-
+    try:
+        import bootstrap_contrast
+    except ImportError:
+        to_install.append('bootstrap_contrast>=0.324.2')
     try:
         import numpy
     except ImportError:
@@ -37,14 +40,14 @@ def check_dependencies():
     try:
         import seaborn
     except ImportError:
-        to_install.append('seaborn')
+        to_install.append('seaborn>=0.8.0')
 
     return to_install
 
 if __name__=="__main__":
 
     installs=check_dependencies()
-    setup(name='bootstrap_contrast',
+    setup(name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
         version='0.1',
