@@ -152,16 +152,18 @@ def latency_ingestion_plots(feeds,first_x_min=180):
  #    # #    # #    # ######    #      #    # ###### ######   #     #   ######  ####
 
 
-def _make_categorial_palette(feedlog, group_by):
+def _make_categorial_palette(df, group_by):
     """
     Create a categorical color palette.
+    Pass a pandas DataFrame and the column to group by.
     """
-    _cat_palette=_sns.color_palette( n_colors=len(feedlog[group_by].unique()) )
+    _cat_palette=_sns.color_palette( n_colors=len(df[group_by].unique()) )
     return _cat_palette
 
-def _make_sequential_palette(feedlog, group_by):
+def _make_sequential_palette(df, group_by):
     """
     Create a sequential color palette.
+    Pass a pandas DataFrame and the column to group by.
     """
-    _seq_palette=_sns.cubehelix_palette( n_colors=len(feedlog[group_by].unique()) )
+    _seq_palette=_sns.cubehelix_palette( n_colors=len(df[group_by].unique()) )
     return _seq_palette
