@@ -129,9 +129,9 @@ class espresso_plotter:
         grps=allfeeds[group_by].unique()
         pal=dict( zip(grps, color_palette) )
 
+        # Compute the resampled time course volume.
         allfeeds_bygroup=_pth.timecourse_feeding_vol(allfeeds,group_by,resample)
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
-
         if show_feed_color:
             allfeeds_bygroup_food=_pth.timecourse_feeding_vol(allfeeds,[group_by, 'FoodChoice'],
                                                                 resample)
@@ -222,32 +222,30 @@ class espresso_plotter:
                     # Plot the time course feed volume plots.
                     print('plotting {0} {1} {2}'.format(grp, food, 'volume timecourse'))
 
-                    temp_withfood=allfeeds_bygroup_food[
-                                    (allfeeds_bygroup_food[group_by]==grp) &
-                                    (allfeeds_bygroup_food.FoodChoice==food)]
-                    feedvolax.fill_between(x=temp_withfood['feed_time_s'],
-                                            y1=_np.add(temp_withfood['FeedVol_µl'],basex),
-                                            y2=basex,
-                                            color=foodchoice_palette[food],
-                                            lw=0.75,alpha=0.5)
-                    basex=temp_withfood['FeedVol_µl']
+                    # temp_withfood=allfeeds_bygroup_food[
+                    #                 (allfeeds_bygroup_food[group_by]==grp) &
+                    #                 (allfeeds_bygroup_food.FoodChoice==food)]
+                    # feedvolax.fill_between(x=temp_withfood['feed_time_s'],
+                    #                         y1=_np.add(temp_withfood['FeedVol_µl'],basex),
+                    #                         y2=basex,
+                    #                         color=foodchoice_palette[food],
+                    #                         lw=0.75,alpha=0.5)
+                    # basex=temp_withfood['FeedVol_µl']
 
                 feedvolax.plot(temp_nofood['feed_time_s'],
                                   temp_nofood['FeedVol_µl'],
                                   'k-')
-                feedvolax.set_ylim(0,allfeeds_bygroup_fv['FeedVol_µl'].max())
 
             else:
                 print('plotting {0} volume timecourse'.format(grp))
 
-                temp_df=allfeeds_bygroup_fv[allfeeds_bygroup_food[group_by]==grp]
+                temp_df=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
                 feedvolax.fill_between(x=temp_df['feed_time_s'],
                                        y1=temp_df['FeedVol_µl'],
                                        y2=_np.repeat(0,len(temp_df)),
                                        color=pal[grp],
                                        lw=1)
-                feedvolax.set_ylim(0,allfeeds_bygroup_fv['FeedVol_µl'].max())
-
+            feedvolax.set_ylim(0,allfeeds_bygroup['FeedVol_µl'].max())
             if c==0:
                 feedvolax.set_ylabel('Total Consumption (µl)\n10 min bins')
 
