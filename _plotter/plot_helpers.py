@@ -152,16 +152,39 @@ def latency_ingestion_plots(feeds,first_x_min=180):
  #    # #    # #    # ######    #      #    # ###### ######   #     #   ######  ####
 
 
-def _make_categorial_palette(feedlog, group_by):
+def _make_categorial_palette(df, group_by, pal='tab10'):
     """
     Create a categorical color palette.
+    Pass a pandas DataFrame and the column to group by.
     """
-    _cat_palette=_sns.color_palette( n_colors=len(feedlog[group_by].unique()) )
+    _cat_palette=_sns.color_palette( pal, n_colors=len(df[group_by].unique()) )
     return _cat_palette
 
-def _make_sequential_palette(feedlog, group_by):
+def _make_sequential_palette(df, group_by):
     """
     Create a sequential color palette.
+    Pass a pandas DataFrame and the column to group by.
     """
-    _seq_palette=_sns.cubehelix_palette( n_colors=len(feedlog[group_by].unique()) )
+    _seq_palette=_sns.cubehelix_palette( n_colors=len(df[group_by].unique()) )
     return _seq_palette
+
+def timecourse_feeding_vol(df, group_by, resample_by='10min'):
+
+    temp=df.copy()
+
+    if isinstance(group_by, str):
+        group_by=[group_by]
+
+    out_cols=['RelativeTime_s','FeedVol_µl']
+    out_cols.extend(group_by)
+
+    out=_pd.DataFrame( temp.\
+                        groupby(group_by).\
+                        resample(resample_by,on='RelativeTime_s').\
+                        sum().to_records() )
+    out=out.loc[:,out_cols]
+    out.fillna(0,inplace=True)
+    out['feed_time_s']=out.RelativeTime_s.dt.hour*3600+\
+                        out.RelativeTime_s.dt.minute*60+\
+                        out.RelativeTime_s.dt.second
+    return out
