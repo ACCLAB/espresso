@@ -18,7 +18,7 @@ import seaborn as _sns
 import bootstrap_contrast as _bsc
 
 from _plotter import espresso_plotter as _esp_plotter
-from _plotter import plot_helpers as _pth
+from _plotter import plot_helpers as _plot_helpers
 import munge as _munge
 
 class espresso(object):
