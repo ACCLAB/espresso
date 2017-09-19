@@ -132,6 +132,19 @@ class espresso_plotter:
                 foodchoice_colors=_pth._make_categorial_palette(allfeeds, 'FoodChoice')
                 foodchoice_palette=dict( zip( _np.sort(allfeeds.FoodChoice.unique()),
                                               foodchoice_colors ) )
+                # Create custom handles for the foodchoice.
+                # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
+                raster_legend_handles=[]
+                timecourse_legend_handles=[]
+                for key in foodchoice_palette.keys():
+                    patch=_mpatches.Patch(color=foodchoice_palette[key], label=key)
+                    raster_legend_handles.append(patch)
+                    timecourse_legend_handles.append(patch)
+
+                # Add line for total consumption.
+                timecourse_legend_handles.append( _mlines.Line2D([],[],
+                                                  color='k',label='Total Consumption') )
+
             except KeyError: # FoodChoice not in allfeeds
                 show_feed_color=False
 
@@ -245,6 +258,19 @@ class espresso_plotter:
                                   temp_nofood['FeedVol_µl'],
                                   'k-')
 
+                if num_cols>1: # if we have more than 1 column.
+                    rasterlegend_ax=axx[0,0]
+                    timecourselegend_ax=axx[1,0]
+                else:
+                    rasterlegend_ax=axx[0]
+                    timecourselegend_ax=axx[1]
+
+                rasterlegend_ax.legend(loc='upper left',
+                                        bbox_to_anchor=(0,-0.05),
+                                        handles=raster_legend_handles)
+                timecourselegend_ax.legend(loc='upper left',
+                                            bbox_to_anchor=(0,-0.2),
+                                            handles=timecourse_legend_handles)
             else:
                 print('plotting {0} volume timecourse'.format(grp))
 
