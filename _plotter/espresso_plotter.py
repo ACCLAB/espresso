@@ -81,11 +81,12 @@ class espresso_plotter:
                 resample='10min',
                 show_feed_color=True,
                 add_flyid_labels=False,
-                feed_volume_palette_type='categorical'):
+                feed_volume_palette_type='categorical',
+                figsize=None):
         """
         Produces a raster plot of feed events. For each category in `group_by`,
-        a raster plot and a feed volume plot for the duration of the assay
-        in the time window (time_start, time_end) will be produced.
+        a raster plot and a feed volume plot for the entire duration of the
+        assay will be produced.
 
         Keywords
         --------
@@ -106,6 +107,12 @@ class espresso_plotter:
         feed_volume_palette_type: string, 'categorical' or 'sequential'
             The colour palette used in the plotting of the combined feed volume panels.
 
+        figsize: tuple (width, height), default None.
+            The size of the final figure, in inches.
+
+        Returns
+        -------
+        A matplotlib Figure.
         """
         # make a copy of the metadata and the feedlog.
         allfeeds=self._experiment.feeds.copy()
@@ -295,7 +302,6 @@ class espresso_plotter:
 
         Returns
         -------
-
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
         # Get plotting variables.
