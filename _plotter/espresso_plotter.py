@@ -36,6 +36,22 @@ from . import contrast as _con
 class espresso_plotter:
     """
     Plotting class for espresso object.
+
+    Plots available:
+        rasters
+        percent_feeding
+
+    To produce contrast plots, use the `contrast` method.
+    e.g `my_espresso_experiment.plot.contrast`
+
+        Plots available:
+            feed_count_per_fly
+
+    To produce timecourse plots, use the `timecourse` method.
+    e.g `my_espresso_experiment.plot.timecourse`
+
+        Plots available:
+            TBA
     """
 
 
