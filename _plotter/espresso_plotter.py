@@ -168,11 +168,23 @@ class espresso_plotter:
         else:
             ws=0.2
 
+        if figsize is None:
+            single_panel_x_inches=17
+            single_panel_y_inches=12
+        else:
+            if isinstance(figsize, tuple) or isinstance(figsize, list):
+                single_panel_x_inches=figsize[0]
+                single_panel_y_inches=figsize[1]
+            else:
+                raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
+
+        num_cols=int( len(grps) )
+        fig_x_inches=single_panel_x_inches*num_cols
         fig,axx=_plt.subplots(nrows=2,
-                             ncols=int( len(grps) ),
-                             figsize=(32,15),
+                             ncols=num_cols,
+                             figsize=(fig_x_inches,single_panel_y_inches),
                              gridspec_kw={'wspace':ws,
-                                          'hspace':0.2,
+                                          'hspace':0.3,
                                           'height_ratios':(3,2)} )
 
         for c, grp in enumerate( grps ):
