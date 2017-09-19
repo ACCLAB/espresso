@@ -3,6 +3,10 @@
 # Author: Joses Ho
 # Email : joseshowh@gmail.com
 
+"""
+Convenience functions for munging of metadata and feedlogs.
+"""
+
 import sys
 import os
 
