@@ -31,6 +31,7 @@ import seaborn as _sns
 import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _pth
+from . import contrast as _con
 
 class espresso_plotter:
     """
@@ -45,33 +46,9 @@ class espresso_plotter:
  #    #   ##    #      #
  #    #    #    #      #
 
-
     def __init__(self,espresso): # pass along an espresso instance.
-        self._flies=espresso.flies
-        self._feeds=espresso.feeds
-
-
- #    #   ##   #    # ######    #####    ##   #      ###### ##### ##### ######  ####
- ##  ##  #  #  #   #  #         #    #  #  #  #      #        #     #   #      #
- # ## # #    # ####   #####     #    # #    # #      #####    #     #   #####   ####
- #    # ###### #  #   #         #####  ###### #      #        #     #   #           #
- #    # #    # #   #  #         #      #    # #      #        #     #   #      #    #
- #    # #    # #    # ######    #      #    # ###### ######   #     #   ######  ####
-
-
-    def _make_categorial_palette(self, group_by):
-        """
-        Create a categorical color palette.
-        """
-        _cat_palette=_sns.color_palette( n_colors=len(self._feeds[group_by].unique()) )
-        return _cat_palette
-
-    def _make_sequential_palette(self, group_by):
-        """
-        Create a sequential color palette.
-        """
-        _seq_palette=_sns.cubehelix_palette( n_colors=len(self._feeds[group_by].unique()) )
-        return _seq_palette
+        self._experiment=espresso # so contrast method can access it.
+        self.contrast=_con.contrast_plotter(self)
 
 
  #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
@@ -83,14 +60,15 @@ class espresso_plotter:
 
 
     def rasters(self,group_by,resample='10min',add_flyid_labels=True,palette_type='categorical'):
-        allfeeds=self._feeds.copy()
-        allflies=self._flies.copy()
+        # make a copy of the metadata and the feedlog.
+        allfeeds=self._experiment.feeds.copy()
+        allflies=self._experiment.flies.copy()
 
         # Select palette.
         if palette_type=='categorical':
-            color_palette=self._make_categorial_palette(group_by)
+            color_palette=_pth._make_categorial_palette(allfeeds,group_by)
         elif palette_type=='sequential':
-            color_palette=self._make_sequential_palette(group_by)
+            color_palette=_pth._make_sequential_palette(allfeeds,group_by)
 
         grps=allfeeds[group_by].unique()
         pal=dict( zip(grps, color_palette) )
@@ -237,13 +215,12 @@ class espresso_plotter:
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
         # Get plotting variables.
-        percent_feeding_summary=_pth.compute_percent_feeding(self._flies,
-                                                             self._feeds,
+        percent_feeding_summary=_pth.compute_percent_feeding(self._experiment.flies,
+                                                             self._experiment.feeds,
                                                              group_by,
                                                              start=time_start,
                                                              end=time_end)
 
-        # return percent_feeding_summary ## used to debug.
 
         cilow=percent_feeding_summary.ci_lower.tolist()
         cihigh=percent_feeding_summary.ci_upper.tolist()
@@ -251,9 +228,9 @@ class espresso_plotter:
 
         # Select palette.
         if palette_type=='categorical':
-            color_palette=self._make_categorial_palette(group_by)
+            color_palette=_pth._make_categorial_palette(self._experiment.feeds,group_by)
         elif palette_type=='sequential':
-            color_palette=self._make_sequential_palette(group_by)
+            color_palette=_pth._make_sequential_palette(self._experiment.feeds,group_by)
 
         # Set style.
         _sns.set(style='ticks',context='talk',font_scale=1.1)
@@ -285,63 +262,3 @@ class espresso_plotter:
 
         f.tight_layout()
         return f, percent_feeding_summary
-
-
- ###### ###### ###### #####      ####   ####  #    # #    # #####    #####  ###### #####     ###### #      #   #
- #      #      #      #    #    #    # #    # #    # ##   #   #      #    # #      #    #    #      #       # #
- #####  #####  #####  #    #    #      #    # #    # # #  #   #      #    # #####  #    #    #####  #        #
- #      #      #      #    #    #      #    # #    # #  # #   #      #####  #      #####     #      #        #
- #      #      #      #    #    #    # #    # #    # #   ##   #      #      #      #   #     #      #        #
- #      ###### ###### #####      ####   ####   ####  #    #   #      #      ###### #    #    #      ######   #
-
-    def feed_count_per_fly(self, group_by, palette_type='categorical',contrastplot_kwargs=None):
-
-        """
-        Produces a contrast plot depicting the mean differences in the feed counts between groups.
-        Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
-
-        Keywords
-        --------
-        group_by: string, categorical
-            The column or label indicating the categorical grouping on the x-axis.
-
-        palette_type: string, 'categorical' or 'sequential'.
-
-        contrastplot_kwargs: dict, default None
-            All contrastplot keywords will be entered here.
-
-        Returns
-        -------
-
-        A matplotlib Axes instance, and a pandas DataFrame with the statistics.
-        """
-
-        default_kwargs=dict(fig_size=(12,9),
-                            float_contrast=False,
-                            font_scale=1.4,
-                            swarmplot_kwargs={'size':6})
-        if contrastplot_kwargs is None:
-            contrastplot_kwargs=default_kwargs
-        else:
-            contrastplot_kwargs=_bsc.merge_two_dicts(default_kwargs,contrastplot_kwargs)
-
-        # Select palette.
-        if palette_type=='categorical':
-            color_palette=self._make_categorial_palette(group_by)
-        elif palette_type=='sequential':
-            color_palette=self._make_sequential_palette(group_by)
-
-        total_feeds=_pd.DataFrame(self._feeds[['FlyID',group_by,'FeedVol_nl']].\
-                                    groupby([group_by,'FlyID']).count().\
-                                    to_records())
-        total_feeds.columns=[group_by,'FlyID','Total feed count\nper fly']
-        max_feeds=_np.round(total_feeds.max()['Total feed count\nper fly'],decimals=-2)
-
-        f,b=_bsc.contrastplot(data=total_feeds,
-                              x=group_by,y='Total feed count\nper fly',
-                              idx=_np.sort(total_feeds.loc[:,group_by].unique()),
-                              **contrastplot_kwargs)
-
-        f.suptitle('Contrast Plot Total Feed Count Per Fly')
-
-        return f,b
