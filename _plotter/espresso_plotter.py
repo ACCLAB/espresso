@@ -122,14 +122,14 @@ class espresso_plotter:
 
         # Select palette.
         if feed_volume_palette_type=='categorical':
-            color_palette=_pth._make_categorial_palette(allfeeds,group_by)
+            color_palette=_plot_helpers._make_categorial_palette(allfeeds,group_by)
         elif feed_volume_palette_type=='sequential':
-            color_palette=_pth._make_sequential_palette(allfeeds,group_by)
+            color_palette=_plot_helpers._make_sequential_palette(allfeeds,group_by)
         if show_feed_color:
             # check that there was a food choice in the experiment.
             # if not, set the color to False.
             try:
-                foodchoice_colors=_pth._make_categorial_palette(allfeeds, 'FoodChoice')
+                foodchoice_colors=_plot_helpers._make_categorial_palette(allfeeds, 'FoodChoice')
                 foodchoice_palette=dict( zip( _np.sort(allfeeds.FoodChoice.unique()),
                                               foodchoice_colors ) )
                 # Create custom handles for the foodchoice.
@@ -139,11 +139,6 @@ class espresso_plotter:
                 for key in foodchoice_palette.keys():
                     patch=_mpatches.Patch(color=foodchoice_palette[key], label=key)
                     raster_legend_handles.append(patch)
-                    timecourse_legend_handles.append(patch)
-
-                # Add line for total consumption.
-                timecourse_legend_handles.append( _mlines.Line2D([],[],
-                                                  color='k',label='Total Consumption') )
 
             except KeyError: # FoodChoice not in allfeeds
                 show_feed_color=False
@@ -152,11 +147,20 @@ class espresso_plotter:
         pal=dict( zip(grps, color_palette) )
 
         # Compute the resampled time course volume.
-        allfeeds_bygroup=_pth.timecourse_feeding_vol(allfeeds,group_by,resample)
+        allfeeds_bygroup=_plot_helpers.timecourse_feeding_vol(allfeeds,group_by,resample)
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
         if show_feed_color:
-            allfeeds_bygroup_food=_pth.timecourse_feeding_vol(allfeeds,[group_by, 'FoodChoice'],
-                                                                resample)
+            allfeeds_bygroup_food=_plot_helpers.timecourse_feeding_vol(allfeeds,
+                                                                        [group_by, 'FoodChoice'],
+                                                                        resample)
+            # Prepare a DataFrame for feed volume plotting.
+            feedvolplot_df=_pd.DataFrame( allfeeds_bygroup_food.\
+                                          groupby(['FoodChoice','feed_time_s']).\
+                                          sum().to_records() )
+            feedvolplot_df.fillna(0,inplace=True)
+            feedvolplot_df_pivot=feedvolplot_df.pivot(index='feed_time_s',
+                                                      columns='FoodChoice',
+                                                      values='FeedVol_µl')
 
         allfeeds['feed_time_s']=allfeeds.RelativeTime_s.dt.hour*3600+\
                                 allfeeds.RelativeTime_s.dt.minute*60+\
@@ -184,7 +188,7 @@ class espresso_plotter:
                              ncols=num_cols,
                              figsize=(fig_x_inches,single_panel_y_inches),
                              gridspec_kw={'wspace':ws,
-                                          'hspace':0.3,
+                                          'hspace':0.45,
                                           'height_ratios':(3,2)} )
 
         for c, grp in enumerate( grps ):
@@ -249,40 +253,23 @@ class espresso_plotter:
 
             # Plot the feed volume plots.
             if show_feed_color:
-                temp_nofood=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
-                basex=_np.repeat(0,len(temp_nofood))
-
-                for d, food in enumerate(allfeeds.FoodChoice.unique()):
-                    # Plot the time course feed volume plots.
-                    print('plotting {0} {1} {2}'.format(grp, food, 'volume timecourse'))
-
-                    # temp_withfood=allfeeds_bygroup_food[
-                    #                 (allfeeds_bygroup_food[group_by]==grp) &
-                    #                 (allfeeds_bygroup_food.FoodChoice==food)]
-                    # feedvolax.fill_between(x=temp_withfood['feed_time_s'],
-                    #                         y1=_np.add(temp_withfood['FeedVol_µl'],basex),
-                    #                         y2=basex,
-                    #                         color=foodchoice_palette[food],
-                    #                         lw=0.75,alpha=0.5)
-                    # basex=temp_withfood['FeedVol_µl']
-
-                feedvolax.plot(temp_nofood['feed_time_s'],
-                                  temp_nofood['FeedVol_µl'],
-                                  'k-')
-
+                print('plotting {0} {1}'.format(grp, 'volume timecourse'))
+                feedvolplot_df_pivot.plot.area(alpha=0.5,
+                                                color=foodchoice_colors,
+                                                ax=feedvolax,
+                                                lw=1)
                 if num_cols>1: # if we have more than 1 column.
                     rasterlegend_ax=axx[0,0]
                     timecourselegend_ax=axx[1,0]
                 else:
                     rasterlegend_ax=axx[0]
                     timecourselegend_ax=axx[1]
-
                 rasterlegend_ax.legend(loc='upper left',
-                                        bbox_to_anchor=(0,-0.05),
+                                        bbox_to_anchor=(0,-0.15),
                                         handles=raster_legend_handles)
                 timecourselegend_ax.legend(loc='upper left',
-                                            bbox_to_anchor=(0,-0.2),
-                                            handles=timecourse_legend_handles)
+                                            bbox_to_anchor=(0,-0.2))
+
             else:
                 print('plotting {0} volume timecourse'.format(grp))
 
@@ -343,7 +330,7 @@ class espresso_plotter:
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
         # Get plotting variables.
-        percent_feeding_summary=_pth.compute_percent_feeding(self._experiment.flies,
+        percent_feeding_summary=_plot_helpers.compute_percent_feeding(self._experiment.flies,
                                                              self._experiment.feeds,
                                                              group_by,
                                                              start=time_start,
@@ -356,9 +343,9 @@ class espresso_plotter:
 
         # Select palette.
         if palette_type=='categorical':
-            color_palette=_pth._make_categorial_palette(self._experiment.feeds,group_by)
+            color_palette=_plot_helpers._make_categorial_palette(self._experiment.feeds,group_by)
         elif palette_type=='sequential':
-            color_palette=_pth._make_sequential_palette(self._experiment.feeds,group_by)
+            color_palette=_plot_helpers._make_sequential_palette(self._experiment.feeds,group_by)
 
         # Set style.
         _sns.set(style='ticks',context='talk',font_scale=1.1)
