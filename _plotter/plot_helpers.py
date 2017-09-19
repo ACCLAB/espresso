@@ -11,6 +11,7 @@ import scipy as _sp
 import pandas as _pd
 
 import matplotlib.pyplot as _plt
+import seaborn as _sns
 import bootstrap_contrast as _bsc
 
 #####  #       ####  #####    #    # ###### #      #####  ###### #####   ####
@@ -142,3 +143,25 @@ def latency_ingestion_plots(feeds,first_x_min=180):
     f2.suptitle('Total Volume (nl) ingested in first {0} min'.format(first_x_min),fontsize=20)
     _plt.show()
     print(b2)
+
+ #    #   ##   #    # ######    #####    ##   #      ###### ##### ##### ######  ####
+ ##  ##  #  #  #   #  #         #    #  #  #  #      #        #     #   #      #
+ # ## # #    # ####   #####     #    # #    # #      #####    #     #   #####   ####
+ #    # ###### #  #   #         #####  ###### #      #        #     #   #           #
+ #    # #    # #   #  #         #      #    # #      #        #     #   #      #    #
+ #    # #    # #    # ######    #      #    # ###### ######   #     #   ######  ####
+
+
+def _make_categorial_palette(feedlog, group_by):
+    """
+    Create a categorical color palette.
+    """
+    _cat_palette=_sns.color_palette( n_colors=len(feedlog[group_by].unique()) )
+    return _cat_palette
+
+def _make_sequential_palette(feedlog, group_by):
+    """
+    Create a sequential color palette.
+    """
+    _seq_palette=_sns.cubehelix_palette( n_colors=len(feedlog[group_by].unique()) )
+    return _seq_palette
