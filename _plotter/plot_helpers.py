@@ -172,8 +172,8 @@ def timecourse_feeding_vol(df, group_by, resample_by):
     if isinstance(group_by, str):
         group_by=[group_by]
 
-    out_cols=['RelativeTime_s','FeedVol_µl'].extend(group_by)
-    df.loc[:,'RelativeTime_s']=_pd.to_datetime(df['RelativeTime_s'], unit='s')
+    out_cols=['RelativeTime_s','FeedVol_µl']
+    out_cols.extend(group_by)
 
     out=_pd.DataFrame( df.\
                         groupby(group_by).\
@@ -181,6 +181,7 @@ def timecourse_feeding_vol(df, group_by, resample_by):
                         sum().to_records() )
     out=out.loc[:,out_cols]
     out.fillna(0,inplace=True)
-    out['feed_time_s']=allfeeds_bygroup.RelativeTime_s.dt.hour*3600+\
-                          allfeeds_bygroup.RelativeTime_s.dt.minute*60+\
-                          allfeeds_bygroup.RelativeTime_s.dt.second
+    out['feed_time_s']=out.RelativeTime_s.dt.hour*3600+\
+                        out.RelativeTime_s.dt.minute*60+\
+                        out.RelativeTime_s.dt.second
+    return out

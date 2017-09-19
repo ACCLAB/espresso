@@ -75,37 +75,70 @@ class espresso_plotter:
  #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
 
 
-    def rasters(self,group_by,resample='10min',add_flyid_labels=True,palette_type='categorical'):
+    def rasters(self,group_by,
+                resample='10min',
+                show_feed_color=True,
+                add_flyid_labels=False,
+                feed_volume_palette_type='categorical'):
+        """
+        Produces a raster plot of feed events. For each category in `group_by`,
+        a raster plot and a feed volume plot for the duration of the assay
+        in the time window (time_start, time_end) will be produced.
+
+        Keywords
+        --------
+
+        group_by: string
+            The categorical column in the espresso object used to group the raster plots.
+            Categories in the column will be tiled horizontally as panels.
+
+        resample: string, default '10min'
+             Time duration to use for resampling of feedlog data.
+
+        show_feed_color: boolean, default True
+            If True, the color of each feed will correspond to the food choice.
+
+        add_flyid_labels: boolean, default True
+            If True, the FlyIDs for each fly will be displayed on the left of each raster row.
+
+        feed_volume_palette_type: string, 'categorical' or 'sequential'
+            The colour palette used in the plotting of the combined feed volume panels.
+
+        """
         # make a copy of the metadata and the feedlog.
         allfeeds=self._experiment.feeds.copy()
         allflies=self._experiment.flies.copy()
 
+        allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
+
         # Select palette.
-        if palette_type=='categorical':
+        if feed_volume_palette_type=='categorical':
             color_palette=_pth._make_categorial_palette(allfeeds,group_by)
-        elif palette_type=='sequential':
+        elif feed_volume_palette_type=='sequential':
             color_palette=_pth._make_sequential_palette(allfeeds,group_by)
+        if show_feed_color:
+            # check that there was a food choice in the experiment.
+            # if not, set the color to False.
+            try:
+                foodchoice_colors=_pth._make_categorial_palette(allfeeds, 'FoodChoice')
+                foodchoice_palette=dict( zip( _np.sort(allfeeds.FoodChoice.unique()),
+                                              foodchoice_colors ) )
+            except KeyError: # FoodChoice not in allfeeds
+                show_feed_color=False
 
         grps=allfeeds[group_by].unique()
         pal=dict( zip(grps, color_palette) )
 
-        # Duplicate `RelativeTime_s` as non-DateTime object.
-        allfeeds['feed_time_s']=allfeeds.loc[:,'RelativeTime_s']
-
-        # Convert `RelativeTime_s` to DateTime object.
-        allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
-
-        # munging for bygroup data.
-        allfeeds_bygroup=_pd.DataFrame( allfeeds.groupby(group_by).\
-                                          resample('10min',on='RelativeTime_s').\
-                                          sum().to_records() )
-        allfeeds_bygroup_fv=allfeeds_bygroup.loc[:,[group_by,'RelativeTime_s','FeedVol_µl']]
-        allfeeds_bygroup_fv.fillna(0,inplace=True)
-        allfeeds_bygroup_fv['feed_time_s']=allfeeds_bygroup_fv.RelativeTime_s.dt.hour*3600+\
-                                              allfeeds_bygroup_fv.RelativeTime_s.dt.minute*60+\
-                                              allfeeds_bygroup_fv.RelativeTime_s.dt.second
-
+        allfeeds_bygroup=_pth.timecourse_feeding_vol(allfeeds,group_by,resample)
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
+
+        if show_feed_color:
+            allfeeds_bygroup_food=_pth.timecourse_feeding_vol(allfeeds,[group_by, 'FoodChoice'],
+                                                                resample)
+
+        allfeeds['feed_time_s']=allfeeds.RelativeTime_s.dt.hour*3600+\
+                                allfeeds.RelativeTime_s.dt.minute*60+\
+                                allfeeds.RelativeTime_s.dt.second
 
         _sns.set(style='ticks',context='poster')
         if add_flyid_labels:
@@ -121,19 +154,23 @@ class espresso_plotter:
                                           'height_ratios':(3,2)} )
 
         for c, grp in enumerate( grps ):
+            if len(grps)>1:
+                rasterax=axx[0,c]
+                feedvolax=axx[1,c]
+            else:
+                rasterax=axx[0]
+                feedvolax=axx[1]
 
             print('plotting {0} {1}'.format(grp,'rasters'))
+            print('Be patient, this can take up to 60s.')
             # Plot the raster plots.
-            rasterax=axx[0,c]
+
             rasterax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
             rasterax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
 
             # Grab only the flies we need.
-            tempfeeds=allfeeds[allfeeds[group_by]==grp]
+            tempfeeds=allfeeds[allfeeds[group_by]==grp].copy()
             temp_allflies=tempfeeds.FlyID.unique().tolist()
-
-            # Grab the columns we need.
-            tempfeeds=tempfeeds[['FlyID',group_by,'feed_time_s','FeedDuration_s']]
 
             # Order the flies properly.
             ## First, drop non-valid feeds, then sort by feed time and feed duration,
@@ -150,12 +187,18 @@ class espresso_plotter:
             for k, flyid in enumerate(flies_in_order):
                 tt=tempfeeds[tempfeeds.FlyID==flyid]
                 for idx in [idx for idx in tt.index if ~_np.isnan(tt.loc[idx,'FeedDuration_s'])]:
-                    rasterax.axvspan(xmin=tt.loc[idx,'feed_time_s'],
-                                     xmax=tt.loc[idx,'feed_time_s']+tt.loc[idx,'FeedDuration_s'],
-                                     ymin=(1/maxflycount)*(maxflycount-k-1),
-                                     ymax=(1/maxflycount)*(maxflycount-k),
-                                     color='k',
-                                     alpha=1)
+                    rasterplot_kwargs=dict(xmin=tt.loc[idx,'feed_time_s'],
+                                             xmax=tt.loc[idx,'feed_time_s']+tt.loc[idx,'FeedDuration_s'],
+                                             ymin=(1/maxflycount)*(maxflycount-k-1),
+                                             ymax=(1/maxflycount)*(maxflycount-k),
+                                             alpha=0.8)
+
+                    if show_feed_color:
+                        rasterax.axvspan(color=foodchoice_palette[ tt.loc[idx,'FoodChoice'] ],
+                                         label="_"*k + tt.loc[idx,'FoodChoice'],**rasterplot_kwargs)
+                    else:
+                        rasterax.axvspan(color='k',**rasterplot_kwargs)
+
                 if add_flyid_labels:
                     if flyid in temp_non_feeding_flies:
                         label_color='grey'
@@ -171,20 +214,45 @@ class espresso_plotter:
             rasterax.set_title(grp)
 
             # Plot the feed volume plots.
-            print('plotting {0}'.format(grp))
-            bygroupax=axx[1,c]
-            temp_df=allfeeds_bygroup_fv[allfeeds_bygroup_fv[group_by]==grp]
-            bygroupax.fill_between(x=temp_df['feed_time_s'],
-                                   y1=temp_df['FeedVol_µl'],
-                                   y2=_np.repeat(0,len(temp_df)),
-                                   color=pal[grp],
-                                   lw=1)
-            bygroupax.set_ylim(0,allfeeds_bygroup_fv['FeedVol_µl'].max())
+            if show_feed_color:
+                temp_nofood=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
+                basex=_np.repeat(0,len(temp_nofood))
+
+                for d, food in enumerate(allfeeds.FoodChoice.unique()):
+                    # Plot the time course feed volume plots.
+                    print('plotting {0} {1} {2}'.format(grp, food, 'volume timecourse'))
+
+                    temp_withfood=allfeeds_bygroup_food[
+                                    (allfeeds_bygroup_food[group_by]==grp) &
+                                    (allfeeds_bygroup_food.FoodChoice==food)]
+                    feedvolax.fill_between(x=temp_withfood['feed_time_s'],
+                                            y1=_np.add(temp_withfood['FeedVol_µl'],basex),
+                                            y2=basex,
+                                            color=foodchoice_palette[food],
+                                            lw=0.75,alpha=0.5)
+                    basex=temp_withfood['FeedVol_µl']
+
+                feedvolax.plot(temp_nofood['feed_time_s'],
+                                  temp_nofood['FeedVol_µl'],
+                                  'k-')
+                feedvolax.set_ylim(0,allfeeds_bygroup_fv['FeedVol_µl'].max())
+
+            else:
+                print('plotting {0} volume timecourse'.format(grp))
+
+                temp_df=allfeeds_bygroup_fv[allfeeds_bygroup_food[group_by]==grp]
+                feedvolax.fill_between(x=temp_df['feed_time_s'],
+                                       y1=temp_df['FeedVol_µl'],
+                                       y2=_np.repeat(0,len(temp_df)),
+                                       color=pal[grp],
+                                       lw=1)
+                feedvolax.set_ylim(0,allfeeds_bygroup_fv['FeedVol_µl'].max())
+
             if c==0:
-                bygroupax.set_ylabel('Total Consumption (µl)\n10 min bins')
+                feedvolax.set_ylabel('Total Consumption (µl)\n10 min bins')
 
             # Format x-axis for both axes.
-            for a in [rasterax, bygroupax]:
+            for a in [rasterax, feedvolax]:
                 a.set_xlim(0,21600)
                 a.xaxis.set_ticks(range(0,25200,3600))
                 a.xaxis.set_minor_locator( _tk.MultipleLocator(base=1800) )
@@ -195,7 +263,7 @@ class espresso_plotter:
                 a.tick_params(axis='x', which='minor',length=6)
 
             _sns.despine(ax=rasterax,left=True,trim=True)
-            _sns.despine(ax=bygroupax,trim=True,offset={'left':7,'bottom':5})
+            _sns.despine(ax=feedvolax,trim=True,offset={'left':7,'bottom':5})
 
         return fig
 
