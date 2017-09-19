@@ -168,14 +168,17 @@ def _make_sequential_palette(df, group_by):
     _seq_palette=_sns.cubehelix_palette( n_colors=len(df[group_by].unique()) )
     return _seq_palette
 
-def timecourse_feeding_vol(df, group_by, resample_by):
+def timecourse_feeding_vol(df, group_by, resample_by='10min'):
+
+    temp=df.copy()
+
     if isinstance(group_by, str):
         group_by=[group_by]
 
     out_cols=['RelativeTime_s','FeedVol_µl']
     out_cols.extend(group_by)
 
-    out=_pd.DataFrame( df.\
+    out=_pd.DataFrame( temp.\
                         groupby(group_by).\
                         resample(resample_by,on='RelativeTime_s').\
                         sum().to_records() )
