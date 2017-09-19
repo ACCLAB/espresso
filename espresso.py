@@ -188,7 +188,7 @@ class espresso(object):
             else:
                 plural_list.append('')
 
-        rep_str="{0} feedlog{8} with a total of {1} flies.\n{2} genotype{9} detected {3}.\n{4} temperature{10} detected {5}.\n{6} foodtype{11} detected {7}.".format(
+        rep_str="{0} feedlog{8} with a total of {1} flies.\n{2} genotype{9} {3}.\n{4} temperature{10} {5}.\n{6} foodtype{11} {7}.".format(
             self.feedlog_count,len(self.flies),
             len(self.genotypes),self.genotypes,
             len(self.temperatures),self.temperatures,
