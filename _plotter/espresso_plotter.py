@@ -26,11 +26,13 @@ import pandas as _pd
 import matplotlib as _mpl
 import matplotlib.pyplot as _plt
 import matplotlib.ticker as _tk
+import matplotlib.patches as _mpatches # for custom legends.
+import matplotlib.lines as _mlines # for custom legends.
 
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
-from . import plot_helpers as _pth
+from . import plot_helpers as _plot_helpers
 from . import contrast as _con
 
 class espresso_plotter:
