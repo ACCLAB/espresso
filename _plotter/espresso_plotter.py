@@ -79,26 +79,19 @@ class espresso_plotter:
 
     def rasters(self,
                 group_by=None,
-                resample='10min',
                 show_feed_color=True,
                 add_flyid_labels=False,
-                feed_volume_palette_type='categorical',
-                figsize=None):
+                figsize=None,
+                ax=None):
         """
-        Produces a raster plot of feed events. For each category in `group_by`,
-        a raster plot and a feed volume plot for the entire duration of the
-        assay will be produced.
+        Produces a raster plot of feed events.
 
         Keywords
         --------
 
         group_by: string, default None
-            The categorical column in the espresso object used to group the raster plots.
+            The categorical columns in the espresso object used to group the raster plots.
             Categories in the column will be tiled horizontally as panels.
-            If this keyword is not specified, it will default to using the "Genotype" column.
-
-        resample: string, default '10min'
-             Time duration to use for resampling of feedlog data.
 
         show_feed_color: boolean, default True
             If True, the color of each feed will correspond to the food choice.
@@ -106,11 +99,11 @@ class espresso_plotter:
         add_flyid_labels: boolean, default True
             If True, the FlyIDs for each fly will be displayed on the left of each raster row.
 
-        feed_volume_palette_type: string, 'categorical' or 'sequential'
-            The colour palette used in the plotting of the combined feed volume panels.
-
         figsize: tuple (width, height), default None.
             The size of the final figure, in inches.
+
+        ax: matplotlib Axes, default None.
+            Plot on specified matplotlib Axes.
 
         Returns
         -------
@@ -123,16 +116,12 @@ class espresso_plotter:
             group_by="Genotype"
         else:
             # make sure group_by is a column in allfeeds
-            if group_by is not in allfeeds.columns:
+            if group_by not in allfeeds.columns:
                 raise KeyError("{0} is not a column in the feedlog. Please check.".format(group_by))
-
-        allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
+        # allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
 
         # Select palette.
-        if feed_volume_palette_type=='categorical':
-            color_palette=_plot_helpers._make_categorial_palette(allfeeds,group_by)
-        elif feed_volume_palette_type=='sequential':
-            color_palette=_plot_helpers._make_sequential_palette(allfeeds,group_by)
+        color_palette=_plot_helpers._make_categorial_palette(allfeeds,group_by)
 
         if show_feed_color:
             # check that there was a food choice in the experiment.
@@ -144,7 +133,7 @@ class espresso_plotter:
                 # Create custom handles for the foodchoice.
                 # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
                 raster_legend_handles=[]
-                timecourse_legend_handles=[]
+                # timecourse_legend_handles=[]
                 for key in foodchoice_palette.keys():
                     patch=_mpatches.Patch(color=foodchoice_palette[key], label=key)
                     raster_legend_handles.append(patch)
@@ -154,25 +143,26 @@ class espresso_plotter:
         grps=allfeeds[group_by].unique()
         pal=dict( zip(grps, color_palette) )
 
-        # Compute the resampled time course volume.
-        allfeeds_bygroup=_plot_helpers.timecourse_feed_vol(allfeeds,group_by,resample)
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
-        if show_feed_color:
-            allfeeds_bygroup_food=_plot_helpers.timecourse_feed_vol(allfeeds,
-                                                                        [group_by, 'FoodChoice'],
-                                                                        resample)
-            # Prepare a DataFrame for feed volume plotting.
-            feedvolplot_df=_pd.DataFrame( allfeeds_bygroup_food.\
-                                          groupby(['FoodChoice','feed_time_s']).\
-                                          sum().to_records() )
-            feedvolplot_df.fillna(0,inplace=True)
-            feedvolplot_df_pivot=feedvolplot_df.pivot(index='feed_time_s',
-                                                      columns='FoodChoice',
-                                                      values='FeedVol_µl')
 
-        allfeeds['feed_time_s']=allfeeds.RelativeTime_s.dt.hour*3600+\
-                                allfeeds.RelativeTime_s.dt.minute*60+\
-                                allfeeds.RelativeTime_s.dt.second
+        # # Compute the resampled time course volume.
+        # allfeeds_bygroup=_plot_helpers.timecourse_feed_vol(allfeeds,group_by,resample)
+        # if show_feed_color:
+        #     allfeeds_bygroup_food=_plot_helpers.timecourse_feed_vol(allfeeds,
+        #                                                                 [group_by, 'FoodChoice'],
+        #                                                                 resample)
+        #     # Prepare a DataFrame for feed volume plotting.
+        #     feedvolplot_df=_pd.DataFrame( allfeeds_bygroup_food.\
+        #                                   groupby(['FoodChoice','feed_time_s']).\
+        #                                   sum().to_records() )
+        #     feedvolplot_df.fillna(0,inplace=True)
+        #     feedvolplot_df_pivot=feedvolplot_df.pivot(index='feed_time_s',
+        #                                               columns='FoodChoice',
+        #                                               values='FeedVol_µl')
+        #
+        # allfeeds['feed_time_s']=allfeeds.RelativeTime_s.dt.hour*3600+\
+        #                         allfeeds.RelativeTime_s.dt.minute*60+\
+        #                         allfeeds.RelativeTime_s.dt.second
 
         _sns.set(style='ticks',context='poster')
         if add_flyid_labels:
@@ -181,31 +171,29 @@ class espresso_plotter:
             ws=0.2
 
         if figsize is None:
-            single_panel_x_inches=17
-            single_panel_y_inches=12
+            x_inches=12
+            y_inches=9
         else:
             if isinstance(figsize, tuple) or isinstance(figsize, list):
-                single_panel_x_inches=figsize[0]
-                single_panel_y_inches=figsize[1]
+                x_inches=figsize[0]
+                y_inches=figsize[1]
             else:
                 raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
         num_cols=int( len(grps) )
-        fig_x_inches=single_panel_x_inches*num_cols
-        fig,axx=_plt.subplots(nrows=2,
-                             ncols=num_cols,
-                             figsize=(fig_x_inches,single_panel_y_inches),
-                             gridspec_kw={'wspace':ws,
-                                          'hspace':0.45,
-                                          'height_ratios':(3,2)} )
+        if ax is None:
+            fig,axx=_plt.subplots(nrows=1,
+                                  ncols=num_cols,
+                                  figsize=(x_inches,y_inches),
+                                  gridspec_kw={'wspace':ws} )
+        else:
+            axx=ax
 
         for c, grp in enumerate( grps ):
             if len(grps)>1:
-                rasterax=axx[0,c]
-                feedvolax=axx[1,c]
+                rasterax=axx[c]
             else:
-                rasterax=axx[0]
-                feedvolax=axx[1]
+                rasterax=axx
 
             print('plotting {0} {1}'.format(grp,'rasters'))
             print('Be patient, this can take up to 60s.')
@@ -222,7 +210,7 @@ class espresso_plotter:
             ## First, drop non-valid feeds, then sort by feed time and feed duration,
             ## then pull out FlyIDs in that order.
             temp_feeding_flies=tempfeeds[~_np.isnan(tempfeeds['FeedDuration_s'])].\
-                                    sort_values(['feed_time_s','FeedDuration_s']).FlyID.\
+                                    sort_values(['RelativeTime_s','FeedDuration_s']).FlyID.\
                                     drop_duplicates().tolist()
             ## Next, identify which flies did not feed (aka not in list above.)
             temp_non_feeding_flies=[fly for fly in temp_allflies if fly not in temp_feeding_flies]
@@ -233,8 +221,8 @@ class espresso_plotter:
             for k, flyid in enumerate(flies_in_order):
                 tt=tempfeeds[tempfeeds.FlyID==flyid]
                 for idx in [idx for idx in tt.index if ~_np.isnan(tt.loc[idx,'FeedDuration_s'])]:
-                    rasterplot_kwargs=dict(xmin=tt.loc[idx,'feed_time_s'],
-                                             xmax=tt.loc[idx,'feed_time_s']+tt.loc[idx,'FeedDuration_s'],
+                    rasterplot_kwargs=dict(xmin=tt.loc[idx,'RelativeTime_s'],
+                                             xmax=tt.loc[idx,'RelativeTime_s']+tt.loc[idx,'FeedDuration_s'],
                                              ymin=(1/maxflycount)*(maxflycount-k-1),
                                              ymax=(1/maxflycount)*(maxflycount-k),
                                              alpha=0.8)
@@ -261,51 +249,49 @@ class espresso_plotter:
 
             # Plot the feed volume plots.
             if show_feed_color:
-                print('plotting {0} {1}'.format(grp, 'volume timecourse'))
-                feedvolplot_df_pivot.plot.area(alpha=0.5,
-                                                color=foodchoice_colors,
-                                                ax=feedvolax,
-                                                lw=1)
+                # feedvolplot_df_pivot.plot.area(alpha=0.5,
+                #                                 color=foodchoice_colors,
+                #                                 ax=feedvolax,
+                #                                 lw=1)
                 if num_cols>1: # if we have more than 1 column.
-                    rasterlegend_ax=axx[0,0]
-                    timecourselegend_ax=axx[1,0]
-                else:
                     rasterlegend_ax=axx[0]
-                    timecourselegend_ax=axx[1]
+                    # timecourselegend_ax=axx[1,0]
+                else:
+                    rasterlegend_ax=axx
+                    # timecourselegend_ax=axx[1]
                 rasterlegend_ax.legend(loc='upper left',
                                         bbox_to_anchor=(0,-0.15),
                                         handles=raster_legend_handles)
-                timecourselegend_ax.legend(loc='upper left',
-                                            bbox_to_anchor=(0,-0.2))
+                # timecourselegend_ax.legend(loc='upper left',
+                #                             bbox_to_anchor=(0,-0.2))
 
-            else:
-                print('plotting {0} volume timecourse'.format(grp))
+            # else:
+            #     print('plotting {0} volume timecourse'.format(grp))
+            #
+            #     temp_df=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
+            #     feedvolax.fill_between(x=temp_df['feed_time_s'],
+            #                            y1=temp_df['FeedVol_µl'],
+            #                            y2=_np.repeat(0,len(temp_df)),
+            #                            color=pal[grp],
+            #                            lw=1)
+            # feedvolax.set_ylim(0,allfeeds_bygroup['FeedVol_µl'].max())
+            # if c==0:
+            #     feedvolax.set_ylabel('Total Consumption (µl)\n10 min bins')
 
-                temp_df=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
-                feedvolax.fill_between(x=temp_df['feed_time_s'],
-                                       y1=temp_df['FeedVol_µl'],
-                                       y2=_np.repeat(0,len(temp_df)),
-                                       color=pal[grp],
-                                       lw=1)
-            feedvolax.set_ylim(0,allfeeds_bygroup['FeedVol_µl'].max())
-            if c==0:
-                feedvolax.set_ylabel('Total Consumption (µl)\n10 min bins')
-
-            # Format x-axis for both axes.
-            for a in [rasterax, feedvolax]:
-                a.set_xlim(0,21600)
-                a.xaxis.set_ticks(range(0,25200,3600))
-                a.xaxis.set_minor_locator( _tk.MultipleLocator(base=1800) )
-                a.set_xlabel('Time (h)',fontsize=17)
-                newlabels=[str(int(t/3600)) for t in a.xaxis.get_ticklocs(minor=False)]
-                a.set_xticklabels(newlabels)
-                a.tick_params(axis='x', which='major',length=10)
-                a.tick_params(axis='x', which='minor',length=6)
+            # Format x-axis.
+            rasterax.set_xlim(0,21600)
+            rasterax.xaxis.set_ticks(range(0,25200,3600))
+            rasterax.xaxis.set_minor_locator( _tk.MultipleLocator(base=1800) )
+            rasterax.set_xlabel('Time (h)',fontsize=17)
+            newlabels=[ str(int(t/3600)) for t in rasterax.xaxis.get_ticklocs(minor=False) ]
+            rasterax.set_xticklabels(newlabels)
+            rasterax.tick_params(axis='x', which='major',length=10)
+            rasterax.tick_params(axis='x', which='minor',length=6)
 
             _sns.despine(ax=rasterax,left=True,trim=True)
-            _sns.despine(ax=feedvolax,trim=True,offset={'left':7,'bottom':5})
-
-        return fig
+            # _sns.despine(ax=feedvolax,trim=True,offset={'left':7,'bottom':5})
+        if ax is None:
+            return fig
 
 
  #####  ###### #####   ####  ###### #    # #####    ###### ###### ###### #####  # #    #  ####
