@@ -69,33 +69,32 @@ class espresso(object):
 
             ## Read in metadata.
             path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
-            metadata_csv=_munge.metadata(path_to_metadata)
             metadata_csv=_munger.metadata(path_to_metadata)
             metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
 
-            ## Save the _munged metadata.
+            ## Save the munged metadata.
             metadata_list.append(metadata_csv)
             ## Save the fly IDs.
             allflies.append( metadata_csv.loc[:,'FlyID'].copy() )
 
             ## Read in feedlog.
             path_to_feedlog=_os.path.join(folder,feedlog)
-            feedlog_csv=_munge.feedlog(path_to_feedlog)
+            feedlog_csv=_munger.feedlog(path_to_feedlog)
             feedlog_csv.loc[:,'FlyID']=datetime_exptname+'_Fly'+feedlog_csv.FlyID.astype(str)
 
             ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies=non_feeding_flies + _munge.detect_non_feeding_flies(metadata_csv,feedlog_csv)
+            non_feeding_flies=non_feeding_flies + _munger.detect_non_feeding_flies(metadata_csv,feedlog_csv)
 
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
-            feedlog_csv=_munge.add_padrows(metadata_csv, feedlog_csv)
+            feedlog_csv=_munger.add_padrows(metadata_csv, feedlog_csv)
 
             ## Add columns in nanoliters.
-            feedlog_csv=_munge.compute_nanoliter_cols(feedlog_csv)
+            feedlog_csv=_munger.compute_nanoliter_cols(feedlog_csv)
             ## Add columns for RelativeTime_s and FeedDuration_s.
-            feedlog_csv=_munge.compute_time_cols(feedlog_csv)
+            feedlog_csv=_munger.compute_time_cols(feedlog_csv)
 
-            ## Save the _munged feedlog.
+            ## Save the munged feedlog.
             feedlogs_list.append(feedlog_csv)
 
 
