@@ -149,25 +149,6 @@ class espresso_plotter:
 
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
 
-        # # Compute the resampled time course volume.
-        # allfeeds_bygroup=_plot_helpers.timecourse_feed_vol(allfeeds,group_by,resample)
-        # if show_feed_color:
-        #     allfeeds_bygroup_food=_plot_helpers.timecourse_feed_vol(allfeeds,
-        #                                                                 [group_by, 'FoodChoice'],
-        #                                                                 resample)
-        #     # Prepare a DataFrame for feed volume plotting.
-        #     feedvolplot_df=_pd.DataFrame( allfeeds_bygroup_food.\
-        #                                   groupby(['FoodChoice','feed_time_s']).\
-        #                                   sum().to_records() )
-        #     feedvolplot_df.fillna(0,inplace=True)
-        #     feedvolplot_df_pivot=feedvolplot_df.pivot(index='feed_time_s',
-        #                                               columns='FoodChoice',
-        #                                               values='FeedVol_µl')
-        #
-        # allfeeds['feed_time_s']=allfeeds.RelativeTime_s.dt.hour*3600+\
-        #                         allfeeds.RelativeTime_s.dt.minute*60+\
-        #                         allfeeds.RelativeTime_s.dt.second
-
         _sns.set(style='ticks',context='poster')
         if add_flyid_labels:
             ws=0.4
@@ -266,34 +247,9 @@ class espresso_plotter:
                 rasterlegend_ax.legend(loc='upper left',
                                         bbox_to_anchor=(0,-0.15),
                                         handles=raster_legend_handles)
-                # timecourselegend_ax.legend(loc='upper left',
-                #                             bbox_to_anchor=(0,-0.2))
-
-            # else:
-            #     print('plotting {0} volume timecourse'.format(grp))
-            #
-            #     temp_df=allfeeds_bygroup[allfeeds_bygroup[group_by]==grp]
-            #     feedvolax.fill_between(x=temp_df['feed_time_s'],
-            #                            y1=temp_df['FeedVol_µl'],
-            #                            y2=_np.repeat(0,len(temp_df)),
-            #                            color=pal[grp],
-            #                            lw=1)
-            # feedvolax.set_ylim(0,allfeeds_bygroup['FeedVol_µl'].max())
-            # if c==0:
-            #     feedvolax.set_ylabel('Total Consumption (µl)\n10 min bins')
 
             # Format x-axis.
-            rasterax.set_xlim(0,21600)
-            rasterax.xaxis.set_ticks(range(0,25200,3600))
-            rasterax.xaxis.set_minor_locator( _tk.MultipleLocator(base=1800) )
-            rasterax.set_xlabel('Time (h)',fontsize=17)
-            newlabels=[ str(int(t/3600)) for t in rasterax.xaxis.get_ticklocs(minor=False) ]
-            rasterax.set_xticklabels(newlabels)
-            rasterax.tick_params(axis='x', which='major',length=10)
-            rasterax.tick_params(axis='x', which='minor',length=6)
-
-            _sns.despine(ax=rasterax,left=True,trim=True)
-            # _sns.despine(ax=feedvolax,trim=True,offset={'left':7,'bottom':5})
+            _plot_helpers.format_timecourse_xaxis(rasterax)
         if ax is None:
             return fig
 
