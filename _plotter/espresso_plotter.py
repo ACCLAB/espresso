@@ -155,10 +155,10 @@ class espresso_plotter:
         pal=dict( zip(grps, color_palette) )
 
         # Compute the resampled time course volume.
-        allfeeds_bygroup=_plot_helpers.timecourse_feeding_vol(allfeeds,group_by,resample)
+        allfeeds_bygroup=_plot_helpers.timecourse_feed_vol(allfeeds,group_by,resample)
         maxflycount=allflies.groupby(group_by).count().FlyID.max()
         if show_feed_color:
-            allfeeds_bygroup_food=_plot_helpers.timecourse_feeding_vol(allfeeds,
+            allfeeds_bygroup_food=_plot_helpers.timecourse_feed_vol(allfeeds,
                                                                         [group_by, 'FoodChoice'],
                                                                         resample)
             # Prepare a DataFrame for feed volume plotting.
