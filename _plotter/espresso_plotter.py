@@ -34,6 +34,7 @@ import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _plot_helpers
 from . import contrast as _con
+from . import timecourse as _timecourse
 
 class espresso_plotter:
     """
@@ -65,8 +66,11 @@ class espresso_plotter:
  #    #    #    #      #
 
     def __init__(self,espresso): # pass along an espresso instance.
-        self._experiment=espresso # so contrast method can access it.
+        # Create attribute so the other methods below can access the espresso object.
+        self._experiment=espresso
+        # call obj.plot.xxx to access these methods.
         self.contrast=_con.contrast_plotter(self)
+        self.timecourse=_timecourse.timecourse_plotter(self)
 
 
  #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
