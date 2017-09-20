@@ -160,9 +160,9 @@ class espresso(object):
         allflies.drop('ID',axis=1,inplace=True) # Discard superfluous 'ID' column.
 
         self.flies=allflies
-        self.feeds=allfeeds
-
         self.flies.original_labels=allflies.columns
+
+        self.feeds=allfeeds
         self.feeds.original_labels=allfeeds.columns
 
         self.feedlog_count=len(feedlogs_in_folder)
