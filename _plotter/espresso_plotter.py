@@ -77,7 +77,8 @@ class espresso_plotter:
  #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
 
 
-    def rasters(self,group_by,
+    def rasters(self,
+                group_by=None,
                 resample='10min',
                 show_feed_color=True,
                 add_flyid_labels=False,
@@ -91,9 +92,10 @@ class espresso_plotter:
         Keywords
         --------
 
-        group_by: string
+        group_by: string, default None
             The categorical column in the espresso object used to group the raster plots.
             Categories in the column will be tiled horizontally as panels.
+            If this keyword is not specified, it will default to using the "Genotype" column.
 
         resample: string, default '10min'
              Time duration to use for resampling of feedlog data.
@@ -117,6 +119,12 @@ class espresso_plotter:
         # make a copy of the metadata and the feedlog.
         allfeeds=self._experiment.feeds.copy()
         allflies=self._experiment.flies.copy()
+        if group_by is None:
+            group_by="Genotype"
+        else:
+            # make sure group_by is a column in allfeeds
+            if group_by is not in allfeeds.columns:
+                raise KeyError("{0} is not a column in the feedlog. Please check.".format(group_by))
 
         allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
 
@@ -125,6 +133,7 @@ class espresso_plotter:
             color_palette=_plot_helpers._make_categorial_palette(allfeeds,group_by)
         elif feed_volume_palette_type=='sequential':
             color_palette=_plot_helpers._make_sequential_palette(allfeeds,group_by)
+
         if show_feed_color:
             # check that there was a food choice in the experiment.
             # if not, set the color to False.
@@ -139,7 +148,6 @@ class espresso_plotter:
                 for key in foodchoice_palette.keys():
                     patch=_mpatches.Patch(color=foodchoice_palette[key], label=key)
                     raster_legend_handles.append(patch)
-
             except KeyError: # FoodChoice not in allfeeds
                 show_feed_color=False
 
