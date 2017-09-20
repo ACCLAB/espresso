@@ -126,15 +126,16 @@ class espresso(object):
                     ## Drop anomalous feed events from Tube2 (aka ChoiceIdx=1),
                     ## where there was no feed tube in the first place.
                     allfeeds.drop(allfeeds[allfeeds.ChoiceIdx==1].index,inplace=True)
+                    allfeeds['FoodChoice']=_np.repeat(choice1,len(allfeeds))
             except TypeError:
                 allfeeds['FoodChoice']=_np.repeat('xx',len(allfeeds))
                 allfeeds.loc[_np.where(allfeeds.ChoiceIdx==0)[0],'FoodChoice']=choice1
                 allfeeds.loc[_np.where(allfeeds.ChoiceIdx==1)[0],'FoodChoice']=choice2
                 ## Add column to identify which FeedLog file the feed data came from.
                 allfeeds['FeedLog_rawfile']=_np.repeat(feedlog, len(allfeeds))
-                ## Turn the 'Valid' column into integers.
-                ## 1 -- True; 0 -- False
-                allfeeds['Valid']=allfeeds.Valid.astype('int')
+                # ## Turn the 'Valid' column into integers.
+                # ## 1 -- True; 0 -- False
+                # allfeeds['Valid']=allfeeds.Valid.astype('int')
 
         # Reset the indexes.
         for df in [allflies,allfeeds]:
