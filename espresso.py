@@ -70,6 +70,7 @@ class espresso(object):
             ## Read in metadata.
             path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog','MetaData') )
             metadata_csv=_munge.metadata(path_to_metadata)
+            metadata_csv=_munger.metadata(path_to_metadata)
             metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
 
             ## Save the _munged metadata.
