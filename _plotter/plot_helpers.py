@@ -168,8 +168,35 @@ def _make_sequential_palette(df, group_by):
     _seq_palette=_sns.cubehelix_palette( n_colors=len(df[group_by].unique()) )
     return _seq_palette
 
-def timecourse_feeding_vol(df, group_by, resample_by='10min'):
+def timecourse_feed_vol(df, group_by, resample_by='10min'):
+    """
+    Produces a Pandas DataFrame with the feed volume per group
+    in `group_by`, for each time interval as indicated by `resample_by`.
+    """
+    temp=df.copy()
 
+    if isinstance(group_by, str):
+        group_by=[group_by]
+
+    out_cols=['RelativeTime_s','FeedVol_µl']
+    out_cols.extend(group_by)
+
+    out=_pd.DataFrame( temp.\
+                        groupby(group_by).\
+                        resample(resample_by,on='RelativeTime_s').\
+                        sum().to_records() )
+    out=out.loc[:,out_cols]
+    out.fillna(0,inplace=True)
+    out['feed_time_s']=out.RelativeTime_s.dt.hour*3600+\
+                        out.RelativeTime_s.dt.minute*60+\
+                        out.RelativeTime_s.dt.second
+    return out
+
+def timecourse_feed_count(df, group_by, resample_by='10min'):
+    """
+    Produces a Pandas DataFrame with the feed volume per group
+    in `group_by`, for each time interval as indicated by `resample_by`.
+    """
     temp=df.copy()
 
     if isinstance(group_by, str):
