@@ -184,6 +184,19 @@ def compute_time_cols(feedlog_df):
     f['FeedDuration_s']=f.FeedDuration_ms/1000
     return f
 
+   ##   #    # ###### #####    ##    ####  ######    ###### ###### ###### #####
+  #  #  #    # #      #    #  #  #  #    # #         #      #      #      #    #
+ #    # #    # #####  #    # #    # #      #####     #####  #####  #####  #    #
+ ###### #    # #      #####  ###### #  ### #         #      #      #      #    #
+ #    #  #  #  #      #   #  #    # #    # #         #      #      #      #    #
+ #    #   ##   ###### #    # #    #  ####  ######    #      ###### ###### #####
+ #    #  ####  #         #####  ###### #####     ###### #      #   #
+ #    # #    # #         #    # #      #    #    #      #       # #
+ #    # #    # #         #    # #####  #    #    #####  #        #
+ #    # #    # #         #####  #      #####     #      #        #
+  #  #  #    # #         #      #      #   #     #      #        #
+   ##    ####  ######    #      ###### #    #    #      ######   #
+
 def average_feed_vol_per_fly(df):
     """
     Computes AverageFeedVolumePerFly in µl for each feed.
@@ -193,6 +206,18 @@ def average_feed_vol_per_fly(df):
     """
     f=df.copy()
     f['AverageFeedVolumePerFly_µl']=f['FeedVol_µl'] / f['FlyCountInChamber']
+    return f
+
+def average_feed_count_per_chamber(df):
+    """
+    Computes AverageFeedCountPerChamber for each feed. This seems redundant,
+    but serves a crucial munging purpose when we are producing timecourse plots.
+    Adds this value as new columns.
+
+    Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
+    """
+    f=df.copy()
+    f['AverageFeedCountPerChamber']=f['Valid'] / f['FlyCountInChamber']
     return f
 
  #####  ###### ##### ######  ####  #####
@@ -253,6 +278,19 @@ def check_column(col,df):
         raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
     pass
 
+  ####  #####   ####  #    # #####  #####  #   #
+ #    # #    # #    # #    # #    # #    #  # #
+ #      #    # #    # #    # #    # #####    #
+ #  ### #####  #    # #    # #####  #    #   #
+ #    # #   #  #    # #    # #      #    #   #
+  ####  #    #  ####   ####  #      #####    #
+ #####  ######  ####    ##   #    # #####
+ #    # #      #       #  #  ##  ## #    #
+ #    # #####   ####  #    # # ## # #    #
+ #####  #           # ###### #    # #####
+ #   #  #      #    # #    # #    # #
+ #    # ######  ####  #    # #    # #
+
 def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
@@ -280,8 +318,9 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
     df_groupby_resamp_sum=__pd.DataFrame(df_groupby_resamp.sum().to_records())
     df_groupby_resamp_sum=df_groupby_resamp_sum[[group_by,color_by,
                                                  'RelativeTime_s',
+                                                 'FlyCountInChamber',
                                                  'AverageFeedVolumePerFly_µl',
-                                                 'Valid']]
+                                                 'AverageFeedCountPerChamber']]
     df_groupby_resamp_sum.fillna(0,inplace=True)
     rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
     df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
