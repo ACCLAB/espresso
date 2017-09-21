@@ -218,7 +218,26 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
     non_feeding_flies=[ flyid for flyid in metadata_df.FlyID.unique() if flyid not in feedlog_df.dropna().FlyID.unique() ]
     return non_feeding_flies
 
-def check_column(self,col,df):
+  ####  #    # ######  ####  #    #    # ######
+ #    # #    # #      #    # #   #     # #
+ #      ###### #####  #      ####      # #####
+ #      #    # #      #      #  #      # #
+ #    # #    # #      #    # #   #     # #
+  ####  #    # ######  ####  #    #    # #
+  ####   ####  #      #    # #    # #    #
+ #    # #    # #      #    # ##  ## ##   #
+ #      #    # #      #    # # ## # # #  #
+ #      #    # #      #    # #    # #  # #
+ #    # #    # #      #    # #    # #   ##
+  ####   ####  ######  ####  #    # #    #
+ # #    #    #####  ######
+ # ##   #    #    # #
+ # # #  #    #    # #####
+ # #  # #    #    # #
+ # #   ##    #    # #
+ # #    #    #####  #
+
+def check_column(col,df):
     if not isinstance(col, str): # if col is not a string.
         raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
     if col not in df.columns: # make sure col is a column in df.
