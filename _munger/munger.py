@@ -10,9 +10,8 @@ Convenience functions for munging of metadata and feedlogs.
 import sys
 import os
 
-import numpy as _np
-import scipy as _sp
-import pandas as _pd
+import numpy as __np
+import pandas as __pd
 
  #    # ###### #####   ##   #####    ##   #####   ##
  ##  ## #        #    #  #  #    #  #  #    #    #  #
@@ -27,7 +26,7 @@ def metadata(path_to_csv):
     Returns a pandas DataFrame.
     """
     ## Read in metadata.
-    metadata_csv=_pd.read_csv( path_to_csv )
+    metadata_csv=__pd.read_csv( path_to_csv )
     ## Check that the metadata has a nonzero number of rows.
     if len(metadata_csv)==0:
         raise ValueError(metadata+' has 0 rows. Please check!!!')
@@ -66,7 +65,7 @@ def feedlog(path_to_csv):
     Returns a pandas DataFrame.
     """
     ## Read in the CSV.
-    feedlog_csv=_pd.read_csv( path_to_csv )
+    feedlog_csv=__pd.read_csv( path_to_csv )
 
     ## Rename columns.
     feedlog_csv.rename(columns={"Food 1":"Tube1",
@@ -107,14 +106,14 @@ def add_padrows(metadata_df, feedlog_df):
     f=feedlog_df.copy()
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
-            padrows=_pd.DataFrame( [ [_np.nan,_np.nan,choice,
+            padrows=__pd.DataFrame( [ [__np.nan,__np.nan,choice,
                                      flyid,choice,'NIL',
-                                     _np.nan,_np.nan,_np.nan,
+                                     __np.nan,__np.nan,__np.nan,
                                      False,0.5,'PAD', # 0.5 seconds
                                     ],
-                                   [_np.nan,_np.nan,choice,
+                                   [__np.nan,__np.nan,choice,
                                     flyid,choice,'NIL',
-                                    _np.nan,_np.nan,_np.nan,
+                                    __np.nan,__np.nan,__np.nan,
                                     False,21891,'PAD', # 6 hrs, 5 min, 1 sec in seconds.
                                    ] ]
                                 )
@@ -185,7 +184,7 @@ def compute_time_cols(feedlog_df):
     f=feedlog_df.copy()
     # Duplicate `RelativeTime_s` as non-DateTime object.
     # f['FeedTime_s']=f['RelativeTime_s']
-    # f['RelativeTime_s']=_pd.to_datetime(f['RelativeTime_s'],unit='s')
+    # f['RelativeTime_s']=__pd.to_datetime(f['RelativeTime_s'],unit='s')
     f['FeedDuration_s']=f.FeedDuration_ms/1000
 
     return f
@@ -218,3 +217,10 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
     """
     non_feeding_flies=[ flyid for flyid in metadata_df.FlyID.unique() if flyid not in feedlog_df.dropna().FlyID.unique() ]
     return non_feeding_flies
+
+def check_column(self,col,df):
+    if not isinstance(col, str): # if col is not a string.
+        raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+    if col not in df.columns: # make sure col is a column in df.
+        raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
+    pass
