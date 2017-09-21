@@ -83,24 +83,26 @@ class espresso_plotter:
 
     def rasters(self,
                 group_by=None,
-                show_feed_color=True,
+                color_by=None,
                 add_flyid_labels=False,
                 figsize=None,
-                ax=None):
+                ax=None,
+                gridlines_major=True,
+                gridlines_minor=True):
         """
         Produces a raster plot of feed events.
 
         Keywords
         --------
 
-        group_by: string, default None
+        group_by: string, default None.
             The categorical columns in the espresso object used to group the raster plots.
             Categories in the column will be tiled horizontally as panels.
 
-        show_feed_color: boolean, default True
-            If True, the color of each feed will correspond to the food choice.
+        color_by: string, default None.
+            The categorical columns in the espresso object used to color individual feeds.
 
-        add_flyid_labels: boolean, default True
+        add_flyid_labels: boolean, default True.
             If True, the FlyIDs for each fly will be displayed on the left of each raster row.
 
         figsize: tuple (width, height), default None.
@@ -109,6 +111,9 @@ class espresso_plotter:
         ax: matplotlib Axes, default None.
             Plot on specified matplotlib Axes.
 
+        major_x_grid, minor_x_grid: boolean, default True.
+            Whether or not major and minor vertical gridlines are displayed.
+
         Returns
         -------
         A matplotlib Figure.
@@ -116,38 +121,41 @@ class espresso_plotter:
         # make a copy of the metadata and the feedlog.
         allfeeds=self._experiment.feeds.copy()
         allflies=self._experiment.flies.copy()
+
+        # Handle the group_by and color_by keywords.
         if group_by is None:
             group_by="Genotype"
         else:
-            # make sure group_by is a column in allfeeds
-            if group_by not in allfeeds.columns:
-                raise KeyError("{0} is not a column in the feedlog. Please check.".format(group_by))
-        # allfeeds.loc[:,'RelativeTime_s']=_pd.to_datetime(allfeeds['RelativeTime_s'], unit='s')
+            self.__check_column(group_by, allfeeds)
+        if color_by is None:
+            color_by='FoodChoice'
+        else:
+            self.__check_column(color_by, allfeeds)
 
-        # Select palette.
-        color_palette=_plot_helpers._make_categorial_palette(allfeeds,group_by)
+        # Get the total flycount.
+        try:
+            check_grpby_col=allflies.groupby(group_by)
+            maxflycount=check_grpby_col.count().FlyID.max()
+        except KeyError:
+            # group_by is not a column in the metadata,
+            # so we assume that the number of flies in the raster plot
+            # is simply the total number of flies.
+            maxflycount=len(allflies)
 
-        if show_feed_color:
-            # check that there was a food choice in the experiment.
-            # if not, set the color to False.
-            try:
-                foodchoice_colors=_plot_helpers._make_categorial_palette(allfeeds, 'FoodChoice')
-                foodchoice_palette=dict( zip( _np.sort(allfeeds.FoodChoice.unique()),
-                                              foodchoice_colors ) )
-                # Create custom handles for the foodchoice.
-                # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
-                raster_legend_handles=[]
-                # timecourse_legend_handles=[]
-                for key in foodchoice_palette.keys():
-                    patch=_mpatches.Patch(color=foodchoice_palette[key], label=key)
-                    raster_legend_handles.append(patch)
-            except KeyError: # FoodChoice not in allfeeds
-                show_feed_color=False
+        # Get the groups we will be grouping on, and coloring on.
+        groupby_grps=_np.sort(allfeeds[group_by].unique())
+        color_grps=_np.sort(allfeeds[color_by].unique())
 
-        grps=allfeeds[group_by].unique()
-        pal=dict( zip(grps, color_palette) )
+        # Create the palette.
+        colors=_plot_helpers._make_categorial_palette(allfeeds,color_by)
+        palette=dict( zip(color_grps, colors) )
 
-        maxflycount=allflies.groupby(group_by).count().FlyID.max()
+        # Create custom handles for the foodchoice.
+        # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
+        raster_legend_handles=[]
+        for key in palette.keys():
+            patch=_mpatches.Patch(color=palette[key], label=key)
+            raster_legend_handles.append(patch)
 
         _sns.set(style='ticks',context='poster')
         if add_flyid_labels:
@@ -165,7 +173,7 @@ class espresso_plotter:
             else:
                 raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
-        num_cols=int( len(grps) )
+        num_cols=int( len(groupby_grps) )
         if ax is None:
             fig,axx=_plt.subplots(nrows=1,
                                   ncols=num_cols,
@@ -174,50 +182,55 @@ class espresso_plotter:
         else:
             axx=ax
 
-        for c, grp in enumerate( grps ):
-            if len(grps)>1:
+        for c, grp in enumerate( groupby_grps ):
+            if len(groupby_grps)>1:
                 rasterax=axx[c]
             else:
                 rasterax=axx
-
             print('plotting {0} {1}'.format(grp,'rasters'))
-            print('Be patient, this can take up to 60s.')
+            print('Be patient, this can a while!')
+
             # Plot the raster plots.
+            ## Plot vertical grid lines if desired.
+            if gridlines_major:
+                rasterax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
+            if gridlines_minor:
+                rasterax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
 
-            rasterax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
-            rasterax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
-
-            # Grab only the flies we need.
+            ## Grab only the flies we need.
             tempfeeds=allfeeds[allfeeds[group_by]==grp].copy()
             temp_allflies=tempfeeds.FlyID.unique().tolist()
 
-            # Order the flies properly.
-            ## First, drop non-valid feeds, then sort by feed time and feed duration,
-            ## then pull out FlyIDs in that order.
+            ## Order the flies properly.
+            ### First, drop non-valid feeds, then sort by feed time and feed duration,
+            ### then pull out FlyIDs in that order.
             temp_feeding_flies=tempfeeds[~_np.isnan(tempfeeds['FeedDuration_s'])].\
                                     sort_values(['RelativeTime_s','FeedDuration_s']).FlyID.\
                                     drop_duplicates().tolist()
-            ## Next, identify which flies did not feed (aka not in list above.)
+            ### Next, identify which flies did not feed (aka not in list above.)
             temp_non_feeding_flies=[fly for fly in temp_allflies if fly not in temp_feeding_flies]
-            ## Now, join these two lists.
+            ### Then, join these two lists.
             flies_in_order=temp_feeding_flies+temp_non_feeding_flies
 
+            ### Now, plot each fly as a row, and plot each feed as a colored raster for every fly.
             flycount=int(len(flies_in_order))
             for k, flyid in enumerate(flies_in_order):
                 tt=tempfeeds[tempfeeds.FlyID==flyid]
                 for idx in [idx for idx in tt.index if ~_np.isnan(tt.loc[idx,'FeedDuration_s'])]:
                     rasterplot_kwargs=dict(xmin=tt.loc[idx,'RelativeTime_s'],
-                                             xmax=tt.loc[idx,'RelativeTime_s']+tt.loc[idx,'FeedDuration_s'],
-                                             ymin=(1/maxflycount)*(maxflycount-k-1),
-                                             ymax=(1/maxflycount)*(maxflycount-k),
-                                             alpha=0.8)
+                                           xmax=tt.loc[idx,'RelativeTime_s']+tt.loc[idx,'FeedDuration_s'],
 
-                    if show_feed_color:
-                        rasterax.axvspan(color=foodchoice_palette[ tt.loc[idx,'FoodChoice'] ],
-                                         label="_"*k + tt.loc[idx,'FoodChoice'],**rasterplot_kwargs)
-                    else:
-                        rasterax.axvspan(color='k',**rasterplot_kwargs)
+                                           ymin=(1/maxflycount)*(maxflycount-k-1),
+                                           ymax=(1/maxflycount)*(maxflycount-k),
 
+                                           color=palette[ tt.loc[idx,'FoodChoice'] ],
+                                           label="_"*k + tt.loc[idx,'FoodChoice'],
+
+                                           alpha=0.8)
+
+                    rasterax.axvspan(**rasterplot_kwargs)
+
+                ### Plot the flyid labels if so desired.
                 if add_flyid_labels:
                     if flyid in temp_non_feeding_flies:
                         label_color='grey'
@@ -229,30 +242,31 @@ class espresso_plotter:
                                 verticalalignment='center',
                                 horizontalalignment='right',
                                 fontsize=8)
+            ## Aesthetic tweaks
             rasterax.yaxis.set_visible(False)
             rasterax.set_title(grp)
 
-            # Plot the feed volume plots.
-            if show_feed_color:
-                # feedvolplot_df_pivot.plot.area(alpha=0.5,
-                #                                 color=foodchoice_colors,
-                #                                 ax=feedvolax,
-                #                                 lw=1)
-                if num_cols>1: # if we have more than 1 column.
-                    rasterlegend_ax=axx[0]
-                    # timecourselegend_ax=axx[1,0]
-                else:
-                    rasterlegend_ax=axx
-                    # timecourselegend_ax=axx[1]
-                rasterlegend_ax.legend(loc='upper left',
-                                        bbox_to_anchor=(0,-0.15),
-                                        handles=raster_legend_handles)
+            ### Position the raster color legend.
+            if num_cols>1: # if we have more than 1 column.
+                rasterlegend_ax=axx[0]
+            else:
+                rasterlegend_ax=axx
+            rasterlegend_ax.legend(loc='upper left',
+                                    bbox_to_anchor=(0,-0.15),
+                                    handles=raster_legend_handles)
 
-            # Format x-axis.
+            ### Format x-axis.
             _plot_helpers.format_timecourse_xaxis(rasterax)
+
         if ax is None:
             return fig
 
+    def __check_column(self,col,df):
+        if not isinstance(col, str): # if col is not a string.
+            raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+        if col not in df.columns: # make sure col is a column in df.
+            raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
+        pass
 
  #####  ###### #####   ####  ###### #    # #####    ###### ###### ###### #####  # #    #  ####
  #    # #      #    # #    # #      ##   #   #      #      #      #      #    # # ##   # #    #
