@@ -88,7 +88,6 @@ class espresso(object):
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
             feedlog_csv=_munger.add_padrows(metadata_csv, feedlog_csv)
-
             ## Add columns in nanoliters.
             feedlog_csv=_munger.compute_nanoliter_cols(feedlog_csv)
             ## Add columns for RelativeTime_s and FeedDuration_s.
@@ -103,6 +102,9 @@ class espresso(object):
         allfeeds=_pd.concat(feedlogs_list).reset_index(drop=True)
         # merge metadata with feedlogs.
         allfeeds=_pd.merge(allfeeds,allflies,left_on='FlyID',right_on='FlyID')
+
+        # Compute average feed volume per fly in chamber, for each feed.
+        allfeeds=_munger.average_feed_vol_per_fly(allfeeds)
 
         # rename columns and food types as is appropriate.
         for df in [allflies,allfeeds]:
