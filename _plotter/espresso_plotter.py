@@ -7,36 +7,31 @@
 Plot functions for espresso objects.
 """
 
-
- #      # #####  #####    ##   #####  #   #    # #    # #####   ####  #####  #####
- #      # #    # #    #  #  #  #    #  # #     # ##  ## #    # #    # #    #   #
- #      # #####  #    # #    # #    #   #      # # ## # #    # #    # #    #   #
- #      # #    # #####  ###### #####    #      # #    # #####  #    # #####    #
- #      # #    # #   #  #    # #   #    #      # #    # #      #    # #   #    #
- ###### # #####  #    # #    # #    #   #      # #    # #       ####  #    #   #
-
+#      # #####  #####    ##   #####  #   #    # #    # #####   ####  #####  #####
+#      # #    # #    #  #  #  #    #  # #     # ##  ## #    # #    # #    #   #
+#      # #####  #    # #    # #    #   #      # # ## # #    # #    # #    #   #
+#      # #    # #####  ###### #####    #      # #    # #####  #    # #####    #
+#      # #    # #   #  #    # #   #    #      # #    # #      #    # #   #    #
+###### # #####  #    # #    # #    #   #      # #    # #       ####  #    #   #
 
 import sys as _sys
-import os as _os
+_sys.path.append("..") # so we can import espresso from the directory above.
 
 import numpy as _np
-import scipy as _sp
 import pandas as _pd
 
-import matplotlib as _mpl
 import matplotlib.pyplot as _plt
-import matplotlib.ticker as _tk
 import matplotlib.patches as _mpatches # for custom legends.
-import matplotlib.lines as _mlines # for custom legends.
 
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _plot_helpers
-from . import contrast as _con
+from . import contrast as _contrast
 from . import timecourse as _timecourse
+from _munger import munger as _munger
 
-class espresso_plotter:
+class espresso_plotter():
     """
     Plotting class for espresso object.
 
@@ -57,28 +52,28 @@ class espresso_plotter:
             TBA
     """
 
-
- #    #    #    #    #####
- #    ##   #    #      #
- #    # #  #    #      #
- #    #  # #    #      #
- #    #   ##    #      #
- #    #    #    #      #
+    #    #    #    #    #####
+    #    ##   #    #      #
+    #    # #  #    #      #
+    #    #  # #    #      #
+    #    #   ##    #      #
+    #    #    #    #      #
 
     def __init__(self,espresso): # pass along an espresso instance.
+
         # Create attribute so the other methods below can access the espresso object.
         self._experiment=espresso
         # call obj.plot.xxx to access these methods.
-        self.contrast=_con.contrast_plotter(self)
+        self.contrast=_contrast.contrast_plotter(self)
         self.timecourse=_timecourse.timecourse_plotter(self)
 
 
- #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
- #    #  #  #  #        #   #      #    #    #    # #      #    #   #   #
- #    # #    #  ####    #   #####  #    #    #    # #      #    #   #    ####
- #####  ######      #   #   #      #####     #####  #      #    #   #        #
- #   #  #    # #    #   #   #      #   #     #      #      #    #   #   #    #
- #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
+    #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
+    #    #  #  #  #        #   #      #    #    #    # #      #    #   #   #
+    #    # #    #  ####    #   #####  #    #    #    # #      #    #   #    ####
+    #####  ######      #   #   #      #####     #####  #      #    #   #        #
+    #   #  #    # #    #   #   #      #   #     #      #      #    #   #   #    #
+    #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
 
 
     def rasters(self,
@@ -126,11 +121,11 @@ class espresso_plotter:
         if group_by is None:
             group_by="Genotype"
         else:
-            self.__check_column(group_by, allfeeds)
+            _munger.check_column(group_by, allfeeds)
         if color_by is None:
             color_by='FoodChoice'
         else:
-            self.__check_column(color_by, allfeeds)
+            _munger.check_column(color_by, allfeeds)
 
         # Get the total flycount.
         try:
@@ -273,20 +268,12 @@ class espresso_plotter:
                             handles=raster_legend_handles)
             pass ## END
 
-
-    def __check_column(self,col,df):
-        if not isinstance(col, str): # if col is not a string.
-            raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
-        if col not in df.columns: # make sure col is a column in df.
-            raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
-        pass
-
- #####  ###### #####   ####  ###### #    # #####    ###### ###### ###### #####  # #    #  ####
- #    # #      #    # #    # #      ##   #   #      #      #      #      #    # # ##   # #    #
- #    # #####  #    # #      #####  # #  #   #      #####  #####  #####  #    # # # #  # #
- #####  #      #####  #      #      #  # #   #      #      #      #      #    # # #  # # #  ###
- #      #      #   #  #    # #      #   ##   #      #      #      #      #    # # #   ## #    #
- #      ###### #    #  ####  ###### #    #   #      #      ###### ###### #####  # #    #  ####
+    #####  ###### #####   ####  ###### #    # #####    ###### ###### ###### #####  # #    #  ####
+    #    # #      #    # #    # #      ##   #   #      #      #      #      #    # # ##   # #    #
+    #    # #####  #    # #      #####  # #  #   #      #####  #####  #####  #    # # # #  # #
+    #####  #      #####  #      #      #  # #   #      #      #      #      #    # # #  # # #  ###
+    #      #      #   #  #    # #      #   ##   #      #      #      #      #    # # #   ## #    #
+    #      ###### #    #  ####  ###### #    #   #      #      ###### ###### #####  # #    #  ####
 
     def percent_feeding(self,group_by,
                         time_start=0,time_end=360,
