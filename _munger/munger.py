@@ -153,7 +153,6 @@ def compute_nanoliter_cols(feedlog_df):
     f['FeedVol_nl']=f['FeedVol_µl']*1000
     # Compute feeding speed.
     f['FeedSpeed_nl/s']=f['FeedVol_nl']/(f['FeedDuration_ms']/1000)
-
     return f
 
   ####   ####  #    # #####  #    # ##### ######
@@ -182,11 +181,18 @@ def compute_time_cols(feedlog_df):
     Pass along a munged feedlog. Returns the modified feedlog.
     """
     f=feedlog_df.copy()
-    # Duplicate `RelativeTime_s` as non-DateTime object.
-    # f['FeedTime_s']=f['RelativeTime_s']
-    # f['RelativeTime_s']=__pd.to_datetime(f['RelativeTime_s'],unit='s')
     f['FeedDuration_s']=f.FeedDuration_ms/1000
+    return f
 
+def average_feed_vol_per_fly(df):
+    """
+    Computes AverageFeedVolumePerFly in µl for each feed.
+    Adds this value as new columns.
+
+    Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
+    """
+    f=df.copy()
+    f['AverageFeedVolumePerFly_µl']=f['FeedVol_µl'] / f['FlyCountInChamber']
     return f
 
  #####  ###### ##### ######  ####  #####
@@ -273,7 +279,9 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
 
     df_groupby_resamp_sum=__pd.DataFrame(df_groupby_resamp.sum().to_records())
     df_groupby_resamp_sum=df_groupby_resamp_sum[[group_by,color_by,
-                                                 'RelativeTime_s','FeedVol_µl']]
+                                                 'RelativeTime_s',
+                                                 'AverageFeedVolumePerFly_µl',
+                                                 'Valid']]
     df_groupby_resamp_sum.fillna(0,inplace=True)
     rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
     df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
