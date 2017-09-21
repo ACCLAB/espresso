@@ -80,7 +80,7 @@ class espresso_plotter():
                 group_by=None,
                 color_by=None,
                 add_flyid_labels=False,
-                figsize=None,
+                fig_size=None,
                 ax=None,
                 gridlines_major=True,
                 gridlines_minor=True):
@@ -100,7 +100,7 @@ class espresso_plotter():
         add_flyid_labels: boolean, default True.
             If True, the FlyIDs for each fly will be displayed on the left of each raster row.
 
-        figsize: tuple (width, height), default None.
+        fig_size: tuple (width, height), default None.
             The size of the final figure, in inches.
 
         ax: matplotlib Axes, default None.
