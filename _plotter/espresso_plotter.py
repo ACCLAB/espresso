@@ -157,12 +157,12 @@ class espresso_plotter:
             patch=_mpatches.Patch(color=palette[key], label=key)
             raster_legend_handles.append(patch)
 
+        # Initialise the figure.
         _sns.set(style='ticks',context='poster')
         if add_flyid_labels:
             ws=0.4
         else:
             ws=0.2
-
         if figsize is None:
             x_inches=12
             y_inches=9
@@ -172,16 +172,16 @@ class espresso_plotter:
                 y_inches=figsize[1]
             else:
                 raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
-
-        num_cols=int( len(groupby_grps) )
+        num_plots=int( len(groupby_grps) )
         if ax is None:
             fig,axx=_plt.subplots(nrows=1,
-                                  ncols=num_cols,
+                                  ncols=num_plots,
                                   figsize=(x_inches,y_inches),
                                   gridspec_kw={'wspace':ws} )
         else:
             axx=ax
 
+        # Loop through each panel.
         for c, grp in enumerate( groupby_grps ):
             if len(groupby_grps)>1:
                 rasterax=axx[c]
@@ -246,20 +246,33 @@ class espresso_plotter:
             rasterax.yaxis.set_visible(False)
             rasterax.set_title(grp)
 
-            ### Position the raster color legend.
-            if num_cols>1: # if we have more than 1 column.
+            ### Format x-axis.
+            _plot_helpers.format_timecourse_xaxis(rasterax)
+
+        if ax is None:
+            if num_plots>1: # if we have more than 1 column.
                 rasterlegend_ax=axx[0]
             else:
                 rasterlegend_ax=axx
             rasterlegend_ax.legend(loc='upper left',
                                     bbox_to_anchor=(0,-0.15),
                                     handles=raster_legend_handles)
+            return fig ## END
 
-            ### Format x-axis.
-            _plot_helpers.format_timecourse_xaxis(rasterax)
+        else:
+            ### Position the raster color legend.
+            # if we don't know the layout, attach the legend to every axes.
+            if num_plots>1: # if we have more than 1 column.
+                for a in axx:
+                    a.legend(loc='upper left',
+                             bbox_to_anchor=(0,-0.15),
+                             handles=raster_legend_handles)
+            else:
+                axx.legend(loc='upper left',
+                            bbox_to_anchor=(0,-0.15),
+                            handles=raster_legend_handles)
+            pass ## END
 
-        if ax is None:
-            return fig
 
     def __check_column(self,col,df):
         if not isinstance(col, str): # if col is not a string.
