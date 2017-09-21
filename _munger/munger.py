@@ -238,8 +238,44 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
  # #    #    #####  #
 
 def check_column(col,df):
+    """
+    Convenience function to check if a dataframe has a column of interest.
+    """
     if not isinstance(col, str): # if col is not a string.
         raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
     if col not in df.columns: # make sure col is a column in df.
         raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
     pass
+
+def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
+    """
+    Convenience function to groupby and then resample a feedlog DataFrame.
+    """
+    if group_by is None:
+        group_by='Genotype'
+    else:
+        check_column(group_by, df)
+
+    if color_by is None:
+        color_by='FoodChoice'
+    else:
+        check_column(color_by, df)
+
+    if resample_by is None:
+        resample_by='10min'
+
+    # Convert RelativeTime_s to datetime if not done so already.
+    if df.RelativeTime_s.dtype=='float64':
+        df.loc[:,'RelativeTime_s']=__pd.to_datetime(df['RelativeTime_s'],unit='s')
+
+    df_groupby_resamp=df.groupby([group_by,color_by])\
+                    .resample(resample_by,on='RelativeTime_s')
+
+    df_groupby_resamp_sum=__pd.DataFrame(df_groupby_resamp.sum().to_records())
+    df_groupby_resamp_sum=df_groupby_resamp_sum[[group_by,color_by,
+                                                 'RelativeTime_s','FeedVol_µl']]
+    df_groupby_resamp_sum.fillna(0,inplace=True)
+    rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
+    df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
+
+    return df_groupby_resamp_sum
