@@ -253,7 +253,7 @@ class espresso_plotter():
             rasterlegend_ax.legend(loc='upper left',
                                     bbox_to_anchor=(0,-0.15),
                                     handles=raster_legend_handles)
-            return fig ## END
+            return axx ## END
 
         else:
             ### Position the raster color legend.
