@@ -103,12 +103,19 @@ class espresso(object):
         # merge metadata with feedlogs.
         allfeeds=_pd.merge(allfeeds,allflies,left_on='FlyID',right_on='FlyID')
 
+           ##   #    # ###### #####    ##    ####  ######     ####   ####  #    # #    # #####  ####
+          #  #  #    # #      #    #  #  #  #    # #         #    # #    # #    # ##   #   #   #
+         #    # #    # #####  #    # #    # #      #####     #      #    # #    # # #  #   #    ####
+         ###### #    # #      #####  ###### #  ### #         #      #    # #    # #  # #   #        #
+         #    #  #  #  #      #   #  #    # #    # #         #    # #    # #    # #   ##   #   #    #
+         #    #   ##   ###### #    # #    #  ####  ######     ####   ####   ####  #    #   #    ####
+
         # Compute average feed volume per fly in chamber, for each feed.
         allfeeds=_munger.average_feed_vol_per_fly(allfeeds)
         # Compute average feed count per fly in chamber, for each feed.
         # This seems redundant, but serves a crucial munging purpose
         # when we are producing timecourse plots.
-        allfeeds=_munger.average_feed_count_per_chamber(allfeeds)
+        allfeeds=_munger.average_feed_count_per_fly(allfeeds)
 
         # rename columns and food types as is appropriate.
         for df in [allflies,allfeeds]:

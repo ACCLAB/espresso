@@ -208,7 +208,19 @@ def average_feed_vol_per_fly(df):
     f['AverageFeedVolumePerFly_µl']=f['FeedVol_µl'] / f['FlyCountInChamber']
     return f
 
-def average_feed_count_per_chamber(df):
+def average_feed_count_per_fly(df):
+    """
+    Computes AverageFeedCountPerChamber for each feed. This seems redundant,
+    but serves a crucial munging purpose when we are producing timecourse plots.
+    Adds this value as new columns.
+
+    Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
+    """
+    f=df.copy()
+    f['AverageFeedCountPerChamber']=f['Valid'] / f['FlyCountInChamber']
+    return f
+
+def average_feed_speed_per_fly(df):
     """
     Computes AverageFeedCountPerChamber for each feed. This seems redundant,
     but serves a crucial munging purpose when we are producing timecourse plots.
