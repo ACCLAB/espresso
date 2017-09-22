@@ -181,4 +181,3 @@ def format_timecourse_xaxis(ax):
     ax.set_xticklabels(newlabels)
     ax.tick_params(axis='x', which='major',length=10)
     ax.tick_params(axis='x', which='minor',length=6)
-    _sns.despine(ax=ax,left=True,trim=True)
