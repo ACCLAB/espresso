@@ -189,10 +189,11 @@ class espresso_plotter():
 
             # Plot the raster plots.
             ## Plot vertical grid lines if desired.
+            grid_kwargs=dict(linestyle=':', alpha=0.5)
             if gridlines_major:
-                rasterax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
+                rasterax.xaxis.grid(which='major',linewidth=0.25,**grid_kwargs)
             if gridlines_minor:
-                rasterax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
+                rasterax.xaxis.grid(which='minor',linewidth=0.15,**grid_kwargs)
 
             ## Grab only the flies we need.
             tempfeeds=allfeeds[allfeeds[group_by]==grp].copy()
