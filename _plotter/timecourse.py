@@ -159,10 +159,13 @@ class timecourse_plotter():
             rasterlegend_ax=[ axx ]
         for a in rasterlegend_ax:
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
+            ## Add additional timecourse plot definitions below.
             if yvar=='AverageFeedVolumePerFly_µl':
                 a.set_ylabel('Average Feed Volume Per Fly (µl)')
-            elif yvar=='AverageFeedCountPerChamber':
+            elif yvar=='AverageFeedCountPerFly':
                 a.set_ylabel('Average Feed Count Per Fly')
+            elif yvar=='AverageFeedSpeedPerFly_µl/s':
+                a.set_ylabel('Average Feed Speed Per Fly (µl/s)')
 
         # End and return the figure.
         if ax is None:
@@ -277,7 +280,67 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out=self.__generic_timecourse_plotter('AverageFeedCountPerChamber',
+        out=self.__generic_timecourse_plotter('AverageFeedCountPerFly',
+                                              group_by=group_by,
+                                              color_by=color_by,
+                                              resample_by=resample_by,
+                                              fig_size=fig_size,
+                                              gridlines_major=gridlines_major,
+                                              gridlines_minor=gridlines_minor,
+                                              ax=ax)
+        return out
+
+###### ###### ###### #####      ####  #####  ###### ###### #####
+#      #      #      #    #    #      #    # #      #      #    #
+#####  #####  #####  #    #     ####  #    # #####  #####  #    #
+#      #      #      #    #         # #####  #      #      #    #
+#      #      #      #    #    #    # #      #      #      #    #
+#      ###### ###### #####      ####  #      ###### ###### #####
+
+    def feed_speed(self,
+                    group_by=None,
+                    color_by=None,
+                    resample_by='10min',
+                    fig_size=None,
+                    gridlines_major=True,
+                    gridlines_minor=True,
+                    ax=None):
+        """
+        Produces a timecourse area plot depicting the average feed speed per fly in µl/s
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be stacked and colored according to the category
+        "color_by". Feed speeds will be binned by the duration in `resample_by`.
+
+        keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be plotted on its own axes.
+
+        color_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately, and stacked as an area plot.
+
+        resample_by: string, default '10min'
+            The time frequency used to bin the timecourse data. For the format, please see
+            http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+        fig_size: tuple (width, height), default None
+            The size of the final figure, in inches.
+
+        gridlines_major, gridlines_minor: boolean, default True
+            Whether or not major and minor vertical gridlines are displayed.
+
+        ax: array of matplotlib Axes objects, default None
+            Given an array of Axes, each category (as dictacted by group_by) will be plotted
+            respectively.
+
+        Returns
+        -------
+        matplotlib AxesSubplot(s)
+        """
+        out=self.__generic_timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
+
                                               group_by=group_by,
                                               color_by=color_by,
                                               resample_by=resample_by,
