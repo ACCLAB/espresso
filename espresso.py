@@ -279,12 +279,12 @@ class espresso(object):
  #    # #    # #    #          #      #    # #    # #      #      #    #
  #    # #####  #####           ###### #    # #####  ###### ######  ####
 
-    def add_label(self, label_name,
+    def attach_label(self, label_name,
                     label_value=None,
                     label_from_cols=None,
                     sep=','):
         """
-        Add a custom label to the metadata and feedlog of an espresso experiment.
+        Attach_label a custom label to the metadata and feedlog of an espresso experiment.
         The espresso object is modified in place.
 
         Keywords
