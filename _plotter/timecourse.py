@@ -62,10 +62,10 @@ class timecourse_plotter():
                     gridlines_minor=True,
                     ax=None):
         """
-        Produces a timecourse area plot depicting the feed volume for the entire assay.
-        The plot will be tiled horizontally according to the category "group_by", and
-        will be stacked and colored according to the category "color_by".
-        feed volumes will be binned by the duration in `resample_by`.
+        Produces a timecourse area plot depicting the average feed volume per fly
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be stacked and colored according to the category
+        "color_by". Feed volumes will be binned by the duration in `resample_by`.
 
         keywords
         --------
