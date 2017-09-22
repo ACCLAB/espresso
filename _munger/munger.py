@@ -334,6 +334,7 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
                                                  'AverageFeedVolumePerFly_µl',
                                                  'AverageFeedCountPerFly',
                                                  'AverageFeedSpeedPerFly_µl/s']]
+
     df_groupby_resamp_sum.fillna(0,inplace=True)
     rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
     df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second

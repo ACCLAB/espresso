@@ -340,6 +340,7 @@ class timecourse_plotter():
         matplotlib AxesSubplot(s)
         """
         out=self.__generic_timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
+
                                               group_by=group_by,
                                               color_by=color_by,
                                               resample_by=resample_by,
