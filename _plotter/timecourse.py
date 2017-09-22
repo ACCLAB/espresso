@@ -145,6 +145,16 @@ class timecourse_plotter():
         else:
             _sns.despine(ax=axx,trim=True,offset=5)
 
+        # Position the raster color legend,
+        # and label the y-axis appropriately.
+        if num_plots>1:
+            rasterlegend_ax=axx
+        else:
+            rasterlegend_ax=[ axx ]
+        for a in rasterlegend_ax:
+            a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
+            a.set_ylabel('Average Feed Volume Per Fly (µl)')
+
         # End and return the figure.
         if ax is None:
             return axx
