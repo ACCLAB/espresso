@@ -118,14 +118,13 @@ class espresso_plotter():
         allflies=self._experiment.flies.copy()
 
         # Handle the group_by and color_by keywords.
-        if group_by is None:
-            group_by="Genotype"
-        else:
-            _munger.check_column(group_by, allfeeds)
-        if color_by is None:
-            color_by='FoodChoice'
-        else:
-            _munger.check_column(color_by, allfeeds)
+        group_by, color_by = _munger.check_group_by_color_by(group_by, color_by, allfeeds)
+
+        print( "Coloring rasters by {0}".format(color_by) )
+        print( "Grouping rasters by {0}".format(group_by) )
+
+        if color_by==group_by: # catch as exception:
+            raise ValueError('color_by and group_by both have the same value. They should be 2 different column names in the feedlog.')
 
         # Get the total flycount.
         try:

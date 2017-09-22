@@ -326,3 +326,15 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
     df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
 
     return df_groupby_resamp_sum
+
+def check_group_by_color_by(group_by, color_by, df):
+    # Handle the group_by and color_by keywords.
+    if group_by is None:
+        group_by="Genotype"
+    else:
+        check_column(group_by, df)
+    if color_by is None:
+        color_by='FoodChoice'
+    else:
+        check_column(color_by, df)
+    return group_by, color_by

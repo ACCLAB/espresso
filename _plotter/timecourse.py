@@ -76,15 +76,7 @@ class timecourse_plotter():
         A matplotlib Figure.
         """
         # Handle the group_by and color_by keywords.
-        if group_by is None:
-            group_by="Genotype"
-        else:
-            _munger.check_column(group_by, self.__feeds)
-
-        if color_by is None:
-            color_by='FoodChoice'
-        else:
-            _munger.check_column(color_by, self.__feeds)
+        group_by, color_by = _munger.check_group_by_color_by(group_by, color_by, self.__feeds)
 
         print( "Coloring feed volume time course by {0}".format(color_by) )
         print( "Grouping feed volume time course by {0}".format(group_by) )
