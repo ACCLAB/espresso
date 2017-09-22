@@ -246,6 +246,14 @@ class espresso_plotter():
             ### Format x-axis.
             _plot_helpers.format_timecourse_xaxis(rasterax)
 
+        ## Despine accordingly (if multiple axes were produced.)
+        ## Note the we remove the left spine (set to True).
+        if len(groupby_grps)>1:
+            for a in axx:
+                _sns.despine(ax=a,left=True,trim=True,offset=5)
+        else:
+            _sns.despine(ax=axx,left=True,trim=True,offset=5)
+
         if ax is None:
             if num_plots>1: # if we have more than 1 column.
                 rasterlegend_ax=axx[0]
