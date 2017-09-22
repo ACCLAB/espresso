@@ -103,9 +103,6 @@ class timecourse_plotter():
             else:
                 raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
-        groupby_grps=_np.sort( plotdf[group_by].unique() )
-        num_plots=int( len(groupby_grps) )
-
         if ax is None:
             fig,axx=_plt.subplots(nrows=1,
                                   ncols=num_plots,
