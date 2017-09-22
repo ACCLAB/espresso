@@ -174,6 +174,8 @@ class espresso_plotter():
                                   gridspec_kw={'wspace':ws} )
         else:
             axx=ax
+            if len(axx)!=num_plots:
+                raise ValueError('The length of the supplied array of Axes objects does not match the number of groups in {0}.'.format(group_by))
 
         # Loop through each panel.
         for c, grp in enumerate( groupby_grps ):
