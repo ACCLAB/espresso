@@ -116,6 +116,8 @@ class espresso(object):
         # This seems redundant, but serves a crucial munging purpose
         # when we are producing timecourse plots.
         allfeeds=_munger.average_feed_count_per_fly(allfeeds)
+        # Compute average feed speed per fly in chamber, for each feed.
+        allfeeds=_munger.average_feed_speed_per_fly(allfeeds)
 
         # rename columns and food types as is appropriate.
         for df in [allflies,allfeeds]:

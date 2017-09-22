@@ -217,19 +217,17 @@ def average_feed_count_per_fly(df):
     Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
     """
     f=df.copy()
-    f['AverageFeedCountPerChamber']=f['Valid'] / f['FlyCountInChamber']
+    f['AverageFeedCountPerFly']=f['Valid'] / f['FlyCountInChamber']
     return f
 
 def average_feed_speed_per_fly(df):
     """
-    Computes AverageFeedCountPerChamber for each feed. This seems redundant,
-    but serves a crucial munging purpose when we are producing timecourse plots.
-    Adds this value as new columns.
+    Computes AverageFeedSpeedPerFly_µl/s for each feed.
 
     Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
     """
     f=df.copy()
-    f['AverageFeedCountPerChamber']=f['Valid'] / f['FlyCountInChamber']
+    f['AverageFeedSpeedPerFly_µl/s']=(f['FeedVol_µl'] / (f['FeedDuration_ms']/1000)) / f['FlyCountInChamber']
     return f
 
  #####  ###### ##### ######  ####  #####
@@ -331,8 +329,11 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
     df_groupby_resamp_sum=df_groupby_resamp_sum[[group_by,color_by,
                                                  'RelativeTime_s',
                                                  'FlyCountInChamber',
+                                                 ### Below, add all the columns that are
+                                                 ### potentially used for timecourse plotting.
                                                  'AverageFeedVolumePerFly_µl',
-                                                 'AverageFeedCountPerChamber']]
+                                                 'AverageFeedCountPerFly',
+                                                 'AverageFeedSpeedPerFly_µl/s']]
     df_groupby_resamp_sum.fillna(0,inplace=True)
     rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
     df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
