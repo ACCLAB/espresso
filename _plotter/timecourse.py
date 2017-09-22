@@ -80,10 +80,17 @@ class timecourse_plotter():
             group_by="Genotype"
         else:
             _munger.check_column(group_by, self.__feeds)
+
         if color_by is None:
             color_by='FoodChoice'
         else:
             _munger.check_column(color_by, self.__feeds)
+
+        print( "Coloring feed volume time course by {0}".format(color_by) )
+        print( "Grouping feed volume time course by {0}".format(group_by) )
+
+        if color_by==group_by: # catch as exception:
+            raise ValueError('color_by and group_by both have the same value. They should be 2 different column names in the feedlog.')
 
         resampdf=_munger.groupby_resamp(self.__feeds, group_by, color_by, resample_by)
         plotdf=self.__pivot_for_plot(resampdf,group_by,color_by)
@@ -101,7 +108,7 @@ class timecourse_plotter():
                 x_inches=fig_size[0]
                 y_inches=fig_size[1]
             else:
-                raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
+                raise TypeError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
         if ax is None:
             fig,axx=_plt.subplots(nrows=1,
@@ -137,17 +144,18 @@ class timecourse_plotter():
             ## Format x-axis.
             _plot_helpers.format_timecourse_xaxis(plotax)
 
-            ## Despine and offset each axis.
-            _sns.despine(ax=plotax,left=True,bottom=True,trim=True,offset=5)
-
         # Normalize all the y-axis limits.
         if len(groupby_grps)>1:
             _plot_helpers.normalize_ylims(axx)
+            ## Despine and offset each axis.
+            for a in axx:
+                _sns.despine(ax=a,trim=True,offset=5)
+        else:
+            _sns.despine(ax=axx,trim=True,offset=5)
 
         # End and return the figure.
         if ax is None:
-            return fig
-
+            return axx
 
     # def feed_count(self,
     #                 group_by=None,
