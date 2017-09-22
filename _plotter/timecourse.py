@@ -88,11 +88,14 @@ class timecourse_plotter():
         resampdf=_munger.groupby_resamp(self.__feeds, group_by, color_by, resample_by)
         plotdf=self.__pivot_for_plot(resampdf,group_by,color_by)
 
+        groupby_grps=_np.sort( plotdf[group_by].unique() )
+        num_plots=int( len(groupby_grps) )
+
         # Initialise figure.
         _sns.set(style='ticks',context='poster')
         if fig_size is None:
-            x_inches=12
-            y_inches=9
+            x_inches=10*num_plots
+            y_inches=7
         else:
             if isinstance(fig_size, tuple) or isinstance(fig_size, list):
                 x_inches=fig_size[0]
