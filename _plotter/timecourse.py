@@ -191,20 +191,42 @@ class timecourse_plotter():
 
         keywords
         --------
-        TBA
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be plotted on its own axes.
+
+        color_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately, and stacked as an area plot.
+
+        resample_by: string, default '10min'
+            The time frequency used to bin the timecourse data. For the format, please see
+            http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+        fig_size: tuple (width, height), default None
+            The size of the final figure, in inches.
+
+        gridlines_major, gridlines_minor: boolean, default True
+            Whether or not major and minor vertical gridlines are displayed.
+
+        ax: array of matplotlib Axes objects, default None
+            Given an array of Axes, each category (as dictacted by group_by) will be plotted
+            respectively.
 
         Returns
         -------
-        A matplotlib Figure.
+        matplotlib AxesSubplot(s)
         """
-        self.__generic_timecourse_plotter('AverageFeedVolumePerFly_µl' ,
-                                          group_by=group_by,
-                                          color_by=color_by,
-                                          resample_by=resample_by,
-                                          fig_size=fig_size,
-                                          gridlines_major=gridlines_major,
-                                          gridlines_minor=gridlines_minor,
-                                          ax=ax)
+        out=self.__generic_timecourse_plotter('AverageFeedVolumePerFly_µl' ,
+                                               group_by=group_by,
+                                               color_by=color_by,
+                                               resample_by=resample_by,
+                                               fig_size=fig_size,
+                                               gridlines_major=gridlines_major,
+                                               gridlines_minor=gridlines_minor,
+                                               ax=ax)
+
+        return out
 
 ###### ###### ###### #####      ####   ####  #    # #    # #####
 #      #      #      #    #    #    # #    # #    # ##   #   #
@@ -225,22 +247,42 @@ class timecourse_plotter():
         Produces a timecourse area plot depicting the average feed count per fly
         for the entire assay. The plot will be tiled horizontally according to the
         category "group_by", and will be stacked and colored according to the category
-        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+        "color_by". Feed counts will be binned by the duration in `resample_by`.
 
         keywords
         --------
-        TBA
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be plotted on its own axes.
+
+        color_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately, and stacked as an area plot.
+
+        resample_by: string, default '10min'
+            The time frequency used to bin the timecourse data. For the format, please see
+            http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+        fig_size: tuple (width, height), default None
+            The size of the final figure, in inches.
+
+        gridlines_major, gridlines_minor: boolean, default True
+            Whether or not major and minor vertical gridlines are displayed.
+
+        ax: array of matplotlib Axes objects, default None
+            Given an array of Axes, each category (as dictacted by group_by) will be plotted
+            respectively.
 
         Returns
         -------
-        A matplotlib Figure.
+        matplotlib AxesSubplot(s)
         """
-
-        self.__generic_timecourse_plotter('AverageFeedCountPerChamber',
-                                          group_by=group_by,
-                                          color_by=color_by,
-                                          resample_by=resample_by,
-                                          fig_size=fig_size,
-                                          gridlines_major=gridlines_major,
-                                          gridlines_minor=gridlines_minor,
-                                          ax=ax)
+        out=self.__generic_timecourse_plotter('AverageFeedCountPerChamber',
+                                              group_by=group_by,
+                                              color_by=color_by,
+                                              resample_by=resample_by,
+                                              fig_size=fig_size,
+                                              gridlines_major=gridlines_major,
+                                              gridlines_minor=gridlines_minor,
+                                              ax=ax)
+        return out

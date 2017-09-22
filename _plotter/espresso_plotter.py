@@ -90,28 +90,28 @@ class espresso_plotter():
         Keywords
         --------
 
-        group_by: string, default None.
-            The categorical columns in the espresso object used to group the raster plots.
+        group_by: string, default None
+            The categorical column in the espresso object used to group the raster plots.
             Categories in the column will be tiled horizontally as panels.
 
-        color_by: string, default None.
-            The categorical columns in the espresso object used to color individual feeds.
+        color_by: string, default None
+            The categorical column in the espresso object used to color individual feeds.
 
-        add_flyid_labels: boolean, default True.
+        add_flyid_labels: boolean, default True
             If True, the FlyIDs for each fly will be displayed on the left of each raster row.
 
-        fig_size: tuple (width, height), default None.
+        fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        ax: matplotlib Axes, default None.
+        ax: matplotlib Axes, default None
             Plot on specified matplotlib Axes.
 
-        major_x_grid, minor_x_grid: boolean, default True.
+        gridlines_major, gridlines_minor: boolean, default True
             Whether or not major and minor vertical gridlines are displayed.
 
         Returns
         -------
-        A matplotlib Figure.
+        matplotlib AxesSubplot(s)
         """
         # make a copy of the metadata and the feedlog.
         allfeeds=self._experiment.feeds.copy()
