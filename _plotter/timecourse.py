@@ -135,8 +135,14 @@ class timecourse_plotter():
             ## Format x-axis.
             _plot_helpers.format_timecourse_xaxis(plotax)
 
+        # Normalize all the y-axis limits.
+        if len(groupby_grps)>1:
+            _plot_helpers.normalize_ylims(axx)
+
+        _sns.despine(ax=ax,left=True,bottom=True,trim=True)
+        # End and return the figure.
         if ax is None:
-            return fig ## END
+            return fig
 
 
     # def feed_count(self,
