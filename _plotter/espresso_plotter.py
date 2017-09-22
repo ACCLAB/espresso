@@ -139,6 +139,7 @@ class espresso_plotter():
         # Get the groups we will be grouping on, and coloring on.
         groupby_grps=_np.sort(allfeeds[group_by].unique())
         color_grps=_np.sort(allfeeds[color_by].unique())
+        num_plots=int( len(groupby_grps) )
 
         # Create the palette.
         colors=_plot_helpers._make_categorial_palette(allfeeds,color_by)
@@ -157,16 +158,16 @@ class espresso_plotter():
             ws=0.4
         else:
             ws=0.2
-        if figsize is None:
-            x_inches=12
-            y_inches=9
+        if fig_size is None:
+            x_inches=10*num_plots
+            y_inches=7
         else:
-            if isinstance(figsize, tuple) or isinstance(figsize, list):
-                x_inches=figsize[0]
-                y_inches=figsize[1]
+            if isinstance(fig_size, tuple) or isinstance(fig_size, list):
+                x_inches=fig_size[0]
+                y_inches=fig_size[1]
             else:
-                raise ValueError('Please make sure figsize is a tuple of the form (w,h) in inches.')
-        num_plots=int( len(groupby_grps) )
+                raise ValueError('Please make sure fig_size is a tuple of the form (w,h) in inches.')
+
         if ax is None:
             fig,axx=_plt.subplots(nrows=1,
                                   ncols=num_plots,
