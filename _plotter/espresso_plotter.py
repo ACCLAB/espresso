@@ -217,8 +217,8 @@ class espresso_plotter():
                                            ymin=(1/maxflycount)*(maxflycount-k-1),
                                            ymax=(1/maxflycount)*(maxflycount-k),
 
-                                           color=palette[ tt.loc[idx,'FoodChoice'] ],
-                                           label="_"*k + tt.loc[idx,'FoodChoice'],
+                                           color=palette[ tt.loc[idx,color_by] ],
+                                           label="_"*k + tt.loc[idx,color_by],
 
                                            alpha=0.8)
 
