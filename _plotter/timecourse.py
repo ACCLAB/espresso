@@ -161,7 +161,7 @@ class timecourse_plotter():
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
             if yvar=='AverageFeedVolumePerFly_µl':
                 a.set_ylabel('Average Feed Volume Per Fly (µl)')
-            elif yvar=='AverageFeedCountPerChamber':
+            elif yvar=='AverageFeedCountPerFly':
                 a.set_ylabel('Average Feed Count Per Fly')
 
         # End and return the figure.
@@ -277,7 +277,7 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out=self.__generic_timecourse_plotter('AverageFeedCountPerChamber',
+        out=self.__generic_timecourse_plotter('AverageFeedCountPerFly',
                                               group_by=group_by,
                                               color_by=color_by,
                                               resample_by=resample_by,
