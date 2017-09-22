@@ -255,29 +255,19 @@ class espresso_plotter():
         else:
             _sns.despine(ax=axx,left=True,trim=True,offset=5)
 
-        if ax is None:
-            if num_plots>1: # if we have more than 1 column.
-                rasterlegend_ax=axx[0]
-            else:
-                rasterlegend_ax=axx
-            rasterlegend_ax.legend(loc='upper left',
-                                    bbox_to_anchor=(0,-0.15),
-                                    handles=raster_legend_handles)
-            return axx ## END
-
+        # Position the raster color legend.
+        if num_plots>1:
+            rasterlegend_ax=axx
         else:
-            ### Position the raster color legend.
-            # if we don't know the layout, attach the legend to every axes.
-            if num_plots>1: # if we have more than 1 column.
-                for a in axx:
-                    a.legend(loc='upper left',
-                             bbox_to_anchor=(0,-0.15),
-                             handles=raster_legend_handles)
-            else:
-                axx.legend(loc='upper left',
-                            bbox_to_anchor=(0,-0.15),
-                            handles=raster_legend_handles)
-            pass ## END
+            rasterlegend_ax=[ axx ]
+
+        for a in rasterlegend_ax:
+            a.legend(loc='upper left',bbox_to_anchor=(0,-0.15),
+                     handles=raster_legend_handles)
+
+        # End and return the figure.
+        if ax is None:
+            return axx
 
     #####  ###### #####   ####  ###### #    # #####    ###### ###### ###### #####  # #    #  ####
     #    # #      #    # #    # #      ##   #   #      #      #      #      #    # # ##   # #    #
