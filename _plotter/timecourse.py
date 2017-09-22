@@ -124,15 +124,17 @@ class timecourse_plotter():
                 plotax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
             if gridlines_minor:
                 plotax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
-
                 ## Filter plotdf according to group_by.
                 temp_plotdf=plotdf[plotdf[group_by]==grp]
                 temp_plotdf_pivot=temp_plotdf.pivot(index='feed_time_s',
                                                      columns=color_by,
                                                      values='AverageFeedVolumePerFly_µl')
 
-                ## and make area plot.
+                ### and make area plot.
                 temp_plotdf_pivot.plot.area(ax=plotax,lw=1)
+            ## Format x-axis.
+            _plot_helpers.format_timecourse_xaxis(plotax)
+
         if ax is None:
             return fig ## END
 
