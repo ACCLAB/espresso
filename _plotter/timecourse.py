@@ -38,12 +38,12 @@ class timecourse_plotter():
     timecourse plotting class for espresso object.
     """
 
-    #    #    #    #    #####
-    #    ##   #    #      #
-    #    # #  #    #      #
-    #    #  # #    #      #
-    #    #   ##    #      #
-    #    #    #    #      #
+#    #    #    #    #####
+#    ##   #    #      #
+#    # #  #    #      #
+#    #  # #    #      #
+#    #   ##    #      #
+#    #    #    #      #
 
     def __init__(self,plotter): # pass along an espresso_plotter instance.
         self.__feeds=plotter._experiment.feeds.copy()
@@ -53,28 +53,34 @@ class timecourse_plotter():
                                                 color_by,
                                                 'feed_time_s']).sum().to_records() )
 
-    def feed_volume(self,
-                    group_by=None,
-                    color_by=None,
-                    resample_by='10min',
-                    fig_size=None,
-                    gridlines_major=True,
-                    gridlines_minor=True,
-                    ax=None):
-        """
-        Produces a timecourse area plot depicting the average feed volume per fly
-        for the entire assay. The plot will be tiled horizontally according to the
-        category "group_by", and will be stacked and colored according to the category
-        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+####  ###### #    # ###### #####  #  ####
+#    # #      ##   # #      #    # # #    #
+#      #####  # #  # #####  #    # # #
+#  ### #      #  # # #      #####  # #
+#    # #      #   ## #      #   #  # #    #
+####  ###### #    # ###### #    # #  ####
+##### # #    # ######  ####   ####  #    # #####   ####  ######
+#   # ##  ## #      #    # #    # #    # #    # #      #
+#   # # ## # #####  #      #    # #    # #    #  ####  #####
+#   # #    # #      #      #    # #    # #####       # #
+#   # #    # #      #    # #    # #    # #   #  #    # #
+#   # #    # ######  ####   ####   ####  #    #  ####  ######
+#####  #       ####  ##### ##### ###### #####
+#    # #      #    #   #     #   #      #    #
+#    # #      #    #   #     #   #####  #    #
+#####  #      #    #   #     #   #      #####
+#      #      #    #   #     #   #      #   #
+#      ######  ####    #     #   ###### #    #
+    def __generic_timecourse_plotter(self,
+                                     yvar,
+                                     group_by=None,
+                                     color_by=None,
+                                     resample_by='10min',
+                                     fig_size=None,
+                                     gridlines_major=True,
+                                     gridlines_minor=True,
+                                     ax=None):
 
-        keywords
-        --------
-        TBA
-
-        Returns
-        -------
-        A matplotlib Figure.
-        """
         # Handle the group_by and color_by keywords.
         group_by, color_by = _munger.check_group_by_color_by(group_by, color_by, self.__feeds)
 
@@ -127,7 +133,7 @@ class timecourse_plotter():
                 temp_plotdf=plotdf[plotdf[group_by]==grp]
                 temp_plotdf_pivot=temp_plotdf.pivot(index='feed_time_s',
                                                      columns=color_by,
-                                                     values='AverageFeedVolumePerFly_µl')
+                                                     values=yvar)
 
                 ### and make area plot.
                 temp_plotdf_pivot.plot.area(ax=plotax,lw=1)
@@ -153,31 +159,88 @@ class timecourse_plotter():
             rasterlegend_ax=[ axx ]
         for a in rasterlegend_ax:
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
-            a.set_ylabel('Average Feed Volume Per Fly (µl)')
+            if yvar=='AverageFeedVolumePerFly_µl':
+                a.set_ylabel('Average Feed Volume Per Fly (µl)')
+            elif yvar=='AverageFeedCountPerChamber':
+                a.set_ylabel('Average Feed Count Per Fly')
 
         # End and return the figure.
         if ax is None:
             return axx
 
-    # def feed_count(self,
-    #                 group_by=None,
-    #                 color_by=None,
-    #                 resample_by='10min',
-    #                 fig_size=None):
-    #     """
-    #     Produces a timecourse area plot depicting the feed volume for the entire assay.
-    #     The plot will be tiled horizontally according to the category "group_by", and
-    #     will be stacked and colored according to the category "color_by".
-    #     feed volumes will be binned by the duration in `resample_by`.
-    #
-    #     keywords
-    #     --------
-    #     TBA
-    #
-    #     Returns
-    #     -------
-    #     A matplotlib Figure.
-    #     """
-    #
-    #     resampdf=_munger.groupby_resamp(self.__feeds, group_by, color_by, resample_by)
-    #     plotdf=self.__pivot_for_plot()
+###### ###### ###### #####     #    #  ####  #      #    # #    # ######
+#      #      #      #    #    #    # #    # #      #    # ##  ## #
+#####  #####  #####  #    #    #    # #    # #      #    # # ## # #####
+#      #      #      #    #    #    # #    # #      #    # #    # #
+#      #      #      #    #     #  #  #    # #      #    # #    # #
+#      ###### ###### #####       ##    ####  ######  ####  #    # ######
+
+    def feed_volume(self,
+                    group_by=None,
+                    color_by=None,
+                    resample_by='10min',
+                    fig_size=None,
+                    gridlines_major=True,
+                    gridlines_minor=True,
+                    ax=None):
+        """
+        Produces a timecourse area plot depicting the average feed volume per fly
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be stacked and colored according to the category
+        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+
+        keywords
+        --------
+        TBA
+
+        Returns
+        -------
+        A matplotlib Figure.
+        """
+        self.__generic_timecourse_plotter('AverageFeedVolumePerFly_µl' ,
+                                          group_by=group_by,
+                                          color_by=color_by,
+                                          resample_by=resample_by,
+                                          fig_size=fig_size,
+                                          gridlines_major=gridlines_major,
+                                          gridlines_minor=gridlines_minor,
+                                          ax=ax)
+
+###### ###### ###### #####      ####   ####  #    # #    # #####
+#      #      #      #    #    #    # #    # #    # ##   #   #
+#####  #####  #####  #    #    #      #    # #    # # #  #   #
+#      #      #      #    #    #      #    # #    # #  # #   #
+#      #      #      #    #    #    # #    # #    # #   ##   #
+#      ###### ###### #####      ####   ####   ####  #    #   #
+
+    def feed_count(self,
+                    group_by=None,
+                    color_by=None,
+                    resample_by='10min',
+                    fig_size=None,
+                    gridlines_major=True,
+                    gridlines_minor=True,
+                    ax=None):
+        """
+        Produces a timecourse area plot depicting the average feed count per fly
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be stacked and colored according to the category
+        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+
+        keywords
+        --------
+        TBA
+
+        Returns
+        -------
+        A matplotlib Figure.
+        """
+
+        self.__generic_timecourse_plotter('AverageFeedCountPerChamber',
+                                          group_by=group_by,
+                                          color_by=color_by,
+                                          resample_by=resample_by,
+                                          fig_size=fig_size,
+                                          gridlines_major=gridlines_major,
+                                          gridlines_minor=gridlines_minor,
+                                          ax=ax)
