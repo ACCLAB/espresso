@@ -137,7 +137,7 @@ class timecourse_plotter():
             _plot_helpers.format_timecourse_xaxis(plotax)
 
         # Normalize all the y-axis limits.
-        if len(groupby_grps)>1:
+        if num_plots>1:
             _plot_helpers.normalize_ylims(axx)
             ## Despine and offset each axis.
             for a in axx:
