@@ -382,8 +382,14 @@ def cumsum_for_cumulative(df,group_by,color_by):
     """
     temp=df.copy()
 
-    # First, groupby for cumsum, then groupby for proper fillna.
-    temp_cumsum=df.groupby([group_by,color_by,'FlyID'])\
+    # Drop duplicate columns:
+    duplicated_cols=[col for col in [group_by,color_by] if col in temp.columns]
+    for col in [duplicated_cols]:
+        temp.drop(col, axis=1, inplace=True)
+
+    # Next, groupby for cumsum,
+    # Then, groupby AGAIN, and fill Nans.
+    temp_cumsum=temp.groupby([group_by,color_by,'FlyID'])\
                     .cumsum()\
                     .groupby([group_by,color_by,'FlyID'])\
                     .fillna(method='pad')\
