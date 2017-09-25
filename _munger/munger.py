@@ -301,7 +301,24 @@ def check_column(col,df):
  #   #  #      #    # #    # #    # #
  #    # ######  ####  #    # #    # #
 
-def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
+def check_group_by_color_by(group_by, color_by, df):
+    """
+    Check to see if `group_by` and `color_by` (if supplied) are columns in `df`.
+    If not, assign them default values of "Genotype" and "FoodChoice" respectively.
+    """
+    if group_by is None:
+        group_by="Genotype"
+    else:
+        check_column(group_by, df)
+
+    if color_by is None:
+        color_by="FoodChoice"
+    else:
+        check_column(color_by, df)
+
+    return group_by, color_by
+
+def groupby_resamp_sum(df,group_by=None,color_by=None,resample_by=None):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
@@ -322,33 +339,76 @@ def groupby_resamp(df,group_by=None,color_by=None,resample_by=None):
     if df.RelativeTime_s.dtype=='float64':
         df.loc[:,'RelativeTime_s']=__pd.to_datetime(df['RelativeTime_s'],unit='s')
 
-    df_groupby_resamp=df.groupby([group_by,color_by])\
-                    .resample(resample_by,on='RelativeTime_s')
-
-    df_groupby_resamp_sum=__pd.DataFrame(df_groupby_resamp.sum().to_records())
-    df_groupby_resamp_sum=df_groupby_resamp_sum[[group_by,color_by,
-                                                 'RelativeTime_s',
-                                                 'FlyCountInChamber',
-                                                 ### Below, add all the columns that are
-                                                 ### potentially used for timecourse plotting.
-                                                 'AverageFeedVolumePerFly_µl',
-                                                 'AverageFeedCountPerFly',
-                                                 'AverageFeedSpeedPerFly_µl/s']]
-
-    df_groupby_resamp_sum.fillna(0,inplace=True)
-    rt=df_groupby_resamp_sum.loc[:,'RelativeTime_s']
-    df_groupby_resamp_sum['feed_time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
+    df_groupby_resamp_sum=df.groupby([group_by,color_by,'FlyID'])\
+                        .resample(resample_by,on='RelativeTime_s')\
+                        .sum()
 
     return df_groupby_resamp_sum
 
-def check_group_by_color_by(group_by, color_by, df):
-    # Handle the group_by and color_by keywords.
-    if group_by is None:
-        group_by="Genotype"
-    else:
-        check_column(group_by, df)
-    if color_by is None:
-        color_by='FoodChoice'
-    else:
-        check_column(color_by, df)
-    return group_by, color_by
+def __add_time_column(df):
+    """
+    Convenience function to add a non DateTime column representing the time.
+    """
+    temp=df.copy()
+    rt=temp.loc[:,'RelativeTime_s']
+    temp['time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
+
+    return temp
+
+def sum_for_timecourse(df,group_by,color_by):
+    """
+    Convenience function to sum a resampled feedlog for timecourse plotting.
+    """
+    temp=df.copy()
+    temp_sum=__pd.DataFrame(temp.to_records())
+
+    temp_sum=temp_sum[[group_by,color_by,
+                       'RelativeTime_s',
+                       'FlyCountInChamber',
+                        ### Below, add all the columns that are
+                         ### potentially used for plotting.
+                         'AverageFeedVolumePerFly_µl',
+                         'AverageFeedCountPerFly',
+                         'AverageFeedSpeedPerFly_µl/s']]
+
+    temp_sum.fillna(0,inplace=True)
+    temp_sum=__add_time_column(temp_sum)
+
+    return temp_sum
+
+def cumsum_for_cumulative(df,group_by,color_by):
+    """
+    Convenience function to sum a resampled feedlog for timecourse plotting.
+    """
+    temp=df.copy()
+
+    # First, groupby for cumsum, then groupby for proper fillna.
+    temp_cumsum=df.groupby([group_by,color_by,'FlyID'])\
+                    .cumsum()\
+                    .groupby([group_by,color_by,'FlyID'])\
+                    .fillna(method='pad')\
+                    .fillna(0)
+
+    temp_cumsum=__pd.DataFrame( temp_cumsum.to_records() )
+
+    # Select only relavant columns.
+    temp_cumsum=temp_cumsum[[group_by,color_by,
+                             'FlyID',
+                             'RelativeTime_s',
+                             'FlyCountInChamber',
+                             ### Below, add all the columns that are
+                             ### potentially used for timecourse plotting.
+                             'AverageFeedVolumePerFly_µl',
+                             'AverageFeedCountPerFly']]
+
+    temp_cumsum.loc[:,'AverageFeedVolumePerFly_nl']=temp_cumsum.loc[:,'AverageFeedVolumePerFly_µl']*1000
+
+    temp_cumsum.rename( columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
+                                 'AverageFeedCountPerFly':'Cumulative Feed Count',
+                                         },
+                             inplace=True)
+
+    # # Add time column to facilitate plotting.
+    temp_cumsum=__add_time_column(temp_cumsum)
+
+    return temp_cumsum

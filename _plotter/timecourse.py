@@ -17,9 +17,7 @@ timecourse plot functions for espresso objects.
 import sys as _sys
 _sys.path.append("..") # so we can import espresso from the directory above.
 
-
 import numpy as _np
-import scipy as _sp
 import pandas as _pd
 
 import matplotlib.pyplot as _plt
@@ -47,7 +45,7 @@ class timecourse_plotter():
     def __pivot_for_plot(self,resampdf,group_by,color_by):
         return _pd.DataFrame( resampdf.groupby([group_by,
                                                 color_by,
-                                                'feed_time_s']).sum().to_records() )
+                                                'time_s']).sum().to_records() )
 
 ####  ###### #    # ###### #####  #  ####
 #    # #      ##   # #      #    # # #    #
@@ -86,8 +84,9 @@ class timecourse_plotter():
         if color_by==group_by: # catch as exception:
             raise ValueError('color_by and group_by both have the same value. They should be 2 different column names in the feedlog.')
 
-        resampdf=_munger.groupby_resamp(self.__feeds, group_by, color_by, resample_by)
-        plotdf=self.__pivot_for_plot(resampdf,group_by,color_by)
+        resampdf=_munger.groupby_resamp_sum(self.__feeds, group_by, color_by, resample_by)
+        resampdf_sum=_munger.sum_for_timecourse(resampdf, group_by, color_by,)
+        plotdf=self.__pivot_for_plot(resampdf_sum, group_by, color_by)
 
         groupby_grps=_np.sort( plotdf[group_by].unique() )
         num_plots=int( len(groupby_grps) )
@@ -125,14 +124,14 @@ class timecourse_plotter():
                 plotax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
             if gridlines_minor:
                 plotax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
-                ## Filter plotdf according to group_by.
-                temp_plotdf=plotdf[plotdf[group_by]==grp]
-                temp_plotdf_pivot=temp_plotdf.pivot(index='feed_time_s',
-                                                     columns=color_by,
-                                                     values=yvar)
+            ## Filter plotdf according to group_by.
+            temp_plotdf=plotdf[plotdf[group_by]==grp]
+            temp_plotdf_pivot=temp_plotdf.pivot(index='time_s',
+                                                 columns=color_by,
+                                                 values=yvar)
 
-                ### and make area plot.
-                temp_plotdf_pivot.plot.area(ax=plotax,lw=1)
+            ### and make area plot.
+            temp_plotdf_pivot.plot.area(ax=plotax,lw=1)
             ## Add the group name as title.
             plotax.set_title(grp)
             ## Format x-axis.
