@@ -29,6 +29,7 @@ import bootstrap_contrast as _bsc
 from . import plot_helpers as _plot_helpers
 from . import contrast as _contrast
 from . import timecourse as _timecourse
+from . import cumulative as _cumulative
 from _munger import munger as _munger
 
 class espresso_plotter():
@@ -66,6 +67,7 @@ class espresso_plotter():
         # call obj.plot.xxx to access these methods.
         self.contrast=_contrast.contrast_plotter(self)
         self.timecourse=_timecourse.timecourse_plotter(self)
+        self.cumulative=_cumulative.cumulative_plotter(self)
 
 
     #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
