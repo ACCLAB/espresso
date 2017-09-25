@@ -154,7 +154,38 @@ class cumulative_plotter:
                     gridlines_minor=True,
                     ax=None):
         """
-        Docstring for cumulative consumption plots.
+        Produces a cumulative line plot depicting the average total volume consumed per fly
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be colored according to the category
+        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+
+        keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be plotted on its own axes.
+
+        color_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately, and stacked as an area plot.
+
+        resample_by: string, default '10min'
+            The time frequency used to bin the timecourse data. For the format, please see
+            http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+        fig_size: tuple (width, height), default None
+            The size of the final figure, in inches.
+
+        gridlines_major, gridlines_minor: boolean, default True
+            Whether or not major and minor vertical gridlines are displayed.
+
+        ax: array of matplotlib Axes objects, default None
+            Given an array of Axes, each category (as dictacted by group_by) will be plotted
+            respectively.
+
+        Returns
+        -------
+        matplotlib AxesSubplot(s)
         """
         out=self.__generic_cumulative_plotter(yvar='Cumulative Volume (nl)',
                                               group_by=group_by,
@@ -175,7 +206,38 @@ class cumulative_plotter:
                    gridlines_minor=True,
                    ax=None):
         """
-        Docstring for cumulative feed count plots.
+        Produces a cumulative line plot depicting the average total feed count consumed per fly
+        for the entire assay. The plot will be tiled horizontally according to the
+        category "group_by", and will be colored according to the category
+        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+
+        keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be plotted on its own axes.
+
+        color_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately, and stacked as an area plot.
+
+        resample_by: string, default '10min'
+            The time frequency used to bin the timecourse data. For the format, please see
+            http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+        fig_size: tuple (width, height), default None
+            The size of the final figure, in inches.
+
+        gridlines_major, gridlines_minor: boolean, default True
+            Whether or not major and minor vertical gridlines are displayed.
+
+        ax: array of matplotlib Axes objects, default None
+            Given an array of Axes, each category (as dictacted by group_by) will be plotted
+            respectively.
+
+        Returns
+        -------
+        matplotlib AxesSubplot(s)
         """
         out=self.__generic_cumulative_plotter(yvar='Cumulative Feed Count',
                                               group_by=group_by,
