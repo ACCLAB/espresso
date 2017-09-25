@@ -17,18 +17,14 @@ timecourse plot functions for espresso objects.
 import sys as _sys
 _sys.path.append("..") # so we can import espresso from the directory above.
 
-import os as _os
 
 import numpy as _np
 import scipy as _sp
 import pandas as _pd
 
-import matplotlib as _mpl
 import matplotlib.pyplot as _plt
-import matplotlib.ticker as _tk
 
 import seaborn as _sns
-import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _plot_helpers
 from _munger import munger as _munger
