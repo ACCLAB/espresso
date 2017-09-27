@@ -400,9 +400,9 @@ def cumsum_for_cumulative(df,group_by,color_by):
 
     # Next, groupby for cumsum,
     # Then, groupby AGAIN, and fill Nans.
-    temp_cumsum=temp.groupby([group_by,color_by,'FlyID'])\
+    temp_cumsum=temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
                     .cumsum()\
-                    .groupby([group_by,color_by,'FlyID'])\
+                    .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
                     .fillna(method='pad')\
                     .fillna(0)
 
