@@ -120,7 +120,7 @@ class cumulative_plotter:
 
             for c in temp_plotdf_mean.columns:
                 plotax.fill_between(temp_plotdf_mean.index,
-                                 lower_ci[c],upper_ci[c],
+                                   lower_ci[c],upper_ci[c],
                                    alpha=0.25)
 
             ## Add the group name as title.
