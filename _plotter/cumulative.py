@@ -110,12 +110,18 @@ class cumulative_plotter:
             temp_plotdf=plotdf[plotdf[group_by]==grp]
 
             ### and make timeseries plot.
-            _sns.tsplot(data=temp_plotdf,ci=95,ax=plotax,
-                       time='time_s',unit='FlyID',
-                       condition=color_by,value=yvar,
-                    #    color=genotype_palette,
-                    #    alpha=temp_alpha,
-                       linewidth=1.25)
+            temp_plotdf_groupby = temp_plotdf.groupby([color_by,'time_s'])
+            temp_plotdf_mean = temp_plotdf_groupby.mean().unstack()[yvar].T
+            temp_plotdf_mean.plot(ax=plotax,lw=1)
+
+            temp_plotdf_halfci = temp_plotdf_groupby.sem().unstack()[yvar].T*1.96
+            lower_ci = temp_plotdf_mean-temp_plotdf_halfci
+            upper_ci = temp_plotdf_mean+temp_plotdf_halfci
+
+            for c in temp_plotdf_mean.columns:
+                plotax.fill_between(temp_plotdf_mean.index,
+                                 lower_ci[c],upper_ci[c],
+                                   alpha=0.25)
 
             ## Add the group name as title.
             plotax.set_title(grp)

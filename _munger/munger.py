@@ -184,6 +184,16 @@ def compute_time_cols(feedlog_df):
     f['FeedDuration_s']=f.FeedDuration_ms/1000
     return f
 
+def __add_time_column(df):
+    """
+    Convenience function to add a non DateTime column representing the time.
+    """
+    temp=df.copy()
+    rt=temp.loc[:,'RelativeTime_s']
+    temp['time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
+
+    return temp
+
    ##   #    # ###### #####    ##    ####  ######    ###### ###### ###### #####
   #  #  #    # #      #    #  #  #  #    # #         #      #      #      #    #
  #    # #    # #####  #    # #    # #      #####     #####  #####  #####  #    #
@@ -345,15 +355,12 @@ def groupby_resamp_sum(df,group_by=None,color_by=None,resample_by=None):
 
     return df_groupby_resamp_sum
 
-def __add_time_column(df):
-    """
-    Convenience function to add a non DateTime column representing the time.
-    """
-    temp=df.copy()
-    rt=temp.loc[:,'RelativeTime_s']
-    temp['time_s']=rt.dt.hour*3600+rt.dt.minute*60+rt.dt.second
-
-    return temp
+ ##### # #    # ######  ####   ####  #    # #####   ####  ######
+   #   # ##  ## #      #    # #    # #    # #    # #      #
+   #   # # ## # #####  #      #    # #    # #    #  ####  #####
+   #   # #    # #      #      #    # #    # #####       # #
+   #   # #    # #      #    # #    # #    # #   #  #    # #
+   #   # #    # ######  ####   ####   ####  #    #  ####  ######
 
 def sum_for_timecourse(df,group_by,color_by):
     """
