@@ -31,6 +31,12 @@ def metadata(path_to_csv):
     if len(metadata_csv)==0:
         raise ValueError(metadata+' has 0 rows. Please check!!!')
 
+    ## Add ``#Flies` column if it is not in the metadata.
+    ## Assume that there is 1 fly per chamber if the metadata did not
+    ## have a `#Flies` column.
+    if '#Flies' not in metadata_csv.columns:
+        metadata_csv['#Flies']=__np.repeat(1, len(metadata_csv))
+
     ## Rename columns.
     metadata_csv.rename(columns={"Food 1":"Tube1",
                                 "Food 2":"Tube2",
