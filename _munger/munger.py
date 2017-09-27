@@ -334,19 +334,10 @@ def check_group_by_color_by(group_by, color_by, df):
 
     return group_by, color_by
 
-def groupby_resamp_sum(df,group_by=None,color_by=None,resample_by=None):
+def groupby_resamp_sum(df,resample_by=None):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
-    if group_by is None:
-        group_by='Genotype'
-    else:
-        check_column(group_by, df)
-
-    if color_by is None:
-        color_by='FoodChoice'
-    else:
-        check_column(color_by, df)
 
     if resample_by is None:
         resample_by='10min'
@@ -355,7 +346,7 @@ def groupby_resamp_sum(df,group_by=None,color_by=None,resample_by=None):
     if df.RelativeTime_s.dtype=='float64':
         df.loc[:,'RelativeTime_s']=__pd.to_datetime(df['RelativeTime_s'],unit='s')
 
-    df_groupby_resamp_sum=df.groupby([group_by,color_by,'FlyID'])\
+    df_groupby_resamp_sum=df.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
                         .resample(resample_by,on='RelativeTime_s')\
                         .sum()
 
@@ -368,14 +359,14 @@ def groupby_resamp_sum(df,group_by=None,color_by=None,resample_by=None):
    #   # #    # #      #    # #    # #    # #   #  #    # #
    #   # #    # ######  ####   ####   ####  #    #  ####  ######
 
-def sum_for_timecourse(df,group_by,color_by):
+def sum_for_timecourse(df):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
     temp=df.copy()
     temp_sum=__pd.DataFrame(temp.to_records())
 
-    temp_sum=temp_sum[[group_by,color_by,
+    temp_sum=temp_sum[['Temperature','Genotype','FlyID','FoodChoice',
                        'RelativeTime_s',
                        'FlyCountInChamber',
                         ### Below, add all the columns that are
@@ -388,6 +379,13 @@ def sum_for_timecourse(df,group_by,color_by):
     temp_sum=__add_time_column(temp_sum)
 
     return temp_sum
+
+  ####  #    # #    #  ####  #    # #    #
+ #    # #    # ##  ## #      #    # ##  ##
+ #      #    # # ## #  ####  #    # # ## #
+ #      #    # #    #      # #    # #    #
+ #    # #    # #    # #    # #    # #    #
+  ####   ####  #    #  ####   ####  #    #
 
 def cumsum_for_cumulative(df,group_by,color_by):
     """

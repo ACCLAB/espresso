@@ -84,8 +84,8 @@ class timecourse_plotter():
         if color_by==group_by: # catch as exception:
             raise ValueError('color_by and group_by both have the same value. They should be 2 different column names in the feedlog.')
 
-        resampdf=_munger.groupby_resamp_sum(self.__feeds, group_by, color_by, resample_by)
-        resampdf_sum=_munger.sum_for_timecourse(resampdf, group_by, color_by,)
+        resampdf=_munger.groupby_resamp_sum(self.__feeds, resample_by)
+        resampdf_sum=_munger.sum_for_timecourse(resampdf)
         plotdf=self.__pivot_for_plot(resampdf_sum, group_by, color_by)
 
         groupby_grps=_np.sort( plotdf[group_by].unique() )
