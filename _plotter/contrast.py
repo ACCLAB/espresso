@@ -45,6 +45,9 @@ class contrast_plotter:
     def __init__(self,plotter): # pass along an espresso_plotter instance.
         self._experiment=plotter._experiment
 
+    def __generic_contrast_plotter():
+        pass
+
     def feed_count_per_fly(self, group_by, palette_type='categorical',contrastplot_kwargs=None):
 
         """
