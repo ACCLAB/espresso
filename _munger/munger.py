@@ -112,21 +112,20 @@ def add_padrows(metadata_df, feedlog_df):
     f=feedlog_df.copy()
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
-            padrows=__pd.DataFrame( [ [__np.nan,__np.nan,choice,
-                                     flyid,choice,'NIL',
-                                     __np.nan,__np.nan,__np.nan,
-                                     False,0.5,'PAD', # 0.5 seconds
-                                    ],
-                                   [__np.nan,__np.nan,choice,
-                                    flyid,choice,'NIL',
-                                    __np.nan,__np.nan,__np.nan,
-                                    False,21891,'PAD', # 6 hrs, 5 min, 1 sec in seconds.
-                                   ] ]
-                                )
-            padrows.columns=f.columns
-        # Add the padrows to feedlog. There is no `inplace` argument for append.
-        f=f.append(padrows,ignore_index=True)
+            padrows=__pd.DataFrame( [
+                                        [__np.nan,__np.nan,choice,
+                                         flyid,choice,'NIL',
+                                         __np.nan,__np.nan,__np.nan,
+                                         False,0.5,'PAD'], # 0.5 seconds
 
+                                       [__np.nan,__np.nan,choice,
+                                        flyid,choice,'NIL',
+                                        __np.nan,__np.nan,__np.nan,
+                                        False,21899,'PAD'] # 6 hrs, 4 min, 49 sec in seconds.
+                                   ] )
+            padrows.columns=f.columns
+            # Add the padrows to feedlog. There is no `inplace` argument for append.
+            f=f.append(padrows,ignore_index=True)
     return f
 
   ####   ####  #    # #####  #    # ##### ######
