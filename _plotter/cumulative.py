@@ -146,6 +146,8 @@ class cumulative_plotter:
             rasterlegend_ax=[ axx ]
         for a in rasterlegend_ax:
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
+            ## Set label for y-axis..
+            a.set_ylabel(yvar)
 
         # End and return the figure.
         if ax is None:

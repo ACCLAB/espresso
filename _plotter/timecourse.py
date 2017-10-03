@@ -91,6 +91,12 @@ class timecourse_plotter():
         groupby_grps=_np.sort( plotdf[group_by].unique() )
         num_plots=int( len(groupby_grps) )
 
+        ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
+        yvar_ylabel_dict={'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
+                          'AverageFeedCountPerFly':'Average Feed Count Per Fly'
+                          'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'
+                          }
+
         # Initialise figure.
         _sns.set(style='ticks',context='poster')
         if fig_size is None:
@@ -154,13 +160,8 @@ class timecourse_plotter():
             rasterlegend_ax=[ axx ]
         for a in rasterlegend_ax:
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
-            ## Add additional timecourse plot definitions below.
-            if yvar=='AverageFeedVolumePerFly_µl':
-                a.set_ylabel('Average Feed Volume Per Fly (µl)')
-            elif yvar=='AverageFeedCountPerFly':
-                a.set_ylabel('Average Feed Count Per Fly')
-            elif yvar=='AverageFeedSpeedPerFly_µl/s':
-                a.set_ylabel('Average Feed Speed Per Fly (µl/s)')
+            ## Set ylabels.
+            a.set_ylabel( yvar_ylabel_dict[yvar] )
 
         # End and return the figure.
         if ax is None:
