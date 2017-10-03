@@ -100,7 +100,6 @@ def feedlog(path_to_csv):
  ###### #    # #    #         #####  ###### #    # #####  #    # # ## #      #
  #    # #    # #    #         #      #    # #    # #   #  #    # ##  ## #    #
  #    # #####  #####          #      #    # #####  #    #  ####  #    #  ####
-                      #######
 
 def add_padrows(metadata_df, feedlog_df):
     """
@@ -399,10 +398,17 @@ def cumsum_for_cumulative(df,group_by,color_by):
 
     # Next, groupby for cumsum,
     # Then, groupby AGAIN, and fill Nans.
+    
+    # temp_cumsum=temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
+    #                 .cumsum()\
+    #                 .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
+    #                 .fillna(method='pad')\
+    #                 .fillna(0)
+
     temp_cumsum=temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
                     .cumsum()\
                     .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-                    .fillna(method='pad')\
+                    .fillna(method='ffill')\
                     .fillna(0)
 
     temp_cumsum=__pd.DataFrame( temp_cumsum.to_records() )
