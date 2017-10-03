@@ -93,9 +93,8 @@ class timecourse_plotter():
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
         yvar_ylabel_dict={'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
-                          'AverageFeedCountPerFly':'Average Feed Count Per Fly'
-                          'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'
-                          }
+                          'AverageFeedCountPerFly':'Average Feed Count Per Fly',
+                          'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
 
         # Initialise figure.
         _sns.set(style='ticks',context='poster')
