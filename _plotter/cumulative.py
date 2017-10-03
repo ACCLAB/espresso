@@ -118,6 +118,8 @@ class cumulative_plotter:
             lower_ci = temp_plotdf_mean-temp_plotdf_halfci
             upper_ci = temp_plotdf_mean+temp_plotdf_halfci
 
+            lower_ci[lower_ci<0] = 0 # Make sure no CI drops below zero.
+
             for c in temp_plotdf_mean.columns:
                 plotax.fill_between(temp_plotdf_mean.index,
                                    lower_ci[c],upper_ci[c],
