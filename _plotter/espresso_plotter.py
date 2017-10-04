@@ -282,7 +282,7 @@ class espresso_plotter():
     #      #      #   #  #    # #      #   ##   #      #      #      #      #    # # #   ## #    #
     #      ###### #    #  ####  ###### #    #   #      #      ###### ###### #####  # #    #  ####
 
-    def percent_feeding(self,group_by,
+    def percent_feeding(self,group_by='Genotype',
                         time_start=0,time_end=360,
                         palette_type='categorical'):
         """
@@ -291,7 +291,7 @@ class espresso_plotter():
 
         Keywords
         --------
-        group_by: string, categorical
+        group_by: string, default 'Genotype'
             The column or label indicating the categorical grouping on the x-axis.
 
         time_start, time_end: integer, default 0 and 360 respectively
