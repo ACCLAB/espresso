@@ -465,16 +465,19 @@ def join_cols(df,cols,sep='; '):
     """
     try:
         base_col = df[ cols[0] ].astype(str).copy()
-        col_list = cols[1:].copy()
 
-        try:
-            for j,col in enumerate(col_list):
+        if len(cols)>1: # if more than one column...
+            col_list = cols[1:].copy()
+            try:
+                for j,col in enumerate(col_list):
                     out_col = base_col + sep + df[ col ].astype(str)
                     base_col = out_col
-            return out_col
-
-        except KeyError:
-                print('`{}` is not found in the feeds. Please check.'.format(col))
+                return out_col
+            except KeyError:
+                    print('`{}` is not found in the feeds. Please check.'.format(col))
+        else:
+            # only one column in list; so do nothing.
+            return base_col
 
     except KeyError:
         print('`{}` is not found in the feeds. Please check.'.format(cols[0]))
