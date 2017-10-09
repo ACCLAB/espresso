@@ -22,33 +22,88 @@ class contrast_plotter:
     def __init__(self,plotter):
         self.__feeds=plotter._experiment.feeds.copy()
 
-    def __generic_contrast_plotter(self,
-                                   df,
-                                   yvar,
-                                   color_by=None,
-                                   fig_size=None,
-                                   ax=None,
-                                   contrastplot_kwargs=None):
 
-        import numpy as __np
+    def __volume_duration_munger(self,
+                                 df,
+                                 group_by,
+                                 compare_by,
+                                 color_by):
+
         import pandas as __pd
-
-        import bootstrap_contrast as __bsc
-
-        from . import plot_helpers as __pth
         from _munger import munger as __munger
 
-        # Handle the yvar and color_by keywords.
-        __munger.check_column(yvar,df)
-        if color_by is not None:
-            __munger.check_column(color_by,df)
+        df=self.__feeds.copy()
+
+        for c in [compare_by,color_by]:
+            __munger.check_column(c,df)
+
+        if len( df[compare_by].unique() )<2:
+            raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
+
+        plot_df=__pd.DataFrame(df[['FoodChoice', 'Genotype', 'Temperature','FlyID',
+                         'AverageFeedCountPerFly',
+                         'AverageFeedVolumePerFly_µl',
+                         'FeedDuration_ms']]\
+                            .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
+                            .sum()\
+                            .to_records() )\
+                    .dropna() # for some reason, groupby produces NaN rows...
+
+        plot_df.reset_index(drop=True, inplace=True)
+        plot_df['FeedDuration_min']=plot_df['FeedDuration_ms']/60000
+        plot_df.rename(columns={'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
+                               'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+                               'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
+                       inplace=True)
+
+        plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
+
+        return plot_df
+
+    def __latency_munger(self,
+                         df,
+                         yvar,
+                         group_by,
+                         compare_by,
+                         color_by):
+        import pandas as __pd
+        from _munger import munger as __munger
+
+        df=self.__feeds.copy()
+
+        for c in [compare_by,color_by]:
+            __munger.check_column(c,df)
+
+        if len( df[compare_by].unique() )<2:
+            raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
+
+        plot_df=__pd.DataFrame(df.dropna()[['FoodChoice', 'Genotype', 'Temperature','FlyID','RelativeTime_s']]\
+                               .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
+                               .sum()\
+                               .to_records() )\
+                     .dropna() # for some reason, groupby produces NaN rows...
+
+
+        plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
+
+        return plot_df
+
+    def __generic_contrast_plotter(self,
+                                   plot_df, yvar,
+                                   color_by,
+                                   fig_size=None,
+                                   palette_type='categorical',
+                                   contrastplot_kwargs=None):
+
+        from . import plot_helpers as __pth
+        import bootstrap_contrast as __bsc
+        import numpy as __np
 
         # Handle contrastplot keyword arguments.
         default_kwargs=dict(fig_size=(12,9),
                             float_contrast=False,
                             font_scale=1.4,
-                            swarmplot_kwargs={'size':6,
-                                              'hue':color_by})
+                            swarmplot_kwargs={'size':6})
         if contrastplot_kwargs is None:
             contrastplot_kwargs=default_kwargs
         else:
@@ -56,18 +111,32 @@ class contrast_plotter:
 
         # Select palette.
         if palette_type=='categorical':
-            color_palette=__pth._make_categorial_palette(df,group_by)
+            color_palette=__pth._make_categorial_palette(plot_df,color_by)
         elif palette_type=='sequential':
-            color_palette=__pth._make_sequential_palette(df,group_by)
+            color_palette=__pth._make_sequential_palette(plot_df,color_by)
 
-        f,b=__bsc.contrastplot(data=df,
-                              x=group_by,y=yvar,
-                              idx=__np.sort(total_feeds.loc[:,group_by].unique()),
-                              **contrastplot_kwargs)
+        # Properly arrange idx for grouping.
+        idx=[ tuple(i) for i in __np.array_split( __np.sort(plot_df.plot_groups_with_contrast.unique()),
+                                                len(plot_df.plot_groups.unique()) ) ]
+
+        # Make sure the ylims dont stretch below zero but still capture all the datapoints.
+        ymax=__np.max(plot_df[yvar])*1.1
+
+        f,b=__bsc.contrastplot(plot_df,
+                               x='plot_groups_with_contrast',
+                               y=yvar,
+                               idx=idx,
+                               color_col=color_by,
+                               custom_palette=color_palette,
+                               swarm_ylim=(-ymax/70,ymax),
+                               **contrastplot_kwargs)
         return f,b
 
+
     def feed_count_per_fly(self,
-                           color_by=None,
+                           group_by,
+                           compare_by,
+                           color_by='Genotype',
                            fig_size=None,
                            ax=None,
                            palette_type='categorical',
@@ -83,7 +152,7 @@ class contrast_plotter:
             Accepts a categorical column in the espresso object. Each group in this column
             will be plotted on its own axes.
 
-        color_by: string, default None
+        color_by: string, default 'Genotype'
             Accepts a categorical column in the espresso object. Each group in this column
             will be colored seperately, and stacked as an area plot.
 
@@ -100,18 +169,13 @@ class contrast_plotter:
         import numpy as __np
         import pandas as __pd
 
-        total_feeds=__pd.DataFrame(self.__feeds[['FlyID',group_by,'FeedVol_nl']].\
-                                    groupby([group_by,'FlyID']).count().\
-                                    to_records())
-        total_feeds.columns=[group_by,'FlyID','Total feed count\nper fly']
-        max_feeds=__np.round(total_feeds.max()['Total feed count\nper fly'],decimals=-2)
+        from . import plot_helpers as __pth
 
-        f, b=__generic_contrast_plotter(yvar='Total feed count\nper fly',
-                                        color_by=color_by,
-                                        fig_size=fig_size,
-                                        ax=ax,
-                                        palette_type='categorical',
-                                        contrastplot_kwargs=contrastplot_kwargs)
-        f.suptitle('Contrast Plot Total Feed Count Per Fly')
+        plot_df=self.__volume_duration_munger(self.__feeds,
+                                              group_by, compare_by, color_by)
+        yvar='Total Time\nFeeding Per Fly (min)'
 
-        return f, b
+        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+                                                 fig_size=fig_size,
+                                                 palette_type=palette_type,
+                                                 contrastplot_kwargs=contrastplot_kwargs)
