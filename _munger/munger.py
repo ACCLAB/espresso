@@ -482,7 +482,20 @@ def join_cols(df,cols,sep='; '):
     except KeyError:
         print('`{}` is not found in the feeds. Please check.'.format(cols[0]))
 
-def cat_categorical_columns(df, group_by, compare_by, inplace=True):
+  ####    ##   #####
+ #    #  #  #    #
+ #      #    #   #
+ #      ######   #
+ #    # #    #   #
+  ####  #    #   #
+  ####   ####  #       ####
+ #    # #    # #      #
+ #      #    # #       ####
+ #      #    # #           #
+ #    # #    # #      #    #
+  ####   ####  ######  ####
+
+def cat_categorical_columns(df, group_by, compare_by):
     """
     Convenience function to concatenate categorical columns for
     contrast plotting purposes.
@@ -499,9 +512,4 @@ def cat_categorical_columns(df, group_by, compare_by, inplace=True):
     # Create another categorical column.
     df_out['plot_groups_with_contrast']=join_cols(df_out,gby)
 
-    if inplace:
-        df=df_out
-        return df
-
-    else:
-        return df_out
+    return df_out
