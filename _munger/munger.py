@@ -398,7 +398,7 @@ def cumsum_for_cumulative(df,group_by,color_by):
 
     # Next, groupby for cumsum,
     # Then, groupby AGAIN, and fill Nans.
-    
+
     # temp_cumsum=temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
     #                 .cumsum()\
     #                 .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
@@ -434,3 +434,82 @@ def cumsum_for_cumulative(df,group_by,color_by):
     temp_cumsum=__add_time_column(temp_cumsum)
 
     return temp_cumsum
+
+      #  ####  # #    #
+      # #    # # ##   #
+      # #    # # # #  #
+      # #    # # #  # #
+ #    # #    # # #   ##
+  ####   ####  # #    #
+  ####   ####  #       ####
+ #    # #    # #      #
+ #      #    # #       ####
+ #      #    # #           #
+ #    # #    # #      #    #
+  ####   ####  ######  ####
+
+def join_cols(df,cols,sep='; '):
+    """
+    Convenience function to concatenate all the columns found in
+    the list `cols`, with `sep` as the delimiter.
+
+    Keywords
+    --------
+
+    df: a pandas DataFrame
+
+    cols: a list of column names in `df`.
+
+    sep: str, default '; '
+        The delimiter used to seperate the concatenated columns.
+    """
+    try:
+        base_col = df[ cols[0] ].astype(str).copy()
+
+        if len(cols)>1: # if more than one column...
+            col_list = cols[1:].copy()
+            try:
+                for j,col in enumerate(col_list):
+                    out_col = base_col + sep + df[ col ].astype(str)
+                    base_col = out_col
+                return out_col
+            except KeyError:
+                    print('`{}` is not found in the feeds. Please check.'.format(col))
+        else:
+            # only one column in list; so do nothing.
+            return base_col
+
+    except KeyError:
+        print('`{}` is not found in the feeds. Please check.'.format(cols[0]))
+
+  ####    ##   #####
+ #    #  #  #    #
+ #      #    #   #
+ #      ######   #
+ #    # #    #   #
+  ####  #    #   #
+  ####   ####  #       ####
+ #    # #    # #      #
+ #      #    # #       ####
+ #      #    # #           #
+ #    # #    # #      #    #
+  ####   ####  ######  ####
+
+def cat_categorical_columns(df, group_by, compare_by):
+    """
+    Convenience function to concatenate categorical columns for
+    contrast plotting purposes.
+    """
+    df_out=df.copy()
+
+    # add compare_by to the group_by list.
+    gby=group_by.copy()
+    gby.append(compare_by)
+
+    # create new categorical column.
+    df_out['plot_groups']=join_cols(df_out,group_by)
+
+    # Create another categorical column.
+    df_out['plot_groups_with_contrast']=join_cols(df_out,gby)
+
+    return df_out
