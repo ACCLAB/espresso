@@ -38,7 +38,7 @@ class contrast_plotter:
                                  color_by):
 
         import pandas as __pd
-        from _munger import munger as __munger
+        from .._munger import munger as __munger
 
         df=self.__feeds.copy()
 
@@ -77,7 +77,7 @@ class contrast_plotter:
                          compare_by,
                          color_by):
         import pandas as __pd
-        from _munger import munger as __munger
+        from .._munger import munger as __munger
 
         df=self.__feeds.copy()
 

@@ -106,44 +106,6 @@ def compute_percent_feeding(metadata,feeds,group_by,start=0,end=30):
     percent_feeding_summary.columns=['percent_feeding','ci_lower','ci_upper']
     return percent_feeding_summary
 
-# def latency_ingestion_plots(feeds,first_x_min=180):
-#     """
-#     Convenience function to enable ipython interact to modify contrast plots
-#     for the latency to feed, and total volume ingested, in the `first_x_min`.
-#     """
-#     allfeeds_timewin=feeds[feeds.feed_time_s<first_x_min*60]
-#
-#     latency=_pd.DataFrame(allfeeds_timewin[['FlyID','starved_time',
-#                                            'feed_time_s','feed_duration_s']].\
-#                          dropna().\
-#                          groupby(['starved_time','FlyID']).\
-#                          apply(_np.min).drop(['starved_time','FlyID','feed_duration_s'],axis=1).\
-#                          to_records())
-#     latency['feed_time_min']=latency['feed_time_s']/60
-#     latency.rename(columns={"feed_time_min": "Latency to\nfirst feed (min)"}, inplace=True)
-#     max_latency=_np.round(latency.max()["Latency to\nfirst feed (min)"],decimals=-2)
-#
-#     total_ingestion=_pd.DataFrame(allfeeds_timewin[['FlyID','starved_time','FeedVol_nl']].\
-#                                  dropna().\
-#                                  groupby(['starved_time','FlyID']).\
-#                                  sum().to_records())
-#     total_ingestion.rename(columns={"FeedVol_nl": "Total Ingestion (nl)"}, inplace=True)
-#     max_ingestion=_np.round(total_ingestion.max()["Total Ingestion (nl)"],decimals=-2)
-#
-#     f1,b1=_bsc.contrastplot(data=latency,x='starved_time',y="Latency to\nfirst feed (min)",
-#                           swarm_ylim=(-20,max_latency),
-#                           **bs_kwargs)
-#     f1.suptitle('Latency to feed in first {0} min'.format(first_x_min),fontsize=20)
-#     _plt.show()
-#     print(b1)
-#
-#     f2,b2=_bsc.contrastplot(data=total_ingestion,
-#                           x='starved_time',y='Total Ingestion (nl)',
-#                           swarm_ylim=(-20,max_ingestion),
-#                           **bs_kwargs)
-#     f2.suptitle('Total Volume (nl) ingested in first {0} min'.format(first_x_min),fontsize=20)
-#     _plt.show()
-#     print(b2)
 
  #    #   ##   #    # ######    #####    ##   #      ###### ##### ##### ######  ####
  ##  ##  #  #  #   #  #         #    #  #  #  #      #        #     #   #      #
