@@ -17,9 +17,9 @@ import pandas as _pd
 import seaborn as _sns
 import bootstrap_contrast as _bsc
 
-from _plotter import espresso_plotter as _espresso_plotter
-from _plotter import plot_helpers as _plot_helpers
-from _munger import munger as _munger
+from ._plotter import espresso_plotter as _espresso_plotter
+from ._plotter import plot_helpers as _plot_helpers
+from ._munger import munger as _munger
 
 class espresso(object):
     """
