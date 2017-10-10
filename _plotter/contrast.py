@@ -10,6 +10,14 @@ contrast plot functions for espresso objects.
 class contrast_plotter:
     """
     contrast plotting class for espresso object.
+
+    Available methods
+    -----------------
+    feed_count_per_fly
+    feed_volume_per_fly
+    feed_duration_per_fly
+    feed_speed_per_fly
+    latency_to_feed_per_fly
     """
 
     #    #    #    #    #####
@@ -40,10 +48,13 @@ class contrast_plotter:
         if len( df[compare_by].unique() )<2:
             raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
 
-        plot_df=__pd.DataFrame(df[['FoodChoice', 'Genotype', 'Temperature','FlyID',
-                         'AverageFeedCountPerFly',
-                         'AverageFeedVolumePerFly_µl',
-                         'FeedDuration_ms']]\
+        for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
+            df[col].fillna(value=0,inplace=True)
+
+        plot_df=__pd.DataFrame(df[['Temperature','Genotype','FoodChoice','FlyID',
+                                   'AverageFeedCountPerFly',
+                                   'AverageFeedVolumePerFly_µl',
+                                   'FeedDuration_ms']]\
                             .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
                             .sum()\
                             .to_records() )\
@@ -51,18 +62,17 @@ class contrast_plotter:
 
         plot_df.reset_index(drop=True, inplace=True)
         plot_df['FeedDuration_min']=plot_df['FeedDuration_ms']/60000
+        plot_df['Feed Speed\nPer Fly (nl/s)']=(plot_df['AverageFeedVolumePerFly_µl'] / plot_df['FeedDuration_ms'])*1000000
         plot_df.rename(columns={'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
                                'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
                                'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
                        inplace=True)
-
         plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
 
         return plot_df
 
     def __latency_munger(self,
                          df,
-                         yvar,
                          group_by,
                          compare_by,
                          color_by):
@@ -77,13 +87,17 @@ class contrast_plotter:
         if len( df[compare_by].unique() )<2:
             raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
 
-        plot_df=__pd.DataFrame(df.dropna()[['FoodChoice', 'Genotype', 'Temperature','FlyID','RelativeTime_s']]\
-                               .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
-                               .sum()\
-                               .to_records() )\
+        plot_df=__pd.DataFrame(df.dropna()[['Temperature','Genotype','FoodChoice','FlyID',
+                                            'RelativeTime_s']]\
+                                 .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
+                                 .min()\
+                                 .to_records() )\
                      .dropna() # for some reason, groupby produces NaN rows...
 
-
+        plot_df.reset_index(drop=True, inplace=True)
+        plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
+        plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
+                       inplace=True)
         plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
 
         return plot_df
@@ -150,11 +164,15 @@ class contrast_plotter:
         --------
         group_by: string, default None
             Accepts a categorical column in the espresso object. Each group in this column
-            will be plotted on its own axes.
+            will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column will be used
+            as the factor for generating and visualizing contrasts.
 
         color_by: string, default 'Genotype'
             Accepts a categorical column in the espresso object. Each group in this column
-            will be colored seperately, and stacked as an area plot.
+            will be colored seperately.
 
         palette_type: string, 'categorical' or 'sequential'.
 
@@ -173,7 +191,204 @@ class contrast_plotter:
 
         plot_df=self.__volume_duration_munger(self.__feeds,
                                               group_by, compare_by, color_by)
+
+        yvar='Total Feed Count\nPer Fly'
+
+        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+                                                 fig_size=fig_size,
+                                                 palette_type=palette_type,
+                                                 contrastplot_kwargs=contrastplot_kwargs)
+
+    def feed_volume_per_fly(self,
+                           group_by,
+                           compare_by,
+                           color_by='Genotype',
+                           fig_size=None,
+                           ax=None,
+                           palette_type='categorical',
+                           contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the feed volumes between groups. Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column will be used as the factor for generating and visualizing contrasts.
+
+        color_by: string, default 'Genotype'
+            Accepts a categorical column in the espresso object. Each group in this column will be colored seperately.
+
+        palette_type: string, 'categorical' or 'sequential'.
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Figure, and a pandas DataFrame with the statistics.
+        """
+        import numpy as __np
+        import pandas as __pd
+
+        from . import plot_helpers as __pth
+
+        plot_df=self.__volume_duration_munger(self.__feeds,
+                                              group_by, compare_by, color_by)
+
+        yvar='Total Feed Volume\nPer Fly (µl)'
+
+        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+                                                 fig_size=fig_size,
+                                                 palette_type=palette_type,
+                                                 contrastplot_kwargs=contrastplot_kwargs)
+
+    def feed_duration_per_fly(self,
+                           group_by,
+                           compare_by,
+                           color_by='Genotype',
+                           fig_size=None,
+                           ax=None,
+                           palette_type='categorical',
+                           contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the feed durations between groups.
+        Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column
+            will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column will be used
+            as the factor for generating and visualizing contrasts.
+
+        color_by: string, default 'Genotype'
+            Accepts a categorical column in the espresso object. Each group in this column
+            will be colored seperately.
+
+        palette_type: string, 'categorical' or 'sequential'.
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Figure, and a pandas DataFrame with the statistics.
+        """
+        import numpy as __np
+        import pandas as __pd
+
+        from . import plot_helpers as __pth
+
+        plot_df=self.__volume_duration_munger(self.__feeds,
+                                              group_by, compare_by, color_by)
+
         yvar='Total Time\nFeeding Per Fly (min)'
+
+        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+                                                 fig_size=fig_size,
+                                                 palette_type=palette_type,
+                                                 contrastplot_kwargs=contrastplot_kwargs)
+
+    def feed_speed_per_fly(self,
+                           group_by,
+                           compare_by,
+                           color_by='Genotype',
+                           fig_size=None,
+                           ax=None,
+                           palette_type='categorical',
+                           contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the feed speeds (across the entire assay duration) between groups. Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column will be used as the factor for generating and visualizing contrasts.
+
+        color_by: string, default 'Genotype'
+            Accepts a categorical column in the espresso object. Each group in this column will be colored seperately.
+
+        palette_type: string, 'categorical' or 'sequential'.
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Figure, and a pandas DataFrame with the statistics.
+        """
+        import numpy as __np
+        import pandas as __pd
+
+        from . import plot_helpers as __pth
+
+        plot_df=self.__volume_duration_munger(self.__feeds,
+                                              group_by, compare_by, color_by)
+
+        yvar='Feed Speed\nPer Fly (nl/s)'
+
+        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+                                                 fig_size=fig_size,
+                                                 palette_type=palette_type,
+                                                 contrastplot_kwargs=contrastplot_kwargs)
+    def latency_to_feed_per_fly(self,
+                                group_by,
+                                compare_by,
+                                color_by='Genotype',
+                                fig_size=None,
+                                ax=None,
+                                palette_type='categorical',
+                                contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the latency to first feed between groups.
+        Place any contrast plot keywords in a dictionary and pass in through `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in this column will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column will be used as the factor for generating and visualizing contrasts.
+
+        color_by: string, default 'Genotype'
+            Accepts a categorical column in the espresso object. Each group in this column will be colored seperately.
+
+        palette_type: string, 'categorical' or 'sequential'.
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Figure, and a pandas DataFrame with the statistics.
+        """
+        import numpy as __np
+        import pandas as __pd
+
+        from . import plot_helpers as __pth
+
+        plot_df=self.__latency_munger(self.__feeds,
+                                      group_by, compare_by, color_by)
+
+        yvar='Latency to\nFirst Feed (min)'
 
         return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
                                                  fig_size=fig_size,
