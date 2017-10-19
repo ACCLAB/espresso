@@ -407,3 +407,21 @@ class espresso(object):
         del self.__dict__['added_labels']
 
         return "All added labels {0} have been dropped.".format(dropped)
+
+    def save(self, filename):
+        '''Saves the current espresso object as a Python pickle.'''
+        import pickle as __pick
+
+        with open(filename, 'wb') as f:
+            # To ensure compatibility with Py2, set protocol=2
+            __pick.dump(self, f, protocol=2)
+
+def load(filename):
+    '''Loads a saved espresso object.'''
+    import pickle as __pick
+
+    with open(filename, 'rb') as f:
+        # Pickle the 'data' dictionary using the highest protocol available.
+        out = __pick.load(f)
+
+    return out
