@@ -129,6 +129,10 @@ class contrast_plotter:
         elif palette_type=='sequential':
             color_palette=__pth._make_sequential_palette(plot_df,color_by)
 
+        custom_pal = dict( zip( plot_df['plot_groups_with_contrast'].unique(),
+                                color_palette )
+                          )
+
         # Properly arrange idx for grouping.
         idx=[ tuple(i) for i in __np.array_split( __np.sort(plot_df.plot_groups_with_contrast.unique()),
                                                 len(plot_df.plot_groups.unique()) ) ]
@@ -141,7 +145,7 @@ class contrast_plotter:
                                y=yvar,
                                idx=idx,
                                color_col=color_by,
-                               custom_palette=color_palette,
+                               custom_palette=custom_pal,
                                swarm_ylim=(-ymax/70,ymax),
                                **contrastplot_kwargs)
         return f,b
