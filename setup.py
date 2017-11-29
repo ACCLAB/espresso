@@ -18,7 +18,7 @@ def check_dependencies():
     try:
         import bootstrap_contrast
     except ImportError:
-        to_install.append('bootstrap_contrast>=0.327')
+        to_install.append('bootstrap_contrast>=1.0')
     try:
         import numpy
     except ImportError:
