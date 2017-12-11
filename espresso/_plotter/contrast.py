@@ -119,36 +119,39 @@ class contrast_plotter:
                             font_scale=1.4,
                             swarmplot_kwargs={'size':6})
         if contrastplot_kwargs is None:
-            contrastplot_kwargs=default_kwargs
+            contrastplot_kwargs = default_kwargs
         else:
-            contrastplot_kwargs=__bsc.merge_two_dicts(default_kwargs,contrastplot_kwargs)
+            contrastplot_kwargs = __bsc.merge_two_dicts(default_kwargs,
+                contrastplot_kwargs)
 
         # Select palette.
-        if palette_type=='categorical':
-            color_palette=__pth._make_categorial_palette(plot_df,color_by)
-        elif palette_type=='sequential':
-            color_palette=__pth._make_sequential_palette(plot_df,color_by)
+        if palette_type == 'categorical':
+            color_palette = __pth._make_categorial_palette(plot_df, color_by)
+        elif palette_type == 'sequential':
+            color_palette = __pth._make_sequential_palette(plot_df, color_by)
 
-        custom_pal = dict( zip( plot_df['plot_groups_with_contrast'].unique(),
-                                color_palette )
-                          )
+        custom_pal = dict(zip(plot_df[color_by].unique(),
+                              color_palette))
 
         # Properly arrange idx for grouping.
-        idx=[ tuple(i) for i in __np.array_split( __np.sort(plot_df.plot_groups_with_contrast.unique()),
-                                                len(plot_df.plot_groups.unique()) ) ]
+        unique_ids = __np.sort(plot_df.plot_groups_with_contrast.unique())
+        split_idxs = __np.array_split(unique_ids,
+            len(plot_df.plot_groups.unique()))
+        idx = [tuple(i) for i in split_idxs]
 
-        # Make sure the ylims dont stretch below zero but still capture all the datapoints.
-        ymax=__np.max(plot_df[yvar])*1.1
+        # Make sure the ylims don't stretch below zero but still capture all
+        # the datapoints.
+        ymax = __np.max(plot_df[yvar])*1.1
 
-        f,b=__bsc.contrastplot(plot_df,
+        f,b = __bsc.contrastplot(plot_df,
                                x='plot_groups_with_contrast',
                                y=yvar,
                                idx=idx,
                                color_col=color_by,
                                custom_palette=custom_pal,
-                               swarm_ylim=(-ymax/70,ymax),
+                               swarm_ylim=(-ymax/70, ymax),
                                **contrastplot_kwargs)
-        return f,b
+        return f, b
 
 
     def feed_count_per_fly(self,
