@@ -34,9 +34,9 @@ def check_dependencies():
     try:
         import pandas
         if int(pandas.__version__.split('.')[1])<20:
-            to_install.append('pandas>=0.20.1')
+            to_install.append('pandas>=0.21')
     except ImportError:
-        to_install.append('pandas>=0.20.1')
+        to_install.append('pandas>=0.21')
     try:
         import seaborn
     except ImportError:
@@ -50,7 +50,7 @@ if __name__=="__main__":
     setup(name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.1',
+        version='0.1.1',
         description='Analysis of ESPRESSO experiments run on CRITTA.',
         packages=find_packages(),
         install_requires=installs,

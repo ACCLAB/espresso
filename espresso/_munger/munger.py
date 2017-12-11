@@ -500,16 +500,18 @@ def cat_categorical_columns(df, group_by, compare_by):
     Convenience function to concatenate categorical columns for
     contrast plotting purposes.
     """
-    df_out=df.copy()
+    df_out = df.copy()
 
-    # add compare_by to the group_by list.
-    gby=group_by.copy()
+    if isinstance(group_by, str):
+        df_out['plot_groups'] = df_out[group_by]
+        gby = [group_by, ]
+    elif isinstance(group_by, list):
+        # create new categorical column.
+        df_out['plot_groups'] = join_cols(df_out, group_by)
+        gby = ['plot_groups',]
+
     gby.append(compare_by)
-
-    # create new categorical column.
-    df_out['plot_groups']=join_cols(df_out,group_by)
-
     # Create another categorical column.
-    df_out['plot_groups_with_contrast']=join_cols(df_out,gby)
+    df_out['plot_groups_with_contrast'] = join_cols(df_out, gby)
 
     return df_out
