@@ -110,8 +110,8 @@ class contrast_plotter:
                                    contrastplot_kwargs=None):
 
         from . import plot_helpers as __pth
-        import bootstrap_contrast as __bsc
         import numpy as __np
+        import dabest
 
         # Handle contrastplot keyword arguments.
         default_kwargs=dict(fig_size=(12,9),
@@ -141,16 +141,16 @@ class contrast_plotter:
 
         # Make sure the ylims don't stretch below zero but still capture all
         # the datapoints.
-        ymax = __np.max(plot_df[yvar])*1.1
+        ymax = np.max(plot_df[yvar])*1.1
 
-        f,b = __bsc.contrastplot(plot_df,
-                               x='plot_groups_with_contrast',
-                               y=yvar,
-                               idx=idx,
-                               color_col=color_by,
-                               custom_palette=custom_pal,
-                               swarm_ylim=(-ymax/70, ymax),
-                               **contrastplot_kwargs)
+        f,b = dabest.plot(plot_df,
+                          x='plot_groups_with_contrast',
+                          y=yvar,
+                          idx=idx,
+                          color_col=color_by,
+                          custom_palette=custom_pal,
+                          swarm_ylim=(-ymax/70, ymax),
+                          **contrastplot_kwargs)
         return f, b
 
 

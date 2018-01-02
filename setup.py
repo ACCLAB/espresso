@@ -16,9 +16,9 @@ except ImportError:
 def check_dependencies():
     to_install=[]
     try:
-        import bootstrap_contrast
+        import dabest
     except ImportError:
-        to_install.append('bootstrap_contrast>=1.0')
+        to_install.append('dabest>=0.1')
     try:
         import numpy
     except ImportError:
