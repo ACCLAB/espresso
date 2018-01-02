@@ -1,21 +1,33 @@
-MIT License
 
 Copyright (c) 2017 Joses W. Ho
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. General. The software, documentation and any fonts accompanying this License
+whether on disk, in read only memory, on any other media or in any other form
+(collectively the “Software”) are licensed, not sold, to you by Joses W. Ho
+(the Author) for use only under the terms of this License, and the author
+reserves all rights not expressly granted to you. The rights granted herein are
+limited to the author's intellectual property rights in the software and do not
+include any other patents or intellectual property rights. You own the media on
+which the Software is recorded but the Author retain ownership of the Software
+itself.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Transfer. You may not rent, lease, lend or sublicense the Software. You may,
+however, make a one-time permanent transfer of all of your license rights to the
+Software to another party, provided that: (a) the transfer must include all of
+the Software, including all its component parts, original media, printed
+materials and this License; (b) you do not retain any copies of the Software,
+full or partial, including copies stored on a computer or other storage device;
+and (c) the party receiving the Software reads and agrees to accept the terms
+and conditions of this License.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Termination. This License is effective until terminated. Your rights under
+this License will terminate automatically without notice from the Author if you
+fail to comply with any term(s) of this License.
+
+4.  Disclaimer of Warranties. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
