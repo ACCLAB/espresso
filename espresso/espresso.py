@@ -15,7 +15,6 @@ import scipy as _sp
 import pandas as _pd
 
 import seaborn as _sns
-import bootstrap_contrast as _bsc
 
 from ._plotter import espresso_plotter as _espresso_plotter
 from ._plotter import plot_helpers as _plot_helpers
@@ -25,15 +24,16 @@ class espresso(object):
     """
     Creates an `espresso` experiment for analysis.
 
-    Supply either a folder with raw feedlog(s) and corresponding metadata file(s) in CSV format from
-    CRITTA, or a pre-processed FeedLog DataFrame and its corresponding MetaData DataFrame.
+    Supply either a folder with raw feedlog(s) and corresponding metadata
+    file(s) in CSV format from CRITTA, or a pre-processed FeedLog DataFrame and
+    its corresponding MetaData DataFrame.
 
     Keywords
     --------
 
     folder: string
-        Path to a folder with at least one FeedLog, along with its corresponding MetaData.
-
+        Path to a folder with at least one FeedLog, along with its corresponding
+        MetaData.
     """
     #       #    #       #       #####
     #       ##   #       #         #

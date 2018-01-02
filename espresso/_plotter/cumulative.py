@@ -28,7 +28,6 @@ import matplotlib.pyplot as _plt
 import matplotlib.ticker as _tk
 
 import seaborn as _sns
-import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _plot_helpers
 from .._munger import munger as _munger
@@ -197,7 +196,7 @@ class cumulative_plotter:
         -------
         matplotlib AxesSubplot(s)
         """
-        out=self.__generic_cumulative_plotter(yvar='Cumulative Volume (nl)',
+        out = self.__generic_cumulative_plotter(yvar='Cumulative Volume (nl)',
                                               group_by=group_by,
                                               color_by=color_by,
                                               resample_by=resample_by,
@@ -249,7 +248,7 @@ class cumulative_plotter:
         -------
         matplotlib AxesSubplot(s)
         """
-        out=self.__generic_cumulative_plotter(yvar='Cumulative Feed Count',
+        out = self.__generic_cumulative_plotter(yvar='Cumulative Feed Count',
                                               group_by=group_by,
                                               color_by=color_by,
                                               resample_by=resample_by,

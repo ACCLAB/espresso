@@ -13,7 +13,6 @@ import pandas as _pd
 import matplotlib.pyplot as _plt
 import matplotlib.ticker as _tk
 import seaborn as _sns
-import bootstrap_contrast as _bsc
 
 #####  #       ####  #####    #    # ###### #      #####  ###### #####   ####
 #    # #      #    #   #      #    # #      #      #    # #      #    # #

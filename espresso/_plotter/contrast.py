@@ -37,13 +37,13 @@ class contrast_plotter:
                                  compare_by,
                                  color_by):
 
-        import pandas as __pd
-        from .._munger import munger as __munger
+        import pandas as pd
+        from .._munger import munger as munge
 
-        df=self.__feeds.copy()
+        df = self.__feeds.copy()
 
         for c in [compare_by,color_by]:
-            __munger.check_column(c,df)
+            munge.check_column(c,df)
 
         if len( df[compare_by].unique() )<2:
             raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
@@ -51,7 +51,7 @@ class contrast_plotter:
         for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
             df[col].fillna(value=0,inplace=True)
 
-        plot_df=__pd.DataFrame(df[['Temperature','Genotype','FoodChoice','FlyID',
+        plot_df=pd.DataFrame(df[['Temperature','Genotype','FoodChoice','FlyID',
                                    'AverageFeedCountPerFly',
                                    'AverageFeedVolumePerFly_µl',
                                    'FeedDuration_ms']]\
@@ -67,7 +67,7 @@ class contrast_plotter:
                                'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
                                'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
                        inplace=True)
-        plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
+        plot_df = munge.cat_categorical_columns(plot_df,group_by,compare_by)
 
         return plot_df
 
@@ -76,20 +76,22 @@ class contrast_plotter:
                          group_by,
                          compare_by,
                          color_by):
-        import pandas as __pd
-        from .._munger import munger as __munger
+        import pandas as pd
+        from .._munger import munger as munge
 
-        df=self.__feeds.copy()
+        df = self.__feeds.copy()
 
         for c in [compare_by,color_by]:
-            __munger.check_column(c,df)
+            munge.check_column(c,df)
 
         if len( df[compare_by].unique() )<2:
             raise ValueError('{} has less than 2 categories and cannot be used for `compare_by`.'.format(compare_by))
 
-        plot_df=__pd.DataFrame(df.dropna()[['Temperature','Genotype','FoodChoice','FlyID',
+        plot_df = pd.DataFrame(df.dropna()[['Temperature','Genotype',
+                                            'FoodChoice','FlyID',
                                             'RelativeTime_s']]\
-                                 .groupby(['Temperature','Genotype','FoodChoice','FlyID'])\
+                                 .groupby(['Temperature','Genotype',
+                                           'FoodChoice','FlyID'])\
                                  .min()\
                                  .to_records() )\
                      .dropna() # for some reason, groupby produces NaN rows...
@@ -98,9 +100,27 @@ class contrast_plotter:
         plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
         plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
                        inplace=True)
-        plot_df=__munger.cat_categorical_columns(plot_df,group_by,compare_by)
+        plot_df = munge.cat_categorical_columns(plot_df, group_by, compare_by)
 
         return plot_df
+
+    def __merge_two_dicts(x, y):
+        """
+        Given two dicts, merge them into a new dict as a shallow copy.
+        Any overlapping keys in `y` will override the values in `x`.
+
+        Taken from https://stackoverflow.com/questions/38987/
+        how-to-merge-two-python-dictionaries-in-a-single-expression
+
+        Keywords:
+            x, y: dicts
+
+        Returns:
+            A dictionary containing a union of all keys in both original dicts.
+        """
+        z = x.copy()
+        z.update(y)
+        return z
 
     def __generic_contrast_plotter(self,
                                    plot_df, yvar,
@@ -109,33 +129,33 @@ class contrast_plotter:
                                    palette_type='categorical',
                                    contrastplot_kwargs=None):
 
-        from . import plot_helpers as __pth
-        import numpy as __np
+        from . import plot_helpers as pth
+        import numpy as np
         import dabest
 
         # Handle contrastplot keyword arguments.
-        default_kwargs=dict(fig_size=(12,9),
-                            float_contrast=False,
-                            font_scale=1.4,
-                            swarmplot_kwargs={'size':6})
+        default_kwargs = dict(fig_size=(12,9),
+                              float_contrast=False,
+                              font_scale=1.4,
+                              swarmplot_kwargs={'size':6})
         if contrastplot_kwargs is None:
             contrastplot_kwargs = default_kwargs
         else:
-            contrastplot_kwargs = __bsc.merge_two_dicts(default_kwargs,
+            contrastplot_kwargs = __merge_two_dicts(default_kwargs,
                 contrastplot_kwargs)
 
         # Select palette.
         if palette_type == 'categorical':
-            color_palette = __pth._make_categorial_palette(plot_df, color_by)
+            color_palette = pth._make_categorial_palette(plot_df, color_by)
         elif palette_type == 'sequential':
-            color_palette = __pth._make_sequential_palette(plot_df, color_by)
+            color_palette = pth._make_sequential_palette(plot_df, color_by)
 
         custom_pal = dict(zip(plot_df[color_by].unique(),
                               color_palette))
 
         # Properly arrange idx for grouping.
-        unique_ids = __np.sort(plot_df.plot_groups_with_contrast.unique())
-        split_idxs = __np.array_split(unique_ids,
+        unique_ids = np.sort(plot_df.plot_groups_with_contrast.unique())
+        split_idxs = np.array_split(unique_ids,
             len(plot_df.plot_groups.unique()))
         idx = [tuple(i) for i in split_idxs]
 
@@ -197,11 +217,6 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        import numpy as __np
-        import pandas as __pd
-
-        from . import plot_helpers as __pth
-
         plot_df = self.__volume_duration_munger(self.__feeds,
                                               group_by, compare_by, color_by)
 
@@ -252,11 +267,6 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        import numpy as __np
-        import pandas as __pd
-
-        from . import plot_helpers as __pth
-
         plot_df = self.__volume_duration_munger(self.__feeds,
                                               group_by, compare_by, color_by)
 
@@ -310,17 +320,12 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        import numpy as __np
-        import pandas as __pd
-
-        from . import plot_helpers as __pth
-
         plot_df = self.__volume_duration_munger(self.__feeds,
                                               group_by, compare_by, color_by)
 
         yvar = 'Total Time\nFeeding Per Fly (min)'
 
-        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+        return self.__generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
@@ -365,17 +370,12 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        import numpy as __np
-        import pandas as __pd
-
-        from . import plot_helpers as __pth
-
         plot_df = self.__volume_duration_munger(self.__feeds,
                                               group_by, compare_by, color_by)
 
         yvar = 'Feed Speed\nPer Fly (nl/s)'
 
-        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+        return self.__generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
@@ -420,17 +420,12 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        import numpy as __np
-        import pandas as __pd
-
-        from . import plot_helpers as __pth
-
         plot_df = self.__latency_munger(self.__feeds,
                                       group_by, compare_by, color_by)
 
         yvar = 'Latency to\nFirst Feed (min)'
 
-        return  self.__generic_contrast_plotter(plot_df, yvar, color_by,
+        return self.__generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)

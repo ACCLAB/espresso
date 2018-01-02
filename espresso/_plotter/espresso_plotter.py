@@ -24,7 +24,6 @@ import matplotlib.pyplot as _plt
 import matplotlib.patches as _mpatches # for custom legends.
 
 import seaborn as _sns
-import bootstrap_contrast as _bsc
 
 from . import plot_helpers as _plot_helpers
 from .._munger import munger as _munger
@@ -67,11 +66,11 @@ class espresso_plotter():
     def __init__(self,espresso): # pass along an espresso instance.
 
         # Create attribute so the other methods below can access the espresso object.
-        self._experiment=espresso
+        self._experiment = espresso
         # call obj.plot.xxx to access these methods.
-        self.contrast=_contrast.contrast_plotter(self)
-        self.timecourse=_timecourse.timecourse_plotter(self)
-        self.cumulative=_cumulative.cumulative_plotter(self)
+        self.contrast = _contrast.contrast_plotter(self)
+        self.timecourse = _timecourse.timecourse_plotter(self)
+        self.cumulative = _cumulative.cumulative_plotter(self)
 
 
     #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
@@ -318,9 +317,11 @@ class espresso_plotter():
 
         # Select palette.
         if palette_type=='categorical':
-            color_palette=_plot_helpers._make_categorial_palette(self._experiment.feeds,group_by)
+            color_palette=_plot_helpers._make_categorial_palette(self._experiment.feeds,
+                group_by)
         elif palette_type=='sequential':
-            color_palette=_plot_helpers._make_sequential_palette(self._experiment.feeds,group_by)
+            color_palette=_plot_helpers._make_sequential_palette(self._experiment.feeds,
+                group_by)
 
         # Set style.
         _sns.set(style='ticks',context='talk',font_scale=1.1)
@@ -334,19 +335,25 @@ class espresso_plotter():
                         alpha=0.25,
                         color='grey' )
         # Then plot the line.
-        percent_feeding_summary.percent_feeding.plot.line(ax=ax,color='k',lw=1.2)
+        percent_feeding_summary.percent_feeding.plot.line(ax=ax,
+            color='k',lw=1.2)
 
         for j,s in enumerate(ydata):
             ax.plot(j, s, 'o',
                     color=color_palette[j])
 
         # Aesthetic tweaks.
-        ax.xaxis.set_ticks( [i for i in range( 0,len(percent_feeding_summary) )] )
-        ax.xaxis.set_ticklabels( percent_feeding_summary.index.tolist() )
+        ax.xaxis.set_ticks([i for i in range(0,len(percent_feeding_summary))])
+        ax.xaxis.set_ticklabels(percent_feeding_summary.index.tolist())
 
         xmax=ax.xaxis.get_ticklocs()[-1]
         ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
-        _bsc.rotate_ticks(ax, angle=45, alignment='right')
+
+        # __rotate_ticks(ax, angle=45, alignment='right')
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(45)
+            tick.set_horizontalalignment('right')
+
         _sns.despine(ax=ax,trim=True,offset={'left':1})
         ax.set_ylabel('Percent Feeding')
 
