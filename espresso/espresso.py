@@ -140,29 +140,60 @@ class espresso(object):
         # Assign feed choice to the allfeeds DataFrame.
         choice1 = allfeeds['Tube1'].unique()
         choice2 = allfeeds['Tube2'].unique()
+        food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
+        food_choice_cols.append('FlyID')
 
-        if len(choice1)>1 or len(choice2)>1:
-            raise ValueError('More than one food choice detected per food column.'
-                'Please check the file '+metadata)
-        else:
-            choice1 = choice1[0]
-            choice2 = choice2[0]
-            try:
-                there_is_no_second_tube = _np.isnan(choice2)
-                if there_is_no_second_tube:
-                    ## Drop anomalous feed events from Tube2 (aka ChoiceIdx = 1),
-                    ## where there was no feed tube in the first place.
-                    allfeeds.drop(allfeeds[allfeeds.ChoiceIdx == 1].index,inplace=True)
-                    allfeeds['FoodChoice'] = _np.repeat(choice1,len(allfeeds))
-            except TypeError:
-                allfeeds['FoodChoice'] = _np.repeat('xx',len(allfeeds))
-                allfeeds.loc[_np.where(allfeeds.ChoiceIdx == 0)[0],'FoodChoice'] = choice1
-                allfeeds.loc[_np.where(allfeeds.ChoiceIdx == 1)[0],'FoodChoice'] = choice2
-                ## Add column to identify which FeedLog file the feed data came from.
-                allfeeds['FeedLog_rawfile'] = _np.repeat(feedlog, len(allfeeds))
-                # ## Turn the 'Valid' column into integers.
-                # ## 1 -- True; 0 -- False
-                # allfeeds['Valid'] = allfeeds.Valid.astype('int')
+        food_choice_dict = allflies[food_choice_cols]
+        food_choice_dict.set_index('FlyID', inplace=True)
+
+        allfeeds['FoodChoice'] = allfeeds.apply(lambda x:
+                                    munger.assign_food_choice(x['FlyID'],
+                                                         x['ChoiceIdx']+1,
+                                                         food_choice_dict),
+                                               axis=1)
+        # Discard superfluous columns.
+        allfeeds.drop('ID', axis = 1, inplace = True)
+        valid_FoodChoice = ~allfeeds.FoodChoice.isna()
+        valid_Feed_status = allfeeds.Valid
+        allfeeds = allfeeds[valid_FoodChoice & valid_Feed_status]
+
+
+        # rename columns and food types as is appropriate.
+        for df in [allflies, allfeeds]:
+            df.loc[:,'Genotype'] = df.Genotype.str.replace('W','w')
+
+        # choice2 = allfeeds['Tube2'].unique()[0]
+        # if np.isnan(choice2):
+        #     # Drop anomalous feed events from Tube2 (aka ChoiceIdx = 1),
+        #     # where there was no feed tube in the first place.
+        #     allfeeds.drop(allfeeds[allfeeds.ChoiceIdx == 1].index,
+        #                   inplace = True)
+        # else:
+        #
+        #
+        # # if len(choice1)>1 or len(choice2)>1:
+        # #     raise ValueError('More than one food choice detected per food column.'
+        # #         'Please check the file '+metadata)
+        #
+        # else:
+        #     choice1 = choice1[0]
+        #     choice2 = choice2[0]
+        #     try:
+        #         there_is_no_second_tube = np.isnan(choice2)
+        #         if there_is_no_second_tube:
+        #             ## Drop anomalous feed events from Tube2 (aka ChoiceIdx = 1),
+        #             ## where there was no feed tube in the first place.
+        #             allfeeds.drop(allfeeds[allfeeds.ChoiceIdx == 1].index,inplace = True)
+        #             allfeeds['FoodChoice'] = np.repeat(choice1, len(allfeeds))
+        #     except TypeError:
+        #         allfeeds['FoodChoice'] = np.repeat('xx',len(allfeeds))
+        #         allfeeds.loc[np.where(allfeeds.ChoiceIdx == 0)[0],'FoodChoice'] = choice1
+        #         allfeeds.loc[np.where(allfeeds.ChoiceIdx == 1)[0],'FoodChoice'] = choice2
+        #         ## Add column to identify which FeedLog file the feed data came from.
+        #         allfeeds['FeedLog_rawfile'] = np.repeat(feedlog, len(allfeeds))
+        #         # ## Turn the 'Valid' column into integers.
+        #         # ## 1 -- True; 0 -- False
+        #         # allfeeds['Valid'] = allfeeds.Valid.astype('int')
 
         # Reset the indexes.
         for df in [allflies,allfeeds]:
