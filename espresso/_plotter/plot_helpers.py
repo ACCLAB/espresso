@@ -130,15 +130,15 @@ def _make_sequential_palette(df, group_by):
     _seq_palette=_sns.cubehelix_palette( n_colors=len(df[group_by].unique()) )
     return _seq_palette
 
-def format_timecourse_xaxis(ax):
+def format_timecourse_xaxis(ax, max_x):
     """
     Convenience function to format a timecourse plot's x-axis.
     """
-    ax.set_xlim(0,21600)
-    ax.xaxis.set_ticks(range(0,25200,3600))
+    ax.set_xlim(0, max_x)
+    ax.xaxis.set_ticks(range(0, max_x + 3600, 3600))
     ax.xaxis.set_minor_locator( _tk.MultipleLocator(base=1800) )
-    ax.set_xlabel('Time (h)',fontsize=17)
-    newlabels=[ str(int(t/3600)) for t in ax.xaxis.get_ticklocs(minor=False) ]
+    ax.set_xlabel('Time (h)',fontsize = 17)
+    newlabels = [str(int(t/3600)) for t in ax.xaxis.get_ticklocs(minor=False)]
     ax.set_xticklabels(newlabels)
-    ax.tick_params(axis='x', which='major',length=10)
-    ax.tick_params(axis='x', which='minor',length=6)
+    ax.tick_params(axis='x', which='major', length=10)
+    ax.tick_params(axis='x', which='minor', length=6)
