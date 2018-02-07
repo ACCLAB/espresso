@@ -7,18 +7,7 @@
 Package for analysis of ESPRESSO experiments run on CRITTA.
 """
 
-import sys as _sys
-import os as _os
 
-import numpy as _np
-import scipy as _sp
-import pandas as _pd
-
-import seaborn as _sns
-
-from ._plotter import espresso_plotter as _espresso_plotter
-from ._plotter import plot_helpers as _plot_helpers
-from ._munger import munger as _munger
 
 class espresso(object):
     """
@@ -30,10 +19,13 @@ class espresso(object):
 
     Keywords
     --------
-
     folder: string
         Path to a folder with at least one FeedLog, along with its corresponding
         MetaData.
+
+    expt_duration_seconds: integer
+        The length of the experiment, in seconds. For example, if the Espresso
+        experiment lasted for 5 hours, enter 18000.
     """
     #       #    #       #       #####
     #       ##   #       #         #
@@ -42,37 +34,50 @@ class espresso(object):
     #       #   ##       #         #
     #       #    #       #         #
 
-    def __init__(self,folder):
-        allflies=[]
-        allfeeds=[]
-        allmetadata=[]
-        non_feeding_flies=[]
+    def __init__(self, folder, expt_duration_seconds):
+        import os
 
-        files=_os.listdir(folder)
+        import numpy as np
+        import scipy as sp
+        import pandas as pd
+
+        from ._plotter import espresso_plotter as espresso_plotter
+        from ._munger import munger as munger
+
+        self.version = '0.2.0'
+
+        self.expt_duration = expt_duration_seconds
+
+        allflies= []
+        allfeeds= []
+        allmetadata= []
+        non_feeding_flies= []
+
+        files = os.listdir(folder)
         self.feedlogs=[csv for csv in files
         if csv.endswith('.csv') and csv.startswith('FeedLog')]
-        feedlogs_in_folder=_np.array(self.feedlogs)
+        feedlogs_in_folder = np.array(self.feedlogs)
 
         # check that each feedlog has a corresponding metadata CSV.
         for feedlog in feedlogs_in_folder:
-            expected_metadata=feedlog.replace('FeedLog','MetaData')
+            expected_metadata = feedlog.replace('FeedLog','MetaData')
             if expected_metadata not in files:
                 raise NameError('A MetaData file for '+feedlog+' cannot be found.\n'+\
                                 'MetaData files should start with "MetaData_" and '+\
                                 'have the same datetime info as the corresponding FeedLog. Please check.')
         # Prepare variables.
-        feedlogs_list=list()
-        metadata_list=list()
-        # fly_counter=0
+        feedlogs_list = list()
+        metadata_list = list()
+        # fly_counter = 0
 
         for j, feedlog in enumerate(feedlogs_in_folder):
-            datetime_exptname='_'.join( feedlog.strip('.csv').split('_')[1:3] )
+            datetime_exptname = '_'.join(feedlog.strip('.csv').split('_')[1:3])
 
             ## Read in metadata.
-            path_to_metadata=_os.path.join( folder, feedlog.replace('FeedLog',
+            path_to_metadata = os.path.join( folder, feedlog.replace('FeedLog',
                 'MetaData') )
-            metadata_csv=_munger.metadata(path_to_metadata)
-            metadata_csv['FlyID']=datetime_exptname+'_Fly'+metadata_csv.ID.astype(str)
+            metadata_csv = munger.metadata(path_to_metadata)
+            metadata_csv['FlyID'] = datetime_exptname + '_Fly' + metadata_csv.ID.astype(str)
 
             ## Save the munged metadata.
             metadata_list.append(metadata_csv)
@@ -80,66 +85,47 @@ class espresso(object):
             allflies.append( metadata_csv.loc[:,'FlyID'].copy() )
 
             ## Read in feedlog.
-            path_to_feedlog=_os.path.join(folder,feedlog)
-            feedlog_csv=_munger.feedlog(path_to_feedlog)
-            feedlog_csv.loc[:,'FlyID']=datetime_exptname+'_Fly'+feedlog_csv.FlyID.astype(str)
+            path_to_feedlog = os.path.join(folder,feedlog)
+            feedlog_csv = munger.feedlog(path_to_feedlog)
+            feedlog_csv.loc[:,'FlyID'] = datetime_exptname + '_Fly' + feedlog_csv.FlyID.astype(str)
 
             ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies=non_feeding_flies + _munger.detect_non_feeding_flies(metadata_csv,
+            non_feeding_flies = non_feeding_flies + munger.detect_non_feeding_flies(metadata_csv,
                 feedlog_csv)
 
             ## Define 2 padrows per fly, per food choice (in this case, only one),
             ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
-            feedlog_csv=_munger.add_padrows(metadata_csv, feedlog_csv)
+            feedlog_csv = munger.add_padrows(metadata_csv, feedlog_csv,
+                                             self.expt_duration)
             ## Add columns in nanoliters.
-            feedlog_csv=_munger.compute_nanoliter_cols(feedlog_csv)
+            feedlog_csv = munger.compute_nanoliter_cols(feedlog_csv)
             ## Add columns for RelativeTime_s and FeedDuration_s.
-            feedlog_csv=_munger.compute_time_cols(feedlog_csv)
+            feedlog_csv = munger.compute_time_cols(feedlog_csv)
 
             ## Save the munged feedlog.
             feedlogs_list.append(feedlog_csv)
 
 
         # Join all processed feedlogs and metadata into respective DataFrames.
-        allflies=_pd.concat(metadata_list).reset_index(drop=True)
-        allfeeds=_pd.concat(feedlogs_list).reset_index(drop=True)
+        allflies = pd.concat(metadata_list).reset_index(drop=True)
+        allfeeds = pd.concat(feedlogs_list).reset_index(drop=True)
         # merge metadata with feedlogs.
-        allfeeds=_pd.merge(allfeeds,allflies,left_on='FlyID',right_on='FlyID')
+        allfeeds = pd.merge(allfeeds, allflies,
+                            left_on='FlyID', right_on='FlyID')
 
-    #
-   # #   #    # ###### #####    ##    ####  ######
-  #   #  #    # #      #    #  #  #  #    # #
- #     # #    # #####  #    # #    # #      #####
- ####### #    # #      #####  ###### #  ### #
- #     #  #  #  #      #   #  #    # #    # #
- #     #   ##   ###### #    # #    #  ####  ######
-  #####
- #     #  ####  #    # #    # #####  ####
- #       #    # #    # ##   #   #   #
- #       #    # #    # # #  #   #    ####
- #       #    # #    # #  # #   #        #
- #     # #    # #    # #   ##   #   #    #
-  #####   ####   ####  #    #   #    ####
 
         # Compute average feed volume per fly in chamber, for each feed.
-        allfeeds = _munger.average_feed_vol_per_fly(allfeeds)
+        allfeeds = munger.average_feed_vol_per_fly(allfeeds)
         # Compute average feed count per fly in chamber, for each feed.
         # This seems redundant, but serves a crucial munging purpose
         # when we are producing timecourse plots.
-        allfeeds = _munger.average_feed_count_per_fly(allfeeds)
+        allfeeds = munger.average_feed_count_per_fly(allfeeds)
         # Compute average feed speed per fly in chamber, for each feed.
-        allfeeds = _munger.average_feed_speed_per_fly(allfeeds)
+        allfeeds = munger.average_feed_speed_per_fly(allfeeds)
 
-        # rename columns and food types as is appropriate.
-        for df in [allflies,allfeeds]:
-            df.loc[:,'Genotype'] = df.Genotype.str.replace('W','w')
 
-        # Discard superfluous columns.
-        allfeeds.drop('ID', axis=1, inplace=True)
 
         # Assign feed choice to the allfeeds DataFrame.
-        choice1 = allfeeds['Tube1'].unique()
-        choice2 = allfeeds['Tube2'].unique()
         food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
         food_choice_cols.append('FlyID')
 
@@ -196,30 +182,27 @@ class espresso(object):
         #         # allfeeds['Valid'] = allfeeds.Valid.astype('int')
 
         # Reset the indexes.
-        for df in [allflies,allfeeds]:
-            df.reset_index(drop=True,inplace=True)
+        for df in [allflies, allfeeds]:
+            df.reset_index(drop = True, inplace = True)
 
         # Sort by FlyID, then by RelativeTime
-        allfeeds.sort_values(['FlyID','RelativeTime_s'],inplace=True)
+        allfeeds.sort_values(['FlyID', 'RelativeTime_s'],inplace = True)
         # Record which flies did not feed.
-        allflies['AtLeastOneFeed']=_np.repeat(True,len(allflies))
-        non_feeding_flies_idx=allflies[allflies.FlyID.isin(non_feeding_flies)].index
+        allflies['AtLeastOneFeed'] = np.repeat(True,len(allflies))
+        non_feeding_flies_idx = allflies[allflies.FlyID.isin(non_feeding_flies)].index
         allflies.loc[non_feeding_flies_idx,'AtLeastOneFeed']=False
 
         ## Change relevant columns to categorical.
         for catcol in ['Genotype','FoodChoice','Temperature']:
             try:
-                allfeeds.loc[:,catcol] = _pd.Categorical(allfeeds[catcol],
-                                                  categories=allfeeds[catcol].unique(),
-                                                  ordered=True)
+                allfeeds.loc[:,catcol] = pd.Categorical(allfeeds[catcol],
+                                                  categories = allfeeds[catcol].unique(),
+                                                  ordered = True)
                 # allfeeds[catcol]=allfeeds.loc[:,catcol].astype('category',
-                #     ordered=True)
+                #     ordered = True)
             except KeyError:
                 pass
 
-        # ## Should we set the FlyID as the index for the (combined) metadata?
-        # allflies.set_index('FlyID',inplace=True,drop=True)
-        allflies.drop('ID',axis=1,inplace=True) # Discard superfluous 'ID' column.
 
         self.flies = allflies
         self.flies_original_labels = allflies.columns # BUG
@@ -230,19 +213,16 @@ class espresso(object):
         self.feedlog_count = len(feedlogs_in_folder)
         self.genotypes = allflies.Genotype.unique()
         self.temperatures = allflies.Temperature.unique()
-        self.foodtypes = _np.unique( allflies.dropna(axis=1).filter(regex='Tube') )
+        self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
 
-        self.plot = _espresso_plotter.espresso_plotter(self) # Passes an instance of `self` to plotter.
+        # Passes an instance of `self` to plotter.
+        self.plot = espresso_plotter.espresso_plotter(self)
 
- #####  ###### #####  #####
- #    # #      #    # #    #
- #    # #####  #    # #    #
- #####  #      #####  #####
- #   #  #      #      #   #
- #    # ###### #      #    #
+
+
+
 
     def __repr__(self):
-
         plural_list = []
         for value in [self.feedlog_count,len(self.genotypes),
                       len(self.temperatures),len(self.foodtypes)]:
@@ -267,70 +247,71 @@ class espresso(object):
                 plural_label,
                 self.added_labels)
 
+        rep_str = rep_str + '\nESPRESSO v{}'.format(self.version)
+
         return rep_str
 
-   ##   #####  #####       ##   #    # #####     #####    ##   #####  #####
-  #  #  #    # #    #     #  #  ##   # #    #    #    #  #  #  #    # #    #
- #    # #    # #    #    #    # # #  # #    #    #    # #    # #    # #    #
- ###### #    # #    #    ###### #  # # #    #    #####  ###### #    # #    #
- #    # #    # #    #    #    # #   ## #    #    #   #  #    # #    # #    #
- #    # #####  #####     #    # #    # #####     #    # #    # #####  #####
+
+
+
 
     def __add__(self, other):
-        from copy import copy as _deepcopy
-        self_copy = _deepcopy(self) # Create a copy of the first espresso object to be summed.
-        other_copy = _deepcopy(other) # Create a copy of the other espresso object.
+        from copy import copy as deepcopy
+        import numpy as np
+        import pandas as pd
+        from ._plotter import espresso_plotter as espresso_plotter
 
-        ##### EXTRACT ADDED LABELS FOR EACH OBJECT IF THEY EXIST.
-        ##### IF NOT ASSIGN EMPTY LIST TO DROP.
+        self_copy = deepcopy(self) # Create a copy of the first espresso object to be summed.
+        other_copy = deepcopy(other) # Create a copy of the other espresso object.
+
 
         # Merge the flies and feeds attributes.
-        self_copy.flies = _pd.merge(self_copy.flies, other_copy.flies,
+        self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
             how='outer')
-        self_copy.feeds = _pd.merge(self_copy.feeds, other_copy.feeds,
+        self_copy.feeds = pd.merge(self_copy.feeds, other_copy.feeds,
             how='outer')
         # carry over the original_labels attrib.
         self_copy.flies_original_labels = self.flies_original_labels
         self_copy.feeds_original_labels = self.feeds_original_labels
 
         new_labels = []
-        for o in [self_copy,other_copy]:
+        for o in [self_copy, other_copy]:
             if hasattr(o, "added_labels"):
                 if isinstance(o.added_labels, list):
-                    new_labels = new_labels+o.added_labels
+                    new_labels = new_labels + o.added_labels
                 elif isinstance(o.added_labels, str):
                     new_labels.append(o.added_labels)
         new_labels = list( set(new_labels) )
         if len(new_labels)>0:
             self_copy.added_labels = new_labels
 
-        self_copy.feedlogs = list(set(self_copy.feedlogs+other_copy.feedlogs))
+        self_copy.feedlogs = list(set(self_copy.feedlogs + other_copy.feedlogs))
         self_copy.feedlog_count = len(self_copy.feedlogs)
 
         self_copy.genotypes = self_copy.flies.Genotype.unique()
         self_copy.temperatures = self_copy.flies.Temperature.unique()
 
-        self_copy.foodtypes = _np.unique(self_copy.flies.dropna(axis=1).filter(regex='Tube'))
-        self_copy.plot = _espresso_plotter.espresso_plotter(self_copy)
+        self_copy.foodtypes = np.unique(self_copy.flies\
+                                        .dropna(axis = 1)\
+                                        .filter(regex='Tube'))
+        self_copy.plot = espresso_plotter.espresso_plotter(self_copy)
 
         return self_copy
 
     def __radd__(self, other):
-        if other==0:
+        if other == 0:
             return self
         else:
             return self.__add__(other)
 
-   ##   #####  #####           #        ##   #####  ###### #       ####
-  #  #  #    # #    #          #       #  #  #    # #      #      #
- #    # #    # #    #          #      #    # #####  #####  #       ####
- ###### #    # #    #          #      ###### #    # #      #           #
- #    # #    # #    #          #      #    # #    # #      #      #    #
- #    # #####  #####           ###### #    # #####  ###### ######  ####
+
+
+
+
 
     def attach_label(self, label_name,
-                    label_value=None,
-                    label_from_cols=None,
+                    label_value = None,
+                    label_from_cols = None,
                     sep=','):
         """
         Attach_label a custom label to the metadata and feedlog of an espresso experiment.
@@ -338,7 +319,6 @@ class espresso(object):
 
         Keywords
         --------
-
         label_name: string
             The new category name.
 
@@ -355,9 +335,10 @@ class espresso(object):
         sep: string, default ','
             The seperator used to denote the joined columns if `label_from_cols` is passed.
         """
+        import numpy as np
 
         # Sanity check for keywords passed.
-        label_name=str(label_name)
+        label_name = str(label_name)
 
         if label_value is None and label_from_cols is None:
             raise ValueError("Please specify either `label_value` or `label_from_cols`.")
@@ -368,38 +349,35 @@ class espresso(object):
 
         if label_value is not None:
             for obj in [self.flies, self.feeds]:
-                obj[label_name]=_np.repeat(str(label_value), len(obj))
+                obj[label_name] = np.repeat(str(label_value), len(obj))
                 # turn into Categorical.
-                obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
+                obj.loc[:,label_name] = obj[label_name].astype('category',ordered = True)
 
         else:
             for col in label_from_cols:
-                col=str(col)
+                col = str(col)
                 if col not in self.flies.columns:
                     raise KeyError( "{0} is not found in the metadata. Please check.".format(col) )
             for obj in [self.flies, self.feeds]:
                 # See https://stackoverflow.com/questions/33098383/merge-multiple-column-values-into-one-column-in-python-pandas
-                obj[label_name]=obj[label_from_cols].apply(lambda x: sep.join(x.dropna().astype(str)),axis=1)
+                obj[label_name] = obj[label_from_cols].apply(lambda x: sep.join(x.dropna().astype(str)),axis = 1)
                 # turn into Categorical.
-                obj.loc[:,label_name]=obj[label_name].astype('category',ordered=True)
+                obj.loc[:,label_name] = obj[label_name].astype('category',ordered = True)
 
         labels=[label_name] # convert to single-member list.
         if hasattr(self, 'added_labels'):
             self.added_labels.extend(labels)
         else:
-            self.added_labels=labels
+            self.added_labels = labels
 
         if label_value is not None:
             print("{0} has been added as a new label, with '{1}' as the custom value.".format(label_name, label_value))
         else:
             print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
 
- #####  ###### #    #  ####  #    # ######       #        ##   #####  ###### #       ####
- #    # #      ##  ## #    # #    # #            #       #  #  #    # #      #      #
- #    # #####  # ## # #    # #    # #####        #      #    # #####  #####  #       ####
- #####  #      #    # #    # #    # #            #      ###### #    # #      #           #
- #   #  #      #    # #    #  #  #  #            #      #    # #    # #      #      #    #
- #    # ###### #    #  ####    ##   ######       ###### #    # #####  ###### ######  ####
+
+
+
 
     def remove_labels(self, labels):
         """
@@ -418,19 +396,19 @@ class espresso(object):
 
         # Handle labels depending if string or list.
         if isinstance(labels, str):
-            labels=[labels] # convert to single-member list.
+            labels = [labels] # convert to single-member list.
 
         if isinstance(labels,list):
-            in_added=[str(l) for l in labels if l in self.added_labels]
+            in_added = [str(l) for l in labels if l in self.added_labels]
 
-            if len(in_added)==0:
+            if len(in_added) == 0:
                 raise KeyError("Not all labels in {0} is not an added label. Please check.".format(labels))
 
-        self.flies.drop(labels,axis=1,inplace=True)
-        self.feeds.drop(labels,axis=1,inplace=True)
+        self.flies.drop(labels,axis = 1,inplace = True)
+        self.feeds.drop(labels,axis = 1,inplace = True)
 
         # check if we need to remove the added_labels attribute.
-        if labels==self.added_labels:
+        if labels == self.added_labels:
             del self.__dict__['added_labels']
         else:
             for l in labels:
@@ -448,10 +426,10 @@ class espresso(object):
         if 'added_labels' not in self.__dict__:
             raise KeyError('This espresso experiment has no added labels.')
 
-        dropped=self.added_labels
+        dropped = self.added_labels
 
         for attr in [self.flies, self.feeds]:
-            attr.drop(dropped,axis=1,inplace=True)
+            attr.drop(dropped,axis = 1,inplace = True)
 
         del self.__dict__['added_labels']
 
@@ -459,18 +437,18 @@ class espresso(object):
 
     def save(self, filename):
         '''Saves the current espresso object as a Python pickle.'''
-        import pickle as __pick
+        import pickle as pk
 
         with open(filename, 'wb') as f:
-            # To ensure compatibility with Py2, set protocol=2
-            __pick.dump(self, f, protocol=2)
+            # To ensure compatibility with Py2, set protocol = 2
+            pk.dump(self, f, protocol = 2)
 
 def load(filename):
     '''Loads a saved espresso object.'''
-    import pickle as __pick
+    import pickle as pk
 
     with open(filename, 'rb') as f:
         # Pickle the 'data' dictionary using the highest protocol available.
-        out = __pick.load(f)
+        out = pk.load(f)
 
     return out
