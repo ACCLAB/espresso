@@ -42,30 +42,15 @@ class timecourse_plotter():
 
     def __init__(self,plotter): # pass along an espresso_plotter instance.
         self.__feeds=plotter._experiment.feeds.copy()
+        self.__expt_end_time = plotter._experiment.expt_duration
 
     def __pivot_for_plot(self,resampdf,group_by,color_by):
         return _pd.DataFrame( resampdf.groupby([group_by,
                                                 color_by,
                                                 'time_s']).sum().to_records() )
 
-####  ###### #    # ###### #####  #  ####
-#    # #      ##   # #      #    # # #    #
-#      #####  # #  # #####  #    # # #
-#  ### #      #  # # #      #####  # #
-#    # #      #   ## #      #   #  # #    #
-####  ###### #    # ###### #    # #  ####
-##### # #    # ######  ####   ####  #    # #####   ####  ######
-#   # ##  ## #      #    # #    # #    # #    # #      #
-#   # # ## # #####  #      #    # #    # #    #  ####  #####
-#   # #    # #      #      #    # #    # #####       # #
-#   # #    # #      #    # #    # #    # #   #  #    # #
-#   # #    # ######  ####   ####   ####  #    #  ####  ######
-#####  #       ####  ##### ##### ###### #####
-#    # #      #    #   #     #   #      #    #
-#    # #      #    #   #     #   #####  #    #
-#####  #      #    #   #     #   #      #####
-#      #      #    #   #     #   #      #   #
-#      ######  ####    #     #   ###### #    #
+
+
     def __generic_timecourse_plotter(self,
                                      yvar,
                                      group_by=None,
@@ -141,7 +126,7 @@ class timecourse_plotter():
             ## Add the group name as title.
             plotax.set_title(grp)
             ## Format x-axis.
-            _plot_helpers.format_timecourse_xaxis(plotax)
+            _plot_helpers.format_timecourse_xaxis(plotax, self.__expt_end_time)
 
         # Normalize all the y-axis limits.
         if num_plots>1:
@@ -167,12 +152,8 @@ class timecourse_plotter():
         if ax is None:
             return axx
 
-###### ###### ###### #####     #    #  ####  #      #    # #    # ######
-#      #      #      #    #    #    # #    # #      #    # ##  ## #
-#####  #####  #####  #    #    #    # #    # #      #    # # ## # #####
-#      #      #      #    #    #    # #    # #      #    # #    # #
-#      #      #      #    #     #  #  #    # #      #    # #    # #
-#      ###### ###### #####       ##    ####  ######  ####  #    # ######
+
+
 
     def feed_volume(self,
                     group_by=None,
@@ -227,12 +208,8 @@ class timecourse_plotter():
 
         return out
 
-###### ###### ###### #####      ####   ####  #    # #    # #####
-#      #      #      #    #    #    # #    # #    # ##   #   #
-#####  #####  #####  #    #    #      #    # #    # # #  #   #
-#      #      #      #    #    #      #    # #    # #  # #   #
-#      #      #      #    #    #    # #    # #    # #   ##   #
-#      ###### ###### #####      ####   ####   ####  #    #   #
+
+
 
     def feed_count(self,
                     group_by=None,
@@ -286,12 +263,8 @@ class timecourse_plotter():
                                               ax=ax)
         return out
 
-###### ###### ###### #####      ####  #####  ###### ###### #####
-#      #      #      #    #    #      #    # #      #      #    #
-#####  #####  #####  #    #     ####  #    # #####  #####  #    #
-#      #      #      #    #         # #####  #      #      #    #
-#      #      #      #    #    #    # #      #      #      #    #
-#      ###### ###### #####      ####  #      ###### ###### #####
+
+
 
     def feed_speed(self,
                     group_by=None,

@@ -56,29 +56,18 @@ class espresso_plotter():
             TBA
     """
 
-    #    #    #    #    #####
-    #    ##   #    #      #
-    #    # #  #    #      #
-    #    #  # #    #      #
-    #    #   ##    #      #
-    #    #    #    #      #
+
 
     def __init__(self,espresso): # pass along an espresso instance.
 
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
+        self.__expt_end_time = espresso.expt_duration
         # call obj.plot.xxx to access these methods.
         self.contrast = _contrast.contrast_plotter(self)
         self.timecourse = _timecourse.timecourse_plotter(self)
         self.cumulative = _cumulative.cumulative_plotter(self)
 
-
-    #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
-    #    #  #  #  #        #   #      #    #    #    # #      #    #   #   #
-    #    # #    #  ####    #   #####  #    #    #    # #      #    #   #    ####
-    #####  ######      #   #   #      #####     #####  #      #    #   #        #
-    #   #  #    # #    #   #   #      #   #     #      #      #    #   #   #    #
-    #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
 
 
     def rasters(self,
@@ -250,7 +239,7 @@ class espresso_plotter():
             rasterax.set_title(grp)
 
             ### Format x-axis.
-            _plot_helpers.format_timecourse_xaxis(rasterax)
+            _plot_helpers.format_timecourse_xaxis(rasterax, self.__expt_end_time)
 
         ## Despine accordingly (if multiple axes were produced.)
         ## Note the we remove the left spine (set to True).
