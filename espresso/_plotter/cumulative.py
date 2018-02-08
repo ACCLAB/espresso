@@ -7,30 +7,10 @@
 cumulative plotting functions for espresso objects.
 """
 
- #      # #####  #####    ##   #####  #   #    # #    # #####   ####  #####  #####
- #      # #    # #    #  #  #  #    #  # #     # ##  ## #    # #    # #    #   #
- #      # #####  #    # #    # #    #   #      # # ## # #    # #    # #    #   #
- #      # #    # #####  ###### #####    #      # #    # #####  #    # #####    #
- #      # #    # #   #  #    # #   #    #      # #    # #      #    # #   #    #
- ###### # #####  #    # #    # #    #   #      # #    # #       ####  #    #   #
+# import sys as _sys
+# _sys.path.append("..") # so we can import espresso from the directory above.
 
-import sys as _sys
-_sys.path.append("..") # so we can import espresso from the directory above.
 
-import os as _os
-
-import numpy as _np
-import scipy as _sp
-import pandas as _pd
-
-import matplotlib as _mpl
-import matplotlib.pyplot as _plt
-import matplotlib.ticker as _tk
-
-import seaborn as _sns
-
-from . import plot_helpers as _plot_helpers
-from .._munger import munger as _munger
 
 class cumulative_plotter:
     """
@@ -57,9 +37,14 @@ class cumulative_plotter:
                                      gridlines_major=True,
                                      gridlines_minor=True,
                                      ax=None):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from . import plot_helpers as plt_helper
+        from .._munger import munger as munge
 
         # Handle the group_by and color_by keywords.
-        group_by, color_by = _munger.check_group_by_color_by(group_by,
+        group_by, color_by = munge.check_group_by_color_by(group_by,
                                     color_by, self.__feeds)
 
         print( "Coloring feed volume time course by {0}".format(color_by) )
@@ -69,14 +54,14 @@ class cumulative_plotter:
             raise ValueError('color_by and group_by both have the same value.'
             'They should be 2 different column names in the feedlog.')
 
-        resampdf = _munger.groupby_resamp_sum(self.__feeds, resample_by)
-        plotdf = _munger.cumsum_for_cumulative(resampdf, group_by, color_by)
+        resampdf = munge.groupby_resamp_sum(self.__feeds, resample_by)
+        plotdf = munge.cumsum_for_cumulative(resampdf, group_by, color_by)
 
-        groupby_grps = _np.sort( plotdf[group_by].unique() )
+        groupby_grps = np.sort( plotdf[group_by].unique() )
         num_plots = int( len(groupby_grps) )
 
         # Initialise figure.
-        _sns.set(style='ticks',context='poster')
+        sns.set(style='ticks',context='poster')
         if fig_size is None:
             x_inches = 10*num_plots
             y_inches = 7
@@ -88,7 +73,7 @@ class cumulative_plotter:
                 raise TypeError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
         if ax is None:
-            fig,axx = _plt.subplots(nrows = 1,
+            fig,axx = plt.subplots(nrows = 1,
                                     ncols=num_plots,
                                     figsize=(x_inches,y_inches),
                                     gridspec_kw={'wspace':0.2})
@@ -132,17 +117,17 @@ class cumulative_plotter:
             ## Add the group name as title.
             plotax.set_title(grp)
             ## Format x-axis.
-            _plot_helpers.format_timecourse_xaxis(plotax, self.__expt_end_time)
+            plt_helper.format_timecourse_xaxis(plotax, self.__expt_end_time)
 
         # Normalize all the y-axis limits.
         if num_plots > 1:
-            _plot_helpers.normalize_ylims(axx,include_zero = True)
+            plt_helper.normalize_ylims(axx,include_zero = True)
             ## Despine and offset each axis.
             for a in axx:
-                _sns.despine(ax=a, trim=True, offset=5)
+                sns.despine(ax=a, trim=True, offset=5)
         else:
             axx.set_ylim(-2, axx.get_ylim()[1]) # Ensure zero is displayed!
-            _sns.despine(ax=axx, trim=True, offset=5)
+            sns.despine(ax=axx, trim=True, offset=5)
 
         # Position the raster color legend,
         # and label the y-axis appropriately.

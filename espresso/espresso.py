@@ -147,39 +147,7 @@ class espresso(object):
         # rename columns and food types as is appropriate.
         for df in [allflies, allfeeds]:
             df.loc[:,'Genotype'] = df.Genotype.str.replace('W','w')
-
-        # choice2 = allfeeds['Tube2'].unique()[0]
-        # if np.isnan(choice2):
-        #     # Drop anomalous feed events from Tube2 (aka ChoiceIdx = 1),
-        #     # where there was no feed tube in the first place.
-        #     allfeeds.drop(allfeeds[allfeeds.ChoiceIdx == 1].index,
-        #                   inplace = True)
-        # else:
-        #
-        #
-        # # if len(choice1)>1 or len(choice2)>1:
-        # #     raise ValueError('More than one food choice detected per food column.'
-        # #         'Please check the file '+metadata)
-        #
-        # else:
-        #     choice1 = choice1[0]
-        #     choice2 = choice2[0]
-        #     try:
-        #         there_is_no_second_tube = np.isnan(choice2)
-        #         if there_is_no_second_tube:
-        #             ## Drop anomalous feed events from Tube2 (aka ChoiceIdx = 1),
-        #             ## where there was no feed tube in the first place.
-        #             allfeeds.drop(allfeeds[allfeeds.ChoiceIdx == 1].index,inplace = True)
-        #             allfeeds['FoodChoice'] = np.repeat(choice1, len(allfeeds))
-        #     except TypeError:
-        #         allfeeds['FoodChoice'] = np.repeat('xx',len(allfeeds))
-        #         allfeeds.loc[np.where(allfeeds.ChoiceIdx == 0)[0],'FoodChoice'] = choice1
-        #         allfeeds.loc[np.where(allfeeds.ChoiceIdx == 1)[0],'FoodChoice'] = choice2
-        #         ## Add column to identify which FeedLog file the feed data came from.
-        #         allfeeds['FeedLog_rawfile'] = np.repeat(feedlog, len(allfeeds))
-        #         # ## Turn the 'Valid' column into integers.
-        #         # ## 1 -- True; 0 -- False
-        #         # allfeeds['Valid'] = allfeeds.Valid.astype('int')
+            df.loc[:,'Genotype'] = df.Genotype.str.replace('iii','111')
 
         # Reset the indexes.
         for df in [allflies, allfeeds]:
@@ -296,6 +264,8 @@ class espresso(object):
                                         .filter(regex='Tube'))
         self_copy.plot = espresso_plotter.espresso_plotter(self_copy)
 
+        print("\nDon't worry about the above exception. "
+              "It's a harmless pandas bug.")
         return self_copy
 
     def __radd__(self, other):
