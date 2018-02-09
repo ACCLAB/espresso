@@ -47,8 +47,8 @@ class cumulative_plotter:
         group_by, color_by = munge.check_group_by_color_by(group_by,
                                     color_by, self.__feeds)
 
-        print( "Coloring feed volume time course by {0}".format(color_by) )
-        print( "Grouping feed volume time course by {0}".format(group_by) )
+        print("Coloring feed volume time course by {0}".format(color_by))
+        print("Grouping feed volume time course by {0}".format(group_by))
 
         if color_by ==group_by: # catch as exception:
             raise ValueError('color_by and group_by both have the same value.'
@@ -57,13 +57,13 @@ class cumulative_plotter:
         resampdf = munge.groupby_resamp_sum(self.__feeds, resample_by)
         plotdf = munge.cumsum_for_cumulative(resampdf, group_by, color_by)
 
-        groupby_grps = np.sort( plotdf[group_by].unique() )
+        groupby_grps = np.sort(plotdf[group_by].unique())
         num_plots = int( len(groupby_grps) )
 
         # Initialise figure.
         sns.set(style='ticks',context='poster')
         if fig_size is None:
-            x_inches = 10*num_plots
+            x_inches = 10 * num_plots
             y_inches = 7
         else:
             if isinstance(fig_size, tuple) or isinstance(fig_size, list):
@@ -73,7 +73,7 @@ class cumulative_plotter:
                 raise TypeError('Please make sure figsize is a tuple of the form (w,h) in inches.')
 
         if ax is None:
-            fig,axx = plt.subplots(nrows = 1,
+            fig,axx = plt.subplots(nrows=1,
                                     ncols=num_plots,
                                     figsize=(x_inches,y_inches),
                                     gridspec_kw={'wspace':0.2})
@@ -131,7 +131,7 @@ class cumulative_plotter:
 
         # Position the raster color legend,
         # and label the y-axis appropriately.
-        if num_plots>1:
+        if num_plots > 1:
             rasterlegend_ax = axx
         else:
             rasterlegend_ax = [axx]
@@ -238,7 +238,7 @@ class cumulative_plotter:
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__generic_cumulative_plotter(yvar='Cumulative Feed Count',
+        out = self.__generic_cumulative_plotter(yvar='temp_plotdf_mean = temp_plotdf_groupby.mean().unstack()[yvar].T',
                                               group_by = group_by,
                                               color_by = color_by,
                                               resample_by = resample_by,

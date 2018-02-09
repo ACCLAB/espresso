@@ -268,15 +268,12 @@ def check_group_by_color_by(group_by, color_by, df):
 
     return group_by, color_by
 
-def groupby_resamp_sum(df, resample_by=None):
+def groupby_resamp_sum(df, resample_by='10min'):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
+
     import pandas as pd
-
-    if resample_by is None:
-        resample_by='10min'
-
     # Convert RelativeTime_s to datetime if not done so already.
     if df.RelativeTime_s.dtype == 'float64':
         df.loc[:,'RelativeTime_s'] = pd.to_datetime(df['RelativeTime_s'],
