@@ -325,48 +325,64 @@ def cumsum_for_cumulative(df, group_by, color_by):
     temp = df.copy()
 
     # Drop duplicate columns:
-    duplicated_cols=[col for col in [group_by,color_by] if col in temp.columns]
+    duplicated_cols=[col for col in [group_by, color_by] if col in temp.columns]
     for col in [duplicated_cols]:
         temp.drop(col, axis = 1, inplace = True)
 
-    # Next, groupby for cumsum,
-    # Then, groupby AGAIN, and fill Nans.
+    # Rename for facility in plotting.
+    temp.rename(columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
+                          'AverageFeedCountPerFly':'Cumulative Feed Count'},
+                inplace=True)
+
+    # Select only relevant columns.
+    grs = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID','Temperature',
+                                            'Genotype','FoodChoice',
+                                            'Cumulative Feed Count',
+                                            'Cumulative Volume (µl)']]
+
+    # Compute the cumulative sum, by Fly.
+    grs_cumsum_a = grs.groupby(['Temperature','Genotype',
+                                'FlyID','FoodChoice']).cumsum()
+
+    # Combine metadata with cumsum.
+    grs_cumsum = pd.merge(grs[['RelativeTime_s','Temperature','Genotype',
+                               'FlyID','FoodChoice']],
+                          grs_cumsum_a,
+                          left_index=True,
+                          right_index=True)
+
+    # Add time column to facilitate plotting.
+    grs_cumsum = __add_time_column(grs_cumsum)
 
     # temp_cumsum = temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
     #                 .cumsum()\
     #                 .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-    #                 .fillna(method='pad')\
+    #                 .fillna(method='ffill')\
     #                 .fillna(0)
+    #
+    # temp_cumsum = pd.DataFrame( temp_cumsum.to_records() )
+    #
+    # # Select only relavant columns.
+    # temp_cumsum = temp_cumsum[[group_by,color_by,
+    #                          'FlyID',
+    #                          'RelativeTime_s',
+    #                          'FlyCountInChamber',
+    #                          ### Below, add all the columns that are
+    #                          ### potentially used for timecourse plotting.
+    #                          'AverageFeedVolumePerFly_µl',
+    #                          'AverageFeedCountPerFly']]
+    #
+    # temp_cumsum.loc[:,'AverageFeedVolumePerFly_nl'] = temp_cumsum.loc[:,'AverageFeedVolumePerFly_µl']*1000
+    #
+    # temp_cumsum.rename( columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
+    #                              'AverageFeedCountPerFly':'Cumulative Feed Count',
+    #                                      },
+    #                          inplace = True)
+    #
+    # # # Add time column to facilitate plotting.
+    # temp_cumsum = __add_time_column(temp_cumsum)
 
-    temp_cumsum = temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-                    .cumsum()\
-                    .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-                    .fillna(method='ffill')\
-                    .fillna(0)
-
-    temp_cumsum = pd.DataFrame( temp_cumsum.to_records() )
-
-    # Select only relavant columns.
-    temp_cumsum = temp_cumsum[[group_by,color_by,
-                             'FlyID',
-                             'RelativeTime_s',
-                             'FlyCountInChamber',
-                             ### Below, add all the columns that are
-                             ### potentially used for timecourse plotting.
-                             'AverageFeedVolumePerFly_µl',
-                             'AverageFeedCountPerFly']]
-
-    temp_cumsum.loc[:,'AverageFeedVolumePerFly_nl'] = temp_cumsum.loc[:,'AverageFeedVolumePerFly_µl']*1000
-
-    temp_cumsum.rename( columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
-                                 'AverageFeedCountPerFly':'Cumulative Feed Count',
-                                         },
-                             inplace = True)
-
-    # # Add time column to facilitate plotting.
-    temp_cumsum = __add_time_column(temp_cumsum)
-
-    return temp_cumsum
+    return grs_cumsum
 
 
 

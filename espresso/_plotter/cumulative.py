@@ -187,23 +187,23 @@ class cumulative_plotter:
         matplotlib AxesSubplot(s)
         """
         out = self.__generic_cumulative_plotter(yvar='Cumulative Volume (nl)',
-                                              group_by = group_by,
-                                              color_by = color_by,
-                                              resample_by = resample_by,
-                                              fig_size = fig_size,
-                                              gridlines_major = gridlines_major,
-                                              gridlines_minor = gridlines_minor,
-                                              ax = ax)
+                                              group_by=group_by,
+                                              color_by=color_by,
+                                              resample_by=resample_by,
+                                              fig_size=fig_size,
+                                              gridlines_major=gridlines_major,
+                                              gridlines_minor=gridlines_minor,
+                                              ax=ax)
         return out
 
     def feed_count(self,
-                   group_by = None,
-                   color_by = None,
+                   group_by=None,
+                   color_by=None,
                    resample_by='10min',
-                   fig_size = None,
-                   gridlines_major = True,
-                   gridlines_minor = True,
-                   ax = None):
+                   fig_size=None,
+                   gridlines_major=True,
+                   gridlines_minor=True,
+                   ax=None):
         """
         Produces a cumulative line plot depicting the average total feed count consumed per fly
         for the entire assay. The plot will be tiled horizontally according to the
@@ -238,12 +238,12 @@ class cumulative_plotter:
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__generic_cumulative_plotter(yvar='temp_plotdf_mean = temp_plotdf_groupby.mean().unstack()[yvar].T',
-                                              group_by = group_by,
-                                              color_by = color_by,
-                                              resample_by = resample_by,
-                                              fig_size = fig_size,
-                                              gridlines_major = gridlines_major,
-                                              gridlines_minor = gridlines_minor,
-                                              ax = ax)
+        out = self.__generic_cumulative_plotter(yvar='Cumulative Feed Count',
+                                              group_by=group_by,
+                                              color_by=color_by,
+                                              resample_by=resample_by,
+                                              fig_size=fig_size,
+                                              gridlines_major=gridlines_major,
+                                              gridlines_minor=gridlines_minor,
+                                              ax=ax)
         return out
