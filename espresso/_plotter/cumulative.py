@@ -55,10 +55,10 @@ class cumulative_plotter:
             'They should be 2 different column names in the feedlog.')
 
         resampdf = munge.groupby_resamp_sum(self.__feeds, resample_by)
-        plotdf = munge.cumsum_for_cumulative(resampdf, group_by, color_by)
+        plotdf = munge.cumsum_for_cumulative(resampdf)
 
         groupby_grps = np.sort(plotdf[group_by].unique())
-        num_plots = int( len(groupby_grps) )
+        num_plots = int(len(groupby_grps))
 
         # Initialise figure.
         sns.set(style='ticks',context='poster')

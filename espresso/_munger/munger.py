@@ -316,7 +316,7 @@ def sum_for_timecourse(df):
 
 
 
-def cumsum_for_cumulative(df, group_by, color_by):
+def cumsum_for_cumulative(df):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
@@ -324,28 +324,31 @@ def cumsum_for_cumulative(df, group_by, color_by):
 
     temp = df.copy()
 
-    # Drop duplicate columns:
-    duplicated_cols=[col for col in [group_by, color_by] if col in temp.columns]
-    for col in [duplicated_cols]:
-        temp.drop(col, axis = 1, inplace = True)
+    # # Drop duplicate columns:
+    # duplicated_cols = [col for col in [group_by, color_by]
+    #                    if col in temp.columns]
+    # for col in [duplicated_cols]:
+    #     temp.drop(col, axis=1, inplace=True)
 
     # Rename for facility in plotting.
-    temp.rename(columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
+    temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
                           'AverageFeedCountPerFly':'Cumulative Feed Count'},
                 inplace=True)
 
+    temp['Cumulative Volume (nl)'] = temp['Cumulative Volume (µl)'] * 1000
+
     # Select only relevant columns.
-    grs = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID','Temperature',
+    temp = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID','Temperature',
                                             'Genotype','FoodChoice',
                                             'Cumulative Feed Count',
-                                            'Cumulative Volume (µl)']]
+                                            'Cumulative Volume (nl)']]
 
     # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = grs.groupby(['Temperature','Genotype',
+    grs_cumsum_a = temp.groupby(['Temperature','Genotype',
                                 'FlyID','FoodChoice']).cumsum()
 
     # Combine metadata with cumsum.
-    grs_cumsum = pd.merge(grs[['RelativeTime_s','Temperature','Genotype',
+    grs_cumsum = pd.merge(temp[['RelativeTime_s','Temperature','Genotype',
                                'FlyID','FoodChoice']],
                           grs_cumsum_a,
                           left_index=True,
