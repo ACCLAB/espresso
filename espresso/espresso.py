@@ -22,19 +22,11 @@ class espresso(object):
     folder: string
         Path to a folder with at least one FeedLog, along with its corresponding
         MetaData.
-
-    expt_duration_seconds: integer
-        The length of the experiment, in seconds. For example, if the Espresso
-        experiment lasted for 5 hours, enter 18000.
     """
-    #       #    #       #       #####
-    #       ##   #       #         #
-    #       # #  #       #         #
-    #       #  # #       #         #
-    #       #   ##       #         #
-    #       #    #       #         #
 
-    def __init__(self, folder, expt_duration_seconds):
+
+
+    def __init__(self, folder):
         import os
 
         import numpy as np
@@ -42,11 +34,9 @@ class espresso(object):
         import pandas as pd
 
         from ._plotter import espresso_plotter as espresso_plotter
-        from ._munger import munger as munger
+        from ._munger import munger as munge
 
         self.version = '0.2.0'
-
-        self.expt_duration = expt_duration_seconds
 
         allflies= []
         allfeeds= []
@@ -54,76 +44,81 @@ class espresso(object):
         non_feeding_flies= []
 
         files = os.listdir(folder)
-        self.feedlogs=[csv for csv in files
-        if csv.endswith('.csv') and csv.startswith('FeedLog')]
+        self.feedlogs = [csv for csv in files
+                          if csv.endswith('.csv') and csv.startswith('FeedLog')]
         feedlogs_in_folder = np.array(self.feedlogs)
 
-        # check that each feedlog has a corresponding metadata CSV.
+
+        # check that each feedlog has a corresponding metadata CSV
+        # and feedstat CSV
         for feedlog in feedlogs_in_folder:
             expected_metadata = feedlog.replace('FeedLog','MetaData')
+            expected_feedstats = feedlog.replace('FeedLog','FeedStats')
             if expected_metadata not in files:
                 raise NameError('A MetaData file for '+feedlog+' cannot be found.\n'+\
                                 'MetaData files should start with "MetaData_" and '+\
                                 'have the same datetime info as the corresponding FeedLog. Please check.')
+            if expected_feedstats not in files:
+                raise NameError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
+                                'FeedStats files should start with "FeedStats_" and '+\
+                                'have the same datetime info as the corresponding FeedLog. Please check.')
+
         # Prepare variables.
         feedlogs_list = list()
         metadata_list = list()
-        # fly_counter = 0
+        expt_durations = list()
+
+        # Read in all the FeedStats CSV. Identify which FeedStat has the longest
+        # recorded experiment duration, and assign that as the overall duration.
+        feedstats_in_folder = [f.replace('FeedLog','FeedStats')
+                               for f in feedlogs_in_folder]
+        for fs in feedstats_in_folder:
+            fs_path = os.path.join(folder, fs)
+            expt_durations.append(munge.get_expt_duration(fs_path))
+        self.expt_duration_seconds = np.max(expt_durations) * 60
 
         for j, feedlog in enumerate(feedlogs_in_folder):
             datetime_exptname = '_'.join(feedlog.strip('.csv').split('_')[1:3])
 
-            ## Read in metadata.
-            path_to_metadata = os.path.join( folder, feedlog.replace('FeedLog',
-                'MetaData') )
-            metadata_csv = munger.metadata(path_to_metadata)
-            metadata_csv['FlyID'] = datetime_exptname + '_Fly' + metadata_csv.ID.astype(str)
+            # Read in metadata.
+            path_to_metadata = os.path.join(folder,
+                                            feedlog.replace('FeedLog',
+                                                            'MetaData'))
+            metadata_csv = munge.metadata(path_to_metadata)
+            metadata_csv['FlyID'] = datetime_exptname + '_Fly' + \
+                                    metadata_csv.ID.astype(str)
 
-            ## Save the munged metadata.
+            # Save the munged metadata.
             metadata_list.append(metadata_csv)
-            ## Save the fly IDs.
-            allflies.append( metadata_csv.loc[:,'FlyID'].copy() )
+            # Save the fly IDs.
+            allflies.append(metadata_csv.loc[:,'FlyID'].copy())
 
-            ## Read in feedlog.
+            # Read in feedlog.
             path_to_feedlog = os.path.join(folder,feedlog)
-            feedlog_csv = munger.feedlog(path_to_feedlog)
+            feedlog_csv = munge.feedlog(path_to_feedlog)
             feedlog_csv.loc[:,'FlyID'] = datetime_exptname + '_Fly' + feedlog_csv.FlyID.astype(str)
 
-            ## Detect non-feeding flies, add to the appropriate list.
-            non_feeding_flies = non_feeding_flies + munger.detect_non_feeding_flies(metadata_csv,
+            # Detect non-feeding flies, add to the appropriate list.
+            non_feeding_flies = non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,
                 feedlog_csv)
 
-            ## Define 2 padrows per fly, per food choice (in this case, only one),
-            ## that will ensure feedlogs for each FlyID fully capture the entire 6-hour duration.
-            feedlog_csv = munger.add_padrows(metadata_csv, feedlog_csv,
-                                             self.expt_duration)
-            ## Add columns in nanoliters.
-            feedlog_csv = munger.compute_nanoliter_cols(feedlog_csv)
-            ## Add columns for RelativeTime_s and FeedDuration_s.
-            feedlog_csv = munger.compute_time_cols(feedlog_csv)
+            # Define 2 padrows per fly, per food choice (in this case, only one),
+            # that will ensure feedlogs for each FlyID fully capture the entire
+            # experiment duration.
+            feedlog_csv = munge.add_padrows(metadata_csv, feedlog_csv,
+                                             self.expt_duration_seconds)
+            # Add columns in nanoliters.
+            feedlog_csv = munge.compute_nanoliter_cols(feedlog_csv)
+            # Add columns for RelativeTime_s and FeedDuration_s.
+            feedlog_csv = munge.compute_time_cols(feedlog_csv)
 
-            ## Save the munged feedlog.
+            # Save the munged feedlog.
             feedlogs_list.append(feedlog_csv)
 
 
         # Join all processed feedlogs and metadata into respective DataFrames.
         allflies = pd.concat(metadata_list).reset_index(drop=True)
         allfeeds = pd.concat(feedlogs_list).reset_index(drop=True)
-        # merge metadata with feedlogs.
-        allfeeds = pd.merge(allfeeds, allflies,
-                            left_on='FlyID', right_on='FlyID')
-
-
-        # Compute average feed volume per fly in chamber, for each feed.
-        allfeeds = munger.average_feed_vol_per_fly(allfeeds)
-        # Compute average feed count per fly in chamber, for each feed.
-        # This seems redundant, but serves a crucial munging purpose
-        # when we are producing timecourse plots.
-        allfeeds = munger.average_feed_count_per_fly(allfeeds)
-        # Compute average feed speed per fly in chamber, for each feed.
-        allfeeds = munger.average_feed_speed_per_fly(allfeeds)
-
-
 
         # Assign feed choice to the allfeeds DataFrame.
         food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
@@ -133,21 +128,44 @@ class espresso(object):
         food_choice_dict.set_index('FlyID', inplace=True)
 
         allfeeds['FoodChoice'] = allfeeds.apply(lambda x:
-                                    munger.assign_food_choice(x['FlyID'],
+                                    munge.assign_food_choice(x['FlyID'],
                                                          x['ChoiceIdx']+1,
                                                          food_choice_dict),
                                                axis=1)
+
+        # rename columns and types as is appropriate.
+        allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
+        allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
+
+        # merge metadata with feedlogs.
+        allfeeds = pd.merge(allfeeds, allflies,
+                            left_on='FlyID', right_on='FlyID')
         # Discard superfluous columns.
         allfeeds.drop('ID', axis = 1, inplace = True)
         valid_FoodChoice = ~allfeeds.FoodChoice.isna()
         valid_Feed_status = allfeeds.Valid
         allfeeds = allfeeds[valid_FoodChoice & valid_Feed_status]
 
+        # Change relevant columns to categorical.
+        for col in ['Genotype', 'FoodChoice', 'Temperature', 'Sex']:
+            try:
+                allfeeds.loc[:, col] = pd.Categorical(allfeeds[col],
+                                            categories=allfeeds[col].unique(),
+                                            ordered=True)
+                allflies.loc[:, col] = pd.Categorical(allflies[col],
+                                            categories=allflies[col].unique(),
+                                            ordered=True)
+            except KeyError:
+                pass
 
-        # rename columns and food types as is appropriate.
-        for df in [allflies, allfeeds]:
-            df.loc[:,'Genotype'] = df.Genotype.str.replace('W','w')
-            df.loc[:,'Genotype'] = df.Genotype.str.replace('iii','111')
+        # Compute average feed volume per fly in chamber, for each feed.
+        allfeeds = munge.average_feed_vol_per_fly(allfeeds)
+        # Compute average feed count per fly in chamber, for each feed.
+        # This seems redundant, but serves a crucial munging purpose
+        # when we are producing timecourse plots.
+        allfeeds = munge.average_feed_count_per_fly(allfeeds)
+        # Compute average feed speed per fly in chamber, for each feed.
+        allfeeds = munge.average_feed_speed_per_fly(allfeeds)
 
         # Reset the indexes.
         for df in [allflies, allfeeds]:
@@ -155,32 +173,23 @@ class espresso(object):
 
         # Sort by FlyID, then by RelativeTime
         allfeeds.sort_values(['FlyID', 'RelativeTime_s'],inplace = True)
+
         # Record which flies did not feed.
         allflies['AtLeastOneFeed'] = np.repeat(True,len(allflies))
         non_feeding_flies_idx = allflies[allflies.FlyID.isin(non_feeding_flies)].index
-        allflies.loc[non_feeding_flies_idx,'AtLeastOneFeed']=False
-
-        ## Change relevant columns to categorical.
-        for catcol in ['Genotype','FoodChoice','Temperature']:
-            try:
-                allfeeds.loc[:,catcol] = pd.Categorical(allfeeds[catcol],
-                                                  categories = allfeeds[catcol].unique(),
-                                                  ordered = True)
-                # allfeeds[catcol]=allfeeds.loc[:,catcol].astype('category',
-                #     ordered = True)
-            except KeyError:
-                pass
+        allflies.loc[non_feeding_flies_idx,'AtLeastOneFeed'] = False
 
 
         self.flies = allflies
-        self.flies_original_labels = allflies.columns # BUG
+        self.flies_original_labels = allflies.columns
 
         self.feeds = allfeeds
-        self.feeds_original_labels = allfeeds.columns # BUG
+        self.feeds_original_labels = allfeeds.columns
 
         self.feedlog_count = len(feedlogs_in_folder)
         self.genotypes = allflies.Genotype.unique()
         self.temperatures = allflies.Temperature.unique()
+        self.sexes = allflies.Sex.unique()
         self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
 
         # Passes an instance of `self` to plotter.
@@ -192,28 +201,50 @@ class espresso(object):
 
     def __repr__(self):
         plural_list = []
-        for value in [self.feedlog_count,len(self.genotypes),
-                      len(self.temperatures),len(self.foodtypes)]:
-            if value>1:
+        for value in [self.feedlog_count, len(self.genotypes),
+                      len(self.temperatures), len(self.foodtypes),
+                      len(self.sexes)]:
+            if value > 1:
                 plural_list.append('s')
             else:
                 plural_list.append('')
 
-        rep_str = "{0} feedlog{8} with a total of {1} flies.\n{2} genotype{9} {3}.\n{4} temperature{10} {5}.\n{6} foodtype{11} {7}.".format(
-            self.feedlog_count,len(self.flies),
-            len(self.genotypes),self.genotypes,
-            len(self.temperatures),self.temperatures,
-            len(self.foodtypes),self.foodtypes,
-            plural_list[0],plural_list[1],plural_list[2],plural_list[3])
+        feedlog_summary = "{0} feedlog{1} with ".format(self.feedlog_count,
+                                                    plural_list[0]) + \
+                          "a total of {} flies.\n".format(len(self.flies))
+
+        genotype_summary = "\n{0} genotype{1} {2}.\n".format(len(self.genotypes),
+                                                          plural_list[1],
+                                                          self.genotypes)
+
+        temp_summary = "\n{0} temperature{1} {2}.\n".format(len(self.temperatures),
+                                                          plural_list[2],
+                                                          self.temperatures)
+
+        foodtypes_summary = "\n{0} foodtype{1} {2}.\n".format(len(self.foodtypes),
+                                                            plural_list[3],
+                                                            self.foodtypes)
+
+        gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
+                                                         plural_list[4],
+                                                         self.sexes)
+
+        expt_duration_summary = "\nTotal experiment duration = {} minutes\n".format(self.expt_duration_seconds / 60)
+
+        rep_str = feedlog_summary + genotype_summary + temp_summary + \
+                  foodtypes_summary + gender_summary + expt_duration_summary
+
 
         if hasattr(self, "added_labels"):
             if len(self.added_labels)>1:
                 plural_label = 's have'
             else:
                 plural_label = ' has'
-            rep_str = rep_str+"\n{0} label{1} been added: {2}".format(len(self.added_labels),
-                plural_label,
-                self.added_labels)
+
+            label_summary = "\n{0} label{1} been added: {2}".format(len(self.added_labels),
+                                                                plural_label,
+                                                                self.added_labels)
+            rep_str = rep_str + label_summary
 
         rep_str = rep_str + '\nESPRESSO v{}'.format(self.version)
 

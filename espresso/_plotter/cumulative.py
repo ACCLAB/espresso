@@ -26,7 +26,7 @@ class cumulative_plotter:
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
-        self.__expt_end_time = plotter._experiment.expt_duration
+        self.__expt_end_time = plotter._experiment.expt_duration_seconds
 
     def __generic_cumulative_plotter(self,
                                      yvar,

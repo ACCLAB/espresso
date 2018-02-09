@@ -42,7 +42,7 @@ class espresso_plotter():
 
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
-        self.__expt_end_time = espresso.expt_duration
+        self.__expt_end_time = espresso.expt_duration_seconds
         # call obj.plot.xxx to access these methods.
         self.contrast = contrast.contrast_plotter(self)
         self.timecourse = timecourse.timecourse_plotter(self)

@@ -98,7 +98,7 @@ def feedlog(path_to_csv):
 
 
 
-def add_padrows(metadata_df, feedlog_df, expt_duration = 21600):
+def add_padrows(metadata_df, feedlog_df, expt_duration=21600):
     """
     Define 2 padrows per fly, per food choice. This will ensure that feedlogs
     for each FlyID fully capture the entire 6-hour duration.
@@ -388,6 +388,7 @@ def join_cols(df, cols, sep='; '):
     sep: str, default '; '
         The delimiter used to seperate the concatenated columns.
     """
+
     try:
         base_col = df[ cols[0] ].astype(str).copy()
 
@@ -415,6 +416,7 @@ def cat_categorical_columns(df, group_by, compare_by):
     Convenience function to concatenate categorical columns for
     contrast plotting purposes.
     """
+
     df_out = df.copy()
 
     if isinstance(group_by, str):
@@ -436,4 +438,17 @@ def assign_food_choice(flyid, choiceid, mapper):
     """
     Convenience function used to assign the food choice.
     """
+
     return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
+
+
+def get_expt_duration(path_to_feedstats):
+    """
+    Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
+    the last timestamp, and assigns that as the experiment duration.
+    """
+    import numpy as np
+    import pandas as pd
+
+    feedstats = pd.read_csv(path_to_feedstats)
+    return np.int(np.round(feedstats.Minutes.values[-1]))
