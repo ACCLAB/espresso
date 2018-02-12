@@ -141,10 +141,10 @@ class espresso(object):
         allfeeds = pd.merge(allfeeds, allflies,
                             left_on='FlyID', right_on='FlyID')
         # Discard superfluous columns.
-        allfeeds.drop('ID', axis = 1, inplace = True)
-        valid_FoodChoice = ~allfeeds.FoodChoice.isna()
-        valid_Feed_status = allfeeds.Valid
-        allfeeds = allfeeds[valid_FoodChoice & valid_Feed_status]
+        allfeeds.drop('ID', axis=1, inplace=True)
+        # valid_FoodChoice = ~allfeeds.FoodChoice.isna()
+        # valid_Feed_status = allfeeds.Valid
+        # allfeeds = allfeeds[valid_FoodChoice & valid_Feed_status]
 
         # Change relevant columns to categorical.
         for col in ['Genotype', 'FoodChoice', 'Temperature', 'Sex']:
@@ -169,10 +169,10 @@ class espresso(object):
 
         # Reset the indexes.
         for df in [allflies, allfeeds]:
-            df.reset_index(drop = True, inplace = True)
+            df.reset_index(drop=True, inplace=True)
 
         # Sort by FlyID, then by RelativeTime
-        allfeeds.sort_values(['FlyID', 'RelativeTime_s'],inplace = True)
+        allfeeds.sort_values(['FlyID', 'RelativeTime_s'], inplace=True)
 
         # Record which flies did not feed.
         allflies['AtLeastOneFeed'] = np.repeat(True,len(allflies))
@@ -201,13 +201,21 @@ class espresso(object):
 
     def __repr__(self):
         plural_list = []
+
         for value in [self.feedlog_count, len(self.genotypes),
-                      len(self.temperatures), len(self.foodtypes),
-                      len(self.sexes)]:
+                      len(self.temperatures), len(self.foodtypes)]:
             if value > 1:
                 plural_list.append('s')
             else:
                 plural_list.append('')
+
+        try:
+            if len(self.sexes) > 1:
+                plural_list.append('s')
+            else:
+                plural_list.append('')
+        except AttributeError:
+            pass
 
         feedlog_summary = "{0} feedlog{1} with ".format(self.feedlog_count,
                                                     plural_list[0]) + \
@@ -225,11 +233,16 @@ class espresso(object):
                                                             plural_list[3],
                                                             self.foodtypes)
 
-        gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
-                                                         plural_list[4],
-                                                         self.sexes)
-
-        expt_duration_summary = "\nTotal experiment duration = {} minutes\n".format(self.expt_duration_seconds / 60)
+        try:
+            gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
+                                                             plural_list[4],
+                                                             self.sexes)
+            except AttributeError:
+                gender_summary = ''
+        try:
+            expt_duration_summary = "\nTotal experiment duration = {} minutes\n".format(self.expt_duration_seconds / 60)
+        except AttributeError:
+            expt_duration_summary = ''
 
         rep_str = feedlog_summary + genotype_summary + temp_summary + \
                   foodtypes_summary + gender_summary + expt_duration_summary
