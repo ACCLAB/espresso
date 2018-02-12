@@ -22,11 +22,15 @@ class espresso(object):
     folder: string
         Path to a folder with at least one FeedLog, along with its corresponding
         MetaData.
+
+    expt_duration_seconds: integer, default None
+        If you lack a FeedStats file, enter the experiment duration here,
+        in seconds.
     """
 
 
 
-    def __init__(self, folder):
+    def __init__(self, folder, expt_duration_seconds=None):
         import os
 
         import numpy as np
@@ -49,6 +53,11 @@ class espresso(object):
         feedlogs_in_folder = np.array(self.feedlogs)
 
 
+        # Prepare variables.
+        feedlogs_list = list()
+        metadata_list = list()
+        expt_durations = list()
+
         # check that each feedlog has a corresponding metadata CSV
         # and feedstat CSV
         for feedlog in feedlogs_in_folder:
@@ -59,23 +68,22 @@ class espresso(object):
                                 'MetaData files should start with "MetaData_" and '+\
                                 'have the same datetime info as the corresponding FeedLog. Please check.')
             if expected_feedstats not in files:
-                raise NameError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
+                if expt_duration_seconds is None:
+                    raise ValueError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
                                 'FeedStats files should start with "FeedStats_" and '+\
-                                'have the same datetime info as the corresponding FeedLog. Please check.')
-
-        # Prepare variables.
-        feedlogs_list = list()
-        metadata_list = list()
-        expt_durations = list()
-
-        # Read in all the FeedStats CSV. Identify which FeedStat has the longest
-        # recorded experiment duration, and assign that as the overall duration.
-        feedstats_in_folder = [f.replace('FeedLog','FeedStats')
-                               for f in feedlogs_in_folder]
-        for fs in feedstats_in_folder:
-            fs_path = os.path.join(folder, fs)
-            expt_durations.append(munge.get_expt_duration(fs_path))
-        self.expt_duration_seconds = np.max(expt_durations) * 60
+                                'have the same datetime info as the corresponding FeedLog.'
+                                ' Alternatively, you can enter expt_duration_seconds.')
+                else:
+                    self.expt_duration_seconds = expt_duration_seconds
+            else:
+                # Read in all the FeedStats CSV. Identify which FeedStat has the longest
+                # recorded experiment duration, and assign that as the overall duration.
+                feedstats_in_folder = [f.replace('FeedLog','FeedStats')
+                                       for f in feedlogs_in_folder]
+                for fs in feedstats_in_folder:
+                    fs_path = os.path.join(folder, fs)
+                    expt_durations.append(munge.get_expt_duration(fs_path))
+                self.expt_duration_seconds = np.max(expt_durations) * 60
 
         for j, feedlog in enumerate(feedlogs_in_folder):
             datetime_exptname = '_'.join(feedlog.strip('.csv').split('_')[1:3])
@@ -117,8 +125,10 @@ class espresso(object):
 
 
         # Join all processed feedlogs and metadata into respective DataFrames.
-        allflies = pd.concat(metadata_list).reset_index(drop=True)
-        allfeeds = pd.concat(feedlogs_list).reset_index(drop=True)
+        allflies = pd.concat(metadata_list)
+        allfeeds = pd.concat(feedlogs_list)
+        # # Discard superfluous columns.
+        # allfeeds.drop('ID', axis=1, inplace=True)
 
         # Assign feed choice to the allfeeds DataFrame.
         food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
@@ -137,26 +147,23 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
-        # merge metadata with feedlogs.
-        allfeeds = pd.merge(allfeeds, allflies,
-                            left_on='FlyID', right_on='FlyID')
-        # Discard superfluous columns.
-        allfeeds.drop('ID', axis=1, inplace=True)
-        # valid_FoodChoice = ~allfeeds.FoodChoice.isna()
-        # valid_Feed_status = allfeeds.Valid
-        # allfeeds = allfeeds[valid_FoodChoice & valid_Feed_status]
-
         # Change relevant columns to categorical.
         for col in ['Genotype', 'FoodChoice', 'Temperature', 'Sex']:
             try:
-                allfeeds.loc[:, col] = pd.Categorical(allfeeds[col],
-                                            categories=allfeeds[col].unique(),
-                                            ordered=True)
+                # allfeeds.loc[:, col] = pd.Categorical(allfeeds[col],
+                #                             categories=allfeeds[col].unique(),
+                #                             ordered=True)
                 allflies.loc[:, col] = pd.Categorical(allflies[col],
                                             categories=allflies[col].unique(),
                                             ordered=True)
             except KeyError:
                 pass
+
+        # merge metadata with feedlogs.
+        allfeeds = pd.merge(allfeeds, allflies,
+                            left_on='FlyID', right_on='FlyID')
+
+
 
         # Compute average feed volume per fly in chamber, for each feed.
         allfeeds = munge.average_feed_vol_per_fly(allfeeds)
@@ -168,8 +175,8 @@ class espresso(object):
         allfeeds = munge.average_feed_speed_per_fly(allfeeds)
 
         # Reset the indexes.
-        for df in [allflies, allfeeds]:
-            df.reset_index(drop=True, inplace=True)
+        allflies.reset_index(drop=True, inplace=True)
+        allfeeds.reset_index(drop=True, inplace=True)
 
         # Sort by FlyID, then by RelativeTime
         allfeeds.sort_values(['FlyID', 'RelativeTime_s'], inplace=True)
@@ -237,8 +244,9 @@ class espresso(object):
             gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
                                                              plural_list[4],
                                                              self.sexes)
-            except AttributeError:
-                gender_summary = ''
+        except AttributeError:
+            gender_summary = ''
+
         try:
             expt_duration_summary = "\nTotal experiment duration = {} minutes\n".format(self.expt_duration_seconds / 60)
         except AttributeError:
