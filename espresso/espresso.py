@@ -148,16 +148,16 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
         # Change relevant columns to categorical.
-        for col in ['Genotype', 'FoodChoice', 'Temperature', 'Sex']:
+        for col in ['Genotype', 'Temperature', 'Sex']:
             try:
-                # allfeeds.loc[:, col] = pd.Categorical(allfeeds[col],
-                #                             categories=allfeeds[col].unique(),
-                #                             ordered=True)
                 allflies.loc[:, col] = pd.Categorical(allflies[col],
-                                            categories=allflies[col].unique(),
+                                            categories=np.sort(allflies[col].unique()),
                                             ordered=True)
             except KeyError:
                 pass
+        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(allfeeds.FoodChoice,
+                                                    categories=np.sort(allfeeds.FoodChoice.unique()),
+                                                    ordered=True)
 
         # merge metadata with feedlogs.
         print("\nDon't worry about the exception/error below. "
