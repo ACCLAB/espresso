@@ -50,7 +50,7 @@ if __name__=="__main__":
     setup(name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.2.0',
+        version='0.2.1',
         description='Analysis of ESPRESSO experiments run on CRITTA.',
         packages=find_packages(),
         install_requires=installs,

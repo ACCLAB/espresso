@@ -40,7 +40,7 @@ class espresso(object):
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
-        self.version = '0.2.0'
+        self.version = '0.2.1'
 
         allflies= []
         allfeeds= []
@@ -147,17 +147,23 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
+        # Assign Status based on genotype.
+        allflies['Status'] = pd.Categorical(allflies.Genotype.apply(munge.assign_status_from_genotype),
+                                            categories=['Sibling','Offspring'],
+                                            ordered=True)
+
+
         # Change relevant columns to categorical.
-        for col in ['Genotype', 'FoodChoice', 'Temperature', 'Sex']:
+        for col in ['Genotype', 'Temperature', 'Sex']:
             try:
-                # allfeeds.loc[:, col] = pd.Categorical(allfeeds[col],
-                #                             categories=allfeeds[col].unique(),
-                #                             ordered=True)
                 allflies.loc[:, col] = pd.Categorical(allflies[col],
-                                            categories=allflies[col].unique(),
+                                            categories=np.sort(allflies[col].unique()),
                                             ordered=True)
             except KeyError:
                 pass
+        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(allfeeds.FoodChoice,
+                                                    categories=np.sort(allfeeds.FoodChoice.unique()),
+                                                    ordered=True)
 
         # merge metadata with feedlogs.
         print("\nDon't worry about the exception/error below. "

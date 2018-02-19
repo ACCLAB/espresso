@@ -44,6 +44,7 @@ class timecourse_plotter():
                                      ax=None):
 
         import numpy as np
+        import pandas as pd
         import matplotlib.pyplot as plt
         import seaborn as sns
         from . import plot_helpers as plt_help
@@ -64,8 +65,26 @@ class timecourse_plotter():
         resampdf_sum = munge.sum_for_timecourse(resampdf)
         plotdf = self.__pivot_for_plot(resampdf_sum, group_by, color_by)
 
-        groupby_grps = np.sort( plotdf[group_by].unique() )
-        num_plots = int( len(groupby_grps) )
+        # Change relevant columns to categorical.
+        try:
+            plotdf.loc[:, 'Status'] = pd.Categorical(plotdf.loc[:, 'Status'],
+                                                categories=['Sibling','Offspring'],
+                                                ordered=True)
+        except KeyError:
+            pass
+
+        # Change relevant columns to categorical.
+        for col in ['Genotype', 'Temperature',
+                    'Sex','FoodChoice']:
+            try:
+                plotdf.loc[:, col] = pd.Categorical(plotdf[col],
+                                            categories=np.sort(plotdf[col].unique()),
+                                            ordered=True)
+            except KeyError:
+                pass
+
+        groupby_grps = plotdf[group_by].cat.categories.tolist()
+        num_plots = int(len(groupby_grps))
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
         yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
@@ -93,7 +112,7 @@ class timecourse_plotter():
             axx = ax
 
         # Loop through each panel.
-        for c, grp in enumerate( groupby_grps ):
+        for c, grp in enumerate(groupby_grps):
             if len(groupby_grps) > 1:
                 plotax = axx[c]
             else:
@@ -136,7 +155,7 @@ class timecourse_plotter():
         for a in rasterlegend_ax:
             a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
             ## Set ylabels.
-            a.set_ylabel( yvar_ylabel_dict[yvar] )
+            a.set_ylabel(yvar_ylabel_dict[yvar])
 
         # End and return the figure.
         if ax is None:
