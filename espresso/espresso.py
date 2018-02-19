@@ -72,7 +72,7 @@ class espresso(object):
                     raise ValueError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
                                 'FeedStats files should start with "FeedStats_" and '+\
                                 'have the same datetime info as the corresponding FeedLog.'
-                                ' Alternatively, you can enter expt_duration_seconds.')
+                                ' Alternatively, you can enter `expt_duration_seconds`.')
                 else:
                     self.expt_duration_seconds = expt_duration_seconds
             else:
@@ -160,9 +160,10 @@ class espresso(object):
                 pass
 
         # merge metadata with feedlogs.
+        print("\nDon't worry about the exception/error below. "
+              "It's a harmless pandas bug.")
         allfeeds = pd.merge(allfeeds, allflies,
                             left_on='FlyID', right_on='FlyID')
-
 
 
         # Compute average feed volume per fly in chamber, for each feed.
@@ -286,6 +287,8 @@ class espresso(object):
 
 
         # Merge the flies and feeds attributes.
+        print("\nDon't worry about the above exception. "
+                      "It's a harmless pandas bug.")
         self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
             how='outer')
         self_copy.feeds = pd.merge(self_copy.feeds, other_copy.feeds,
@@ -316,8 +319,6 @@ class espresso(object):
                                         .filter(regex='Tube'))
         self_copy.plot = espresso_plotter.espresso_plotter(self_copy)
 
-        print("\nDon't worry about the above exception. "
-              "It's a harmless pandas bug.")
         return self_copy
 
     def __radd__(self, other):
