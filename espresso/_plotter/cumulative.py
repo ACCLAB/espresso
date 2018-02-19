@@ -38,6 +38,7 @@ class cumulative_plotter:
                                      gridlines_minor=True,
                                      ax=None):
         import numpy as np
+        import pandas as pd
         import matplotlib.pyplot as plt
         import seaborn as sns
         from . import plot_helpers as plt_helper
@@ -50,14 +51,32 @@ class cumulative_plotter:
         print("Coloring feed volume time course by {0}".format(color_by))
         print("Grouping feed volume time course by {0}".format(group_by))
 
-        if color_by ==group_by: # catch as exception:
+        if color_by == group_by: # catch as exception:
             raise ValueError('color_by and group_by both have the same value.'
             'They should be 2 different column names in the feedlog.')
 
         resampdf = munge.groupby_resamp_sum(self.__feeds, resample_by)
         plotdf = munge.cumsum_for_cumulative(resampdf)
 
-        groupby_grps = np.sort(plotdf[group_by].unique())
+        # Change relevant columns to categorical.
+        try:
+            plotdf.loc[:, 'Status'] = pd.Categorical(plotdf.loc[:, 'Status'],
+                                                categories=['Sibling','Offspring'],
+                                                ordered=True)
+        except KeyError:
+            pass
+
+        # Change relevant columns to categorical.
+        for col in ['Genotype', 'Temperature',
+                    'Sex','FoodChoice']:
+            try:
+                plotdf.loc[:, col] = pd.Categorical(plotdf[col],
+                                            categories=np.sort(plotdf[col].unique()),
+                                            ordered=True)
+            except KeyError:
+                pass
+
+        groupby_grps = plotdf[group_by].cat.categories.tolist()
         num_plots = int(len(groupby_grps))
 
         # Initialise figure.
@@ -81,7 +100,7 @@ class cumulative_plotter:
             axx = ax
 
         # Loop through each panel.
-        for c, grp in enumerate( groupby_grps ):
+        for c, grp in enumerate(groupby_grps):
             if len(groupby_grps)>1:
                 plotax = axx[c]
             else:
