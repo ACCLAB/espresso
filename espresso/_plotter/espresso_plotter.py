@@ -7,32 +7,8 @@
 Plot functions for espresso objects.
 """
 
-#      # #####  #####    ##   #####  #   #    # #    # #####   ####  #####  #####
-#      # #    # #    #  #  #  #    #  # #     # ##  ## #    # #    # #    #   #
-#      # #####  #    # #    # #    #   #      # # ## # #    # #    # #    #   #
-#      # #    # #####  ###### #####    #      # #    # #####  #    # #####    #
-#      # #    # #   #  #    # #   #    #      # #    # #      #    # #   #    #
-###### # #####  #    # #    # #    #   #      # #    # #       ####  #    #   #
-
-import sys as _sys
-_sys.path.append("..") # so we can import munger from the directory above.
-
-import numpy as _np
-import pandas as _pd
-
-import matplotlib.pyplot as _plt
-import matplotlib.patches as _mpatches # for custom legends.
-
-import seaborn as _sns
-
-from . import plot_helpers as _plot_helpers
-from .._munger import munger as _munger
-
-# Add submodules below. The respective .py scripts
-# should be in the same folder as espresso_plotter.py.
-from . import contrast as _contrast
-from . import cumulative as _cumulative
-from . import timecourse as _timecourse
+# import sys as _sys
+# _sys.path.append("..") # so we can import munger from the directory above.
 
 
 class espresso_plotter():
@@ -56,29 +32,22 @@ class espresso_plotter():
             TBA
     """
 
-    #    #    #    #    #####
-    #    ##   #    #      #
-    #    # #  #    #      #
-    #    #  # #    #      #
-    #    #   ##    #      #
-    #    #    #    #      #
-
     def __init__(self,espresso): # pass along an espresso instance.
+
+        # Add submodules below. The respective .py scripts
+        # should be in the same folder as espresso_plotter.py.
+        from . import contrast as contrast
+        from . import cumulative as cumulative
+        from . import timecourse as timecourse
 
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
+        self.__expt_end_time = espresso.expt_duration_seconds
         # call obj.plot.xxx to access these methods.
-        self.contrast = _contrast.contrast_plotter(self)
-        self.timecourse = _timecourse.timecourse_plotter(self)
-        self.cumulative = _cumulative.cumulative_plotter(self)
+        self.contrast = contrast.contrast_plotter(self)
+        self.timecourse = timecourse.timecourse_plotter(self)
+        self.cumulative = cumulative.cumulative_plotter(self)
 
-
-    #####    ##    ####  ##### ###### #####     #####  #       ####  #####  ####
-    #    #  #  #  #        #   #      #    #    #    # #      #    #   #   #
-    #    # #    #  ####    #   #####  #    #    #    # #      #    #   #    ####
-    #####  ######      #   #   #      #####     #####  #      #    #   #        #
-    #   #  #    # #    #   #   #      #   #     #      #      #    #   #   #    #
-    #    # #    #  ####    #   ###### #    #    #      ######  ####    #    ####
 
 
     def rasters(self,
@@ -118,109 +87,119 @@ class espresso_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as mpatches # for custom legends.
+        import seaborn as sns
+
+        from . import plot_helpers as plt_help
+        from .._munger import munger as munge
+
         # make a copy of the metadata and the feedlog.
-        allfeeds=self._experiment.feeds.copy()
-        allflies=self._experiment.flies.copy()
+        allfeeds  =  self._experiment.feeds.copy()
+        allflies = self._experiment.flies.copy()
 
         # Handle the group_by and color_by keywords.
-        group_by, color_by = _munger.check_group_by_color_by(group_by, color_by, allfeeds)
+        group_by, color_by = munge.check_group_by_color_by(group_by, color_by, allfeeds)
 
-        print( "Coloring rasters by {0}".format(color_by) )
-        print( "Grouping rasters by {0}".format(group_by) )
+        print("Coloring rasters by {0}".format(color_by))
+        print("Grouping rasters by {0}".format(group_by))
 
-        if color_by==group_by: # catch as exception:
-            raise ValueError('color_by and group_by both have the same value. They should be 2 different column names in the feedlog.')
+        if color_by == group_by: # catch as exception:
+            raise ValueError("color_by and group_by both have the same value. "
+            "They should be 2 different column names in the feedlog.")
 
         # Get the total flycount.
         try:
-            check_grpby_col=allflies.groupby(group_by)
-            maxflycount=check_grpby_col.count().FlyID.max()
+            check_grpby_col = allflies.groupby(group_by)
+            maxflycount = check_grpby_col.count().FlyID.max()
         except KeyError:
             # group_by is not a column in the metadata,
             # so we assume that the number of flies in the raster plot
             # is simply the total number of flies.
-            maxflycount=len(allflies)
+            maxflycount = len(allflies)
 
         # Get the groups we will be grouping on, and coloring on.
-        groupby_grps=_np.sort(allfeeds[group_by].unique())
-        color_grps=_np.sort(allfeeds[color_by].unique())
-        num_plots=int( len(groupby_grps) )
+        groupby_grps = np.sort(allfeeds[group_by].unique())
+        color_grps = np.sort(allfeeds[color_by].unique())
+        num_plots = int( len(groupby_grps) )
 
         # Create the palette.
-        colors=_plot_helpers._make_categorial_palette(allfeeds,color_by)
-        palette=dict( zip(color_grps, colors) )
+        colors = plt_help._make_categorial_palette(allfeeds,color_by)
+        palette = dict( zip(color_grps, colors) )
 
         # Create custom handles for the foodchoice.
         # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
-        raster_legend_handles=[]
+        raster_legend_handles = []
         for key in palette.keys():
-            patch=_mpatches.Patch(color=palette[key], label=key)
+            patch = mpatches.Patch(color=palette[key], label=key)
             raster_legend_handles.append(patch)
 
         # Initialise the figure.
-        _sns.set(style='ticks',context='poster')
+        sns.set(style='ticks',context='poster')
         if add_flyid_labels:
-            ws=0.4
+            ws = 0.4
         else:
-            ws=0.2
+            ws = 0.2
         if fig_size is None:
-            x_inches=10*num_plots
-            y_inches=7
+            x_inches = 10*num_plots
+            y_inches = 7
         else:
             if isinstance(fig_size, tuple) or isinstance(fig_size, list):
-                x_inches=fig_size[0]
-                y_inches=fig_size[1]
+                x_inches = fig_size[0]
+                y_inches = fig_size[1]
             else:
                 raise ValueError('Please make sure fig_size is a tuple of the form (w,h) in inches.')
 
         if ax is None:
-            fig,axx=_plt.subplots(nrows=1,
+            fig,axx = plt.subplots(nrows=1,
                                   ncols=num_plots,
                                   figsize=(x_inches,y_inches),
                                   gridspec_kw={'wspace':ws} )
         else:
-            axx=ax
-            if len(axx)!=num_plots:
+            axx = ax
+            if len(axx) != num_plots:
                 raise ValueError('The length of the supplied array of Axes objects does not match the number of groups in {0}.'.format(group_by))
 
         # Loop through each panel.
         for c, grp in enumerate( groupby_grps ):
             if len(groupby_grps)>1:
-                rasterax=axx[c]
+                rasterax = axx[c]
             else:
-                rasterax=axx
+                rasterax = axx
             print('plotting {0} {1}'.format(grp,'rasters'))
             print('Be patient, this can a while!')
 
             # Plot the raster plots.
             ## Plot vertical grid lines if desired.
-            grid_kwargs=dict(linestyle=':', alpha=0.5)
+            grid_kwargs = dict(linestyle=':', alpha=0.5)
             if gridlines_major:
                 rasterax.xaxis.grid(which='major',linewidth=0.25,**grid_kwargs)
             if gridlines_minor:
                 rasterax.xaxis.grid(which='minor',linewidth=0.15,**grid_kwargs)
 
             ## Grab only the flies we need.
-            tempfeeds=allfeeds[allfeeds[group_by]==grp].copy()
-            temp_allflies=tempfeeds.FlyID.unique().tolist()
+            tempfeeds = allfeeds[allfeeds[group_by] == grp].copy()
+            temp_allflies = tempfeeds.FlyID.unique().tolist()
 
             ## Order the flies properly.
             ### First, drop non-valid feeds, then sort by feed time and feed duration,
             ### then pull out FlyIDs in that order.
-            temp_feeding_flies=tempfeeds[~_np.isnan(tempfeeds['FeedDuration_s'])].\
+            temp_feeding_flies = tempfeeds[~np.isnan(tempfeeds['FeedDuration_s'])].\
                                     sort_values(['RelativeTime_s','FeedDuration_s']).FlyID.\
                                     drop_duplicates().tolist()
             ### Next, identify which flies did not feed (aka not in list above.)
-            temp_non_feeding_flies=[fly for fly in temp_allflies if fly not in temp_feeding_flies]
+            temp_non_feeding_flies = [fly for fly in temp_allflies
+            if fly not in temp_feeding_flies]
             ### Then, join these two lists.
-            flies_in_order=temp_feeding_flies+temp_non_feeding_flies
+            flies_in_order = temp_feeding_flies + temp_non_feeding_flies
 
             ### Now, plot each fly as a row, and plot each feed as a colored raster for every fly.
-            flycount=int(len(flies_in_order))
+            flycount = int(len(flies_in_order))
             for k, flyid in enumerate(flies_in_order):
-                tt=tempfeeds[tempfeeds.FlyID==flyid]
-                for idx in [idx for idx in tt.index if ~_np.isnan(tt.loc[idx,'FeedDuration_s'])]:
-                    rasterplot_kwargs=dict(xmin=tt.loc[idx,'RelativeTime_s'],
+                tt = tempfeeds[tempfeeds.FlyID == flyid]
+                for idx in [idx for idx in tt.index if ~np.isnan(tt.loc[idx,'FeedDuration_s'])]:
+                    rasterplot_kwargs = dict(xmin=tt.loc[idx,'RelativeTime_s'],
                                            xmax=tt.loc[idx,'RelativeTime_s']+tt.loc[idx,'FeedDuration_s'],
 
                                            ymin=(1/maxflycount)*(maxflycount-k-1),
@@ -236,9 +215,9 @@ class espresso_plotter():
                 ### Plot the flyid labels if so desired.
                 if add_flyid_labels:
                     if flyid in temp_non_feeding_flies:
-                        label_color='grey'
+                        label_color = 'grey'
                     else:
-                        label_color='black'
+                        label_color = 'black'
                     rasterax.text(-85, (1/maxflycount)*(maxflycount-k-1) + (1/maxflycount)*.5,
                                 flyid,
                                 color=label_color,
@@ -250,15 +229,15 @@ class espresso_plotter():
             rasterax.set_title(grp)
 
             ### Format x-axis.
-            _plot_helpers.format_timecourse_xaxis(rasterax)
+            plt_help.format_timecourse_xaxis(rasterax, self.__expt_end_time)
 
         ## Despine accordingly (if multiple axes were produced.)
         ## Note the we remove the left spine (set to True).
-        if len(groupby_grps)>1:
+        if len(groupby_grps) > 1:
             for a in axx:
-                _sns.despine(ax=a,left=True,trim=True,offset=5)
+                sns.despine(ax=a,left=True,trim=True,offset=5)
         else:
-            _sns.despine(ax=axx,left=True,trim=True,offset=5)
+            sns.despine(ax=axx,left=True,trim=True,offset=5)
 
         # Position the raster color legend.
         if num_plots>1:
@@ -303,31 +282,36 @@ class espresso_plotter():
         -------
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
+        import matplotlib.pyplot as plt
+        from . import plot_helpers as plt_help
+        import seaborn as sns
+
+
         # Get plotting variables.
-        percent_feeding_summary=_plot_helpers.compute_percent_feeding(self._experiment.flies,
+        percent_feeding_summary = plt_help.compute_percent_feeding(self._experiment.flies,
                                                              self._experiment.feeds,
                                                              group_by,
                                                              start=time_start,
                                                              end=time_end)
 
 
-        cilow=percent_feeding_summary.ci_lower.tolist()
-        cihigh=percent_feeding_summary.ci_upper.tolist()
-        ydata=percent_feeding_summary.percent_feeding.tolist()
+        cilow = percent_feeding_summary.ci_lower.tolist()
+        cihigh = percent_feeding_summary.ci_upper.tolist()
+        ydata = percent_feeding_summary.percent_feeding.tolist()
 
         # Select palette.
-        if palette_type=='categorical':
-            color_palette=_plot_helpers._make_categorial_palette(self._experiment.feeds,
+        if palette_type == 'categorical':
+            color_palette = plt_help._make_categorial_palette(self._experiment.feeds,
                 group_by)
-        elif palette_type=='sequential':
-            color_palette=_plot_helpers._make_sequential_palette(self._experiment.feeds,
+        elif palette_type == 'sequential':
+            color_palette = plt_help._make_sequential_palette(self._experiment.feeds,
                 group_by)
 
         # Set style.
-        _sns.set(style='ticks',context='talk',font_scale=1.1)
+        sns.set(style='ticks',context='talk',font_scale=1.1)
 
         # Initialise figure.
-        f,ax=_plt.subplots(1,figsize=(8,5))
+        f,ax = plt.subplots(1,figsize=(8,5))
         ax.set_ylim(0,110)
         # Plot 95CI first.
         ax.fill_between(range(0,len(percent_feeding_summary)),
@@ -338,7 +322,7 @@ class espresso_plotter():
         percent_feeding_summary.percent_feeding.plot.line(ax=ax,
             color='k',lw=1.2)
 
-        for j,s in enumerate(ydata):
+        for j, s in enumerate(ydata):
             ax.plot(j, s, 'o',
                     color=color_palette[j])
 
@@ -346,7 +330,7 @@ class espresso_plotter():
         ax.xaxis.set_ticks([i for i in range(0,len(percent_feeding_summary))])
         ax.xaxis.set_ticklabels(percent_feeding_summary.index.tolist())
 
-        xmax=ax.xaxis.get_ticklocs()[-1]
+        xmax = ax.xaxis.get_ticklocs()[-1]
         ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
 
         # __rotate_ticks(ax, angle=45, alignment='right')
@@ -354,7 +338,7 @@ class espresso_plotter():
             tick.set_rotation(45)
             tick.set_horizontalalignment('right')
 
-        _sns.despine(ax=ax,trim=True,offset={'left':1})
+        sns.despine(ax=ax, trim=True, offset={'left':1})
         ax.set_ylabel('Percent Feeding')
 
         f.tight_layout()
