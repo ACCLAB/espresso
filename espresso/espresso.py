@@ -147,6 +147,12 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
+        # Assign Status based on genotype.
+        allflies['Status'] = pd.Categorical(allflies.Genotype.apply(munge.assign_status_from_genotype),
+                                            categories=['Sibling','Offspring'],
+                                            ordered=True)
+
+
         # Change relevant columns to categorical.
         for col in ['Genotype', 'Temperature', 'Sex']:
             try:
