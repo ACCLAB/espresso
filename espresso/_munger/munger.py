@@ -279,7 +279,7 @@ def groupby_resamp_sum(df, resample_by='10min'):
         df.loc[:,'RelativeTime_s'] = pd.to_datetime(df['RelativeTime_s'],
                                                     unit='s')
 
-    df_groupby_resamp_sum = df.groupby(['Temperature','Genotype',
+    df_groupby_resamp_sum = df.groupby(['Temperature','Status','Genotype',
                                         'FlyID','FoodChoice'])\
                               .resample(resample_by,
                                         on='RelativeTime_s')\
@@ -299,7 +299,7 @@ def sum_for_timecourse(df):
     temp = df.copy()
     temp_sum = pd.DataFrame(temp.to_records())
 
-    temp_sum = temp_sum[['Temperature','Genotype','FlyID','FoodChoice',
+    temp_sum = temp_sum[['Temperature','Status','Genotype','FlyID','FoodChoice',
                        'RelativeTime_s',
                        'FlyCountInChamber',
                         ### Below, add all the columns that are
@@ -338,18 +338,20 @@ def cumsum_for_cumulative(df):
     temp['Cumulative Volume (nl)'] = temp['Cumulative Volume (µl)'] * 1000
 
     # Select only relevant columns.
-    temp = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID','Temperature',
+    temp = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID',
+                                            'Temperature','Status',
                                             'Genotype','FoodChoice',
                                             'Cumulative Feed Count',
                                             'Cumulative Volume (nl)']]
 
     # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = temp.groupby(['Temperature','Genotype',
+    grs_cumsum_a = temp.groupby(['Temperature','Status','Genotype',
                                 'FlyID','FoodChoice']).cumsum()
 
     # Combine metadata with cumsum.
-    grs_cumsum = pd.merge(temp[['RelativeTime_s','Temperature','Genotype',
-                               'FlyID','FoodChoice']],
+    grs_cumsum = pd.merge(temp[['RelativeTime_s','Temperature',
+                                'Status','Genotype',
+                                'FlyID','FoodChoice']],
                           grs_cumsum_a,
                           left_index=True,
                           right_index=True)
@@ -468,3 +470,15 @@ def get_expt_duration(path_to_feedstats):
 
     feedstats = pd.read_csv(path_to_feedstats)
     return np.int(np.round(feedstats.Minutes.values[-1]))
+
+
+def assign_status_from_genotype(genotype):
+    """
+    Convenience function to map genotype to status.
+    """
+    if genotype.lower().startswith('w1118'):
+        status = 'Sibling'
+    else:
+        status = 'Offspring'
+
+    return status
