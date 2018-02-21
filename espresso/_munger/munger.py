@@ -259,14 +259,16 @@ def check_group_by_color_by(col, row, color_by, df):
 
     if col is not None:
         check_column(col, df)
+    else:
+        col = "Genotype"
 
     if row is not None:
         check_column(row, df)
 
-    if color_by is None:
-        color_by = "FoodChoice"
-    else:
+    if color_by is not None:
         check_column(color_by, df)
+    else:
+        color_by = "FoodChoice"
 
     if col == color_by or row == color_by:
         raise ValueError('{} is the same as {} or {}.'.format(color_by, row, col))
