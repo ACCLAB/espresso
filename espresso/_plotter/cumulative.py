@@ -201,8 +201,8 @@ class cumulative_plotter:
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        gridlines_major, gridlines_minor: boolean, default True
-            Whether or not major and minor vertical gridlines are displayed.
+        gridlines boolean, default True
+            Whether or not vertical gridlines are displayed at each hour.
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category(as dictacted by group_by)
@@ -235,7 +235,7 @@ class cumulative_plotter:
         consumed per fly for the entire assay. The plot will be tiled
         horizontally according to the `col`, horizontally according to the
         category `row`, and will be colored according to the category `color_by`.
-        Feed volumes will be binned by the duration in `resample_by`.
+        Feed counts will be binned by the duration in `resample_by`.
 
         keywords
         --------
@@ -255,8 +255,8 @@ class cumulative_plotter:
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        gridlines_major, gridlines_minor: boolean, default True
-            Whether or not major and minor vertical gridlines are displayed.
+        gridlines boolean, default True
+            Whether or not vertical gridlines are displayed at each hour.
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category(as dictacted by group_by)
