@@ -146,7 +146,8 @@ class cumulative_plotter:
                                        include_zero=True)
             for plot_ax in axx.flatten():
                 # Format x-axis.
-                plt_helper.format_timecourse_xaxis(plot_ax, 21600)
+                plt_helper.format_timecourse_xaxis(plot_ax,
+                                                   self.__expt_end_time)
                 # Set label for y-axis.
                 plot_ax.set_ylabel(yvar)
                 # Plot vertical grid lines if desired.
