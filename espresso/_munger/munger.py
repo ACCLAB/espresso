@@ -243,30 +243,37 @@ def check_column(col, df):
     Convenience function to check if a dataframe has a column of interest.
     """
     if not isinstance(col, str): # if col is not a string.
-        raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+        raise TypeError("{} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
     if col not in df.columns: # make sure col is a column in df.
-        raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
+        raise KeyError("{} is not a column in the feedlog. Please check.".format(col))
     pass
 
 
 
 
-def check_group_by_color_by(group_by, color_by, df):
+def check_group_by_color_by(col, row, color_by, df):
     """
-    Check to see if `group_by` and `color_by` (if supplied) are columns in `df`.
+    Check to see if `row`, `col` and `color_by` (if supplied) are columns in `df`.
     If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
-    if group_by is None:
-        group_by = "Genotype"
-    else:
-        check_column(group_by, df)
+
+    if col is not None:
+        check_column(col, df)
+
+    if row is not None:
+        check_column(row, df)
 
     if color_by is None:
         color_by = "FoodChoice"
     else:
         check_column(color_by, df)
 
-    return group_by, color_by
+    if col == color_by or row == color_by:
+        raise ValueError('{} is the same as {} or {}.'.format(color_by, row, col))
+    if col == row:
+        raise ValueError('Row variable {} is the same as column variable {}.'.format(row, col))
+
+    return col, row, color_by
 
 def groupby_resamp_sum(df, resample_by='10min'):
     """
@@ -279,7 +286,8 @@ def groupby_resamp_sum(df, resample_by='10min'):
         df.loc[:,'RelativeTime_s'] = pd.to_datetime(df['RelativeTime_s'],
                                                     unit='s')
 
-    df_groupby_resamp_sum = df.groupby(['Temperature','Status','Genotype',
+    df_groupby_resamp_sum = df.groupby(['Temperature','Status',
+                                        'Genotype','Sex',
                                         'FlyID','FoodChoice'])\
                               .resample(resample_by,
                                         on='RelativeTime_s')\
@@ -299,9 +307,10 @@ def sum_for_timecourse(df):
     temp = df.copy()
     temp_sum = pd.DataFrame(temp.to_records())
 
-    temp_sum = temp_sum[['Temperature','Status','Genotype','FlyID','FoodChoice',
-                       'RelativeTime_s',
-                       'FlyCountInChamber',
+    temp_sum = temp_sum[['Temperature','Status','Genotype',
+                        'Sex','FlyID','FoodChoice',
+                        'RelativeTime_s',
+                        'FlyCountInChamber',
                         ### Below, add all the columns that are
                          ### potentially used for plotting.
                          'AverageFeedVolumePerFly_µl',
@@ -340,17 +349,18 @@ def cumsum_for_cumulative(df):
     # Select only relevant columns.
     temp = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID',
                                             'Temperature','Status',
-                                            'Genotype','FoodChoice',
+                                            'Genotype','Sex','FoodChoice',
                                             'Cumulative Feed Count',
                                             'Cumulative Volume (nl)']]
 
     # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = temp.groupby(['Temperature','Status','Genotype',
+    grs_cumsum_a = temp.groupby(['Temperature','Status',
+                                'Genotype','Sex',
                                 'FlyID','FoodChoice']).cumsum()
 
     # Combine metadata with cumsum.
     grs_cumsum = pd.merge(temp[['RelativeTime_s','Temperature',
-                                'Status','Genotype',
+                                'Status','Genotype','Sex',
                                 'FlyID','FoodChoice']],
                           grs_cumsum_a,
                           left_index=True,

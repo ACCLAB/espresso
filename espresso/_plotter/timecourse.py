@@ -16,146 +16,148 @@ class timecourse_plotter():
     timecourse plotting class for espresso object.
     """
 
-#    #    #    #    #####
-#    ##   #    #      #
-#    # #  #    #      #
-#    #  # #    #      #
-#    #   ##    #      #
-#    #    #    #      #
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
         self.__expt_end_time = plotter._experiment.expt_duration_seconds
 
-    def __pivot_for_plot(self, resampdf, group_by, color_by):
+    def __pivot_for_plot(self, resampdf, row, col, color_by):
         import pandas as pd
-        return pd.DataFrame(resampdf.groupby([group_by, color_by,'time_s'])\
-                                    .sum().to_records())
+
+        group_by_cols = [a for a in [row, col, color_by, 'time_s']
+                        if a is not None]
+        out = pd.DataFrame(resampdf.groupby(group_by_cols).sum())
+        out.drop('FlyCountInChamber', axis=1, inplace=True)
+
+        return out
 
 
-    def __generic_timecourse_plotter(self,
-                                     yvar,
-                                     group_by=None,
-                                     color_by=None,
-                                     resample_by='10min',
-                                     fig_size=None,
-                                     gridlines_major=True,
-                                     gridlines_minor=True,
-                                     ax=None):
+    def __timecourse_plotter(self,
+                             yvar,
+                             col=None,
+                             row=None,
+                             color_by=None,
+                             resample_by='5min',
+                             fig_size=None,
+                             gridlines=True,
+                             ax=None):
 
         import numpy as np
         import pandas as pd
         import matplotlib.pyplot as plt
         import seaborn as sns
-        from . import plot_helpers as plt_help
+        from . import plot_helpers as plt_helper
         from .._munger import munger as munge
 
+        feeds = self.__feeds.copy()
+
         # Handle the group_by and color_by keywords.
-        group_by, color_by = munge.check_group_by_color_by(group_by, color_by,
-                                                           self.__feeds)
-
-        print("Coloring feed volume time course by {0}".format(color_by))
-        print("Grouping feed volume time course by {0}".format(group_by))
-
-        if color_by == group_by: # catch as exception:
-            raise ValueError('color_by and group_by both have the same value. '
-            'They should be 2 different column names in the feedlog.')
-
-        resampdf = munge.groupby_resamp_sum(self.__feeds, resample_by)
-        resampdf_sum = munge.sum_for_timecourse(resampdf)
-        plotdf = self.__pivot_for_plot(resampdf_sum, group_by, color_by)
-
-        # Change relevant columns to categorical.
-        try:
-            plotdf.loc[:, 'Status'] = pd.Categorical(plotdf.loc[:, 'Status'],
-                                                categories=['Sibling','Offspring'],
-                                                ordered=True)
-        except KeyError:
-            pass
-
-        # Change relevant columns to categorical.
-        for col in ['Genotype', 'Temperature',
-                    'Sex','FoodChoice']:
-            try:
-                plotdf.loc[:, col] = pd.Categorical(plotdf[col],
-                                            categories=np.sort(plotdf[col].unique()),
-                                            ordered=True)
-            except KeyError:
-                pass
-
-        groupby_grps = plotdf[group_by].cat.categories.tolist()
-        num_plots = int(len(groupby_grps))
+        col, row, color_by = munge.check_group_by_color_by(col, row,
+                                            color_by, feeds)
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
         yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
-                          'AverageFeedCountPerFly':'Average Feed Count Per Fly',
-                          'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
+                           'AverageFeedCountPerFly':'Average Feed Count Per Fly',
+                           'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
+
+        ylab = yvar_ylabel_dict[yvar]
+
+        resamp_feeds = munge.groupby_resamp_sum(feeds, '5min')
+        resamp_feeds_sum = munge.sum_for_timecourse(resamp_feeds)
+        plotdf = self.__pivot_for_plot(resamp_feeds_sum, row, col, color_by)
+
+        # print("Coloring time course by {0}".format(color_by))
+        if row is not None:
+            # print("Plotting rows by {0}".format(row))
+            row_count = int(len(feeds[row].cat.categories))
+        else:
+            row_count = 1
+        if col is not None:
+            # print("Plotting columns by {0}".format(col))
+            col_count = int(len(feeds[col].cat.categories))
+        else:
+            col_count = 1
+
+
+        # DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
+        yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
+                           'AverageFeedCountPerFly':'Average Feed Count Per Fly',
+                           'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
+
 
         # Initialise figure.
         sns.set(style='ticks',context='poster')
         if fig_size is None:
-            x_inches = 10*num_plots
-            y_inches = 7
+            x_inches = 10 * col_count
+            y_inches = 7 * row_count
         else:
             if isinstance(fig_size, tuple) or isinstance(fig_size, list):
                 x_inches = fig_size[0]
                 y_inches = fig_size[1]
             else:
-                raise TypeError('Please make sure figsize is a tuple of the form (w,h) in inches.')
+                raise TypeError('Please make sure figsize is a tuple of the '
+                'form (w,h) in inches.')
 
         if ax is None:
-            fig,axx = plt.subplots(nrows=1,
-                                  ncols=num_plots,
-                                  figsize=(x_inches,y_inches),
-                                  gridspec_kw={'wspace':0.2} )
+            fig,axx = plt.subplots(nrows=row_count, ncols=col_count,
+                                   figsize=(x_inches,y_inches),
+                                   gridspec_kw={'wspace':0.3,
+                                               'hspace':0.3})
         else:
             axx = ax
 
-        # Loop through each panel.
-        for c, grp in enumerate(groupby_grps):
-            if len(groupby_grps) > 1:
-                plotax = axx[c]
-            else:
-                plotax = axx
+        if row is not None and col is not None:
+            for r, row_ in enumerate(feeds[row].cat.categories):
+                for c, col_ in enumerate(feeds[col].cat.categories):
+                    plot_ax = axx[r, c] # the axes to plot on.
 
-            ## Plot the raster plots.
-            ### Plot vertical grid lines if desired.
-            if gridlines_major:
-                plotax.xaxis.grid(True,linestyle='dotted',which='major',alpha=1)
-            if gridlines_minor:
-                plotax.xaxis.grid(True,linestyle='dotted',which='minor',alpha=0.5)
-            ## Filter plotdf according to group_by.
-            temp_plotdf = plotdf[plotdf[group_by] == grp]
-            temp_plotdf_pivot = temp_plotdf.pivot(index='time_s',
-                                                 columns=color_by,
-                                                 values=yvar)
+                    # Reshape the current data to be plotted.
+                    current_plot_df = plotdf.loc[(row_, col_), yvar]
 
-            ### and make area plot.
-            temp_plotdf_pivot.plot.area(ax=plotax,lw=1)
-            ## Add the group name as title.
-            plotax.set_title(grp)
-            ## Format x-axis.
-            plt_help.format_timecourse_xaxis(plotax, self.__expt_end_time)
+                    # We unstack and transpose to create a 'long' dataset,
+                    # where each column is a timecourse dataset to be plotted.
+                    current_plot_df = current_plot_df.unstack().T
+
+                    # Create the plot.
+                    current_plot_df.plot.area(ax=plot_ax, stacked=True)
+                    plot_ax.set_title("{}; {}".format(row_, col_))
+
+        else:
+            # We only have one dimension here.
+            plot_dim = [d for d in [row, col] if d is not None][0]
+            for j, dim_ in enumerate(feeds[plot_dim].cat.categories):
+
+                plot_ax = axx[j]
+
+                current_plot_df = plotdf.loc[dim_, yvar]
+                current_plot_df = current_plot_df.unstack().T
+
+                current_plot_df.plot.area(ax=plot_ax, stacked=True)
+                plot_ax.set_title(dim_)
 
         # Normalize all the y-axis limits.
-        if num_plots > 1:
-            plt_help.normalize_ylims(axx)
-            ## Despine and offset each axis.
-            for a in axx:
-                sns.despine(ax=a,trim=True,offset=5)
-        else:
-            sns.despine(ax=axx,trim=True,offset=5)
+        if row_count + col_count > 1:
+            plt_helper.normalize_ylims(axx.flatten(),
+                                     include_zero=True)
+            for plot_ax in axx.flatten():
+                # Format x-axis.
+                plt_helper.format_timecourse_xaxis(plot_ax, 21600)
+                # Set label for y-axis.
+                plot_ax.set_ylabel(ylab)
+                # Plot vertical grid lines if desired.
+                if gridlines:
+                    plot_ax.xaxis.grid(True, which='major',
+                                       linestyle='dotted', #linewidth=1,
+                                       alpha=0.5)
+                # Despine and offset each axis.
+                sns.despine(ax=plot_ax, trim=True, offset=3)
 
-        # Position the raster color legend,
-        # and label the y-axis appropriately.
-        if num_plots > 1:
-            rasterlegend_ax = axx
-        else:
-            rasterlegend_ax = [axx]
-        for a in rasterlegend_ax:
-            a.legend(loc='upper left',bbox_to_anchor=(0,-0.15))
-            ## Set ylabels.
-            a.set_ylabel(yvar_ylabel_dict[yvar])
+        for ax in axx.flatten()[:-1]:
+            ax.legend().set_visible(False)
+
+        axx.flatten()[-1].legend(loc='upper left',
+                                 title=color_by,
+                                 bbox_to_anchor=(-0.05, -0.15))
 
         # End and return the figure.
         if ax is None:
@@ -165,30 +167,31 @@ class timecourse_plotter():
 
 
     def feed_volume(self,
-                    group_by=None,
+                    col=None,
+                    row=None,
                     color_by=None,
-                    resample_by='10min',
+                    resample_by='5min',
                     fig_size=None,
-                    gridlines_major=True,
-                    gridlines_minor=True,
+                    gridlines=True,
                     ax=None):
         """
-        Produces a timecourse area plot depicting the average feed volume per fly
-        for the entire assay. The plot will be tiled horizontally according to the
-        category "group_by", and will be stacked and colored according to the category
-        "color_by". Feed volumes will be binned by the duration in `resample_by`.
+        Produces a timecourse area plot depicting the average feed volume per
+        fly for the entire assay. The plot will be tiled horizontally
+        according to the `col`, horizontally according to the category `row`,
+        and will be colored according to the category `color_by`.
+        Feed volumes will be binned by the duration in `resample_by`.
 
         keywords
         --------
-        group_by: string, default None
+        col, row: string, default None
             Accepts a categorical column in the espresso object. Each group in
-            this column will be plotted on its own axes.
+            this column will be plotted on along the desired axis.
 
         color_by: string, default None
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        resample_by: string, default '10min'
+        resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -196,8 +199,8 @@ class timecourse_plotter():
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        gridlines_major, gridlines_minor: boolean, default True
-            Whether or not major and minor vertical gridlines are displayed.
+        gridlines boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)
@@ -207,14 +210,14 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__generic_timecourse_plotter('AverageFeedVolumePerFly_µl' ,
-                                                group_by=group_by,
-                                                color_by=color_by,
-                                                resample_by=resample_by,
-                                                fig_size=fig_size,
-                                                gridlines_major=gridlines_major,
-                                                gridlines_minor=gridlines_minor,
-                                                ax=ax)
+        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl' ,
+                                        row=row,
+                                        col=col,
+                                        color_by=color_by,
+                                        resample_by=resample_by,
+                                        fig_size=fig_size,
+                                        gridlines=gridlines,
+                                        ax=ax)
 
         return out
 
@@ -222,30 +225,31 @@ class timecourse_plotter():
 
 
     def feed_count(self,
-                    group_by=None,
+                    col=None,
+                    row=None,
                     color_by=None,
-                    resample_by='10min',
+                    resample_by='5min',
                     fig_size=None,
-                    gridlines_major=True,
-                    gridlines_minor=True,
+                    gridlines=True,
                     ax=None):
         """
         Produces a timecourse area plot depicting the average feed count per fly
-        for the entire assay. The plot will be tiled horizontally according to the
-        category "group_by", and will be stacked and colored according to the category
-        "color_by". Feed counts will be binned by the duration in `resample_by`.
+        for the entire assay. The plot will be tiled horizontally
+        according to the `col`, horizontally according to the category `row`,
+        and will be colored according to the category `color_by`.
+        Feed counts will be binned by the duration in `resample_by`.
 
         keywords
         --------
-        group_by: string, default None
+        col, row: string, default None
             Accepts a categorical column in the espresso object. Each group in
-            this column will be plotted on its own axes.
+            this column will be plotted on along the desired axis.
 
         color_by: string, default None
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        resample_by: string, default '10min'
+        resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -253,8 +257,8 @@ class timecourse_plotter():
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        gridlines_major, gridlines_minor: boolean, default True
-            Whether or not major and minor vertical gridlines are displayed.
+        gridlines boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)
@@ -264,44 +268,45 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__generic_timecourse_plotter('AverageFeedCountPerFly',
-                                                group_by=group_by,
-                                                color_by=color_by,
-                                                resample_by=resample_by,
-                                                fig_size=fig_size,
-                                                gridlines_major=gridlines_major,
-                                                gridlines_minor=gridlines_minor,
-                                                ax=ax)
+        out = self.__timecourse_plotter('AverageFeedCountPerFly',
+                                        row=row,
+                                        col=col,
+                                        color_by=color_by,
+                                        resample_by=resample_by,
+                                        fig_size=fig_size,
+                                        gridlines=gridlines,
+                                        ax=ax)
         return out
 
 
 
 
     def feed_speed(self,
-                    group_by=None,
+                    col=None,
+                    row=None,
                     color_by=None,
-                    resample_by='10min',
+                    resample_by='5min',
                     fig_size=None,
-                    gridlines_major=True,
-                    gridlines_minor=True,
+                    gridlines=True,
                     ax=None):
         """
-        Produces a timecourse area plot depicting the average feed speed per fly in µl/s
-        for the entire assay. The plot will be tiled horizontally according to the
-        category "group_by", and will be stacked and colored according to the category
-        "color_by". Feed speeds will be binned by the duration in `resample_by`.
+        Produces a timecourse area plot depicting the average feed speed per fly
+        in µl/s for the entire assay. The plot will be tiled horizontally
+        according to the `col`, horizontally according to the category `row`,
+        and will be colored according to the category `color_by`.
+        Feed speeds will be binned by the duration in `resample_by`.
 
         keywords
         --------
-        group_by: string, default None
+        col, row: string, default None
             Accepts a categorical column in the espresso object. Each group in
-            this column will be plotted on its own axes.
+            this column will be plotted on along the desired axis.
 
         color_by: string, default None
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        resample_by: string, default '10min'
+        resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -309,8 +314,8 @@ class timecourse_plotter():
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
 
-        gridlines_major, gridlines_minor: boolean, default True
-            Whether or not major and minor vertical gridlines are displayed.
+        gridlines boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)
@@ -320,12 +325,12 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__generic_timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
-                                                group_by=group_by,
-                                                color_by=color_by,
-                                                resample_by=resample_by,
-                                                fig_size=fig_size,
-                                                gridlines_major=gridlines_major,
-                                                gridlines_minor=gridlines_minor,
-                                                ax=ax)
+        out = self.__timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
+                                        row=row,
+                                        col=col,
+                                        color_by=color_by,
+                                        resample_by=resample_by,
+                                        fig_size=fig_size,
+                                        gridlines=gridlines,
+                                        ax=ax)
         return out
