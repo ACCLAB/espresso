@@ -243,9 +243,9 @@ def check_column(col, df):
     Convenience function to check if a dataframe has a column of interest.
     """
     if not isinstance(col, str): # if col is not a string.
-        raise TypeError("{0} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+        raise TypeError("{} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
     if col not in df.columns: # make sure col is a column in df.
-        raise KeyError("{0} is not a column in the feedlog. Please check.".format(col))
+        raise KeyError("{} is not a column in the feedlog. Please check.".format(col))
     pass
 
 
