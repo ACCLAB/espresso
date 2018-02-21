@@ -7,9 +7,6 @@
 cumulative plotting functions for espresso objects.
 """
 
-# import sys as _sys
-# _sys.path.append("..") # so we can import espresso from the directory above.
-
 
 
 class cumulative_plotter:
@@ -17,12 +14,6 @@ class cumulative_plotter:
     cumulative plotting class for espresso object.
     """
 
-    #    #    #    #    #####
-    #    ##   #    #      #
-    #    # #  #    #      #
-    #    #  # #    #      #
-    #    #   ##    #      #
-    #    #    #    #      #
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
@@ -172,66 +163,6 @@ class cumulative_plotter:
                                  title=color_by,
                                  bbox_to_anchor=(-0.05, -0.15))
 
-
-        # # Loop through each panel.
-        # for c, grp in enumerate(groupby_grps):
-        #     if len(groupby_grps)>1:
-        #         plotax = axx[c]
-        #     else:
-        #         plotax = axx
-        #
-        #     ### Plot vertical grid lines if desired.
-        #     if gridlines_major:
-        #         plotax.xaxis.grid(True,linestyle='dotted',
-        #             which='major',lw = 0.5,alpha = 1)
-        #     if gridlines_minor:
-        #         plotax.xaxis.grid(True,linestyle='dotted',
-        #             which='minor',lw = 0.25,alpha = 0.5)
-        #
-        #     ## Filter plotdf according to group_by.
-        #     temp_plotdf = plotdf[plotdf[group_by] == grp]
-        #
-        #     ### and make timeseries plot.
-        #     temp_plotdf_groupby = temp_plotdf.groupby([color_by,'time_s'])
-        #     temp_plotdf_mean = temp_plotdf_groupby.mean().unstack()[yvar].T
-        #     temp_plotdf_mean.plot(ax=plotax,lw=1)
-        #
-        #     temp_plotdf_halfci = temp_plotdf_groupby.sem().unstack()[yvar].T * 1.96
-        #     lower_ci = temp_plotdf_mean-temp_plotdf_halfci
-        #     upper_ci = temp_plotdf_mean+temp_plotdf_halfci
-        #
-        #     lower_ci[lower_ci<0] = 0 # Make sure no CI drops below zero.
-        #
-        #     for c in temp_plotdf_mean.columns:
-        #         plotax.fill_between(temp_plotdf_mean.index,
-        #                            lower_ci[c],upper_ci[c],
-        #                            alpha = 0.25)
-        #
-        #     ## Add the group name as title.
-        #     plotax.set_title(grp)
-        #     ## Format x-axis.
-        #     plt_helper.format_timecourse_xaxis(plotax, self.__expt_end_time)
-        #
-        # # Normalize all the y-axis limits.
-        # if num_plots > 1:
-        #     plt_helper.normalize_ylims(axx,include_zero = True)
-        #     ## Despine and offset each axis.
-        #     for a in axx:
-        #         sns.despine(ax=a, trim=True, offset=5)
-        # else:
-        #     axx.set_ylim(-2, axx.get_ylim()[1]) # Ensure zero is displayed!
-        #     sns.despine(ax=axx, trim=True, offset=5)
-        #
-        # # Position the raster color legend,
-        # # and label the y-axis appropriately.
-        # if num_plots > 1:
-        #     rasterlegend_ax = axx
-        # else:
-        #     rasterlegend_ax = [axx]
-        # for a in rasterlegend_ax:
-        #     a.legend(loc='upper left' ,bbox_to_anchor=(0,-0.15))
-        #     ## Set label for y-axis..
-        #     a.set_ylabel(yvar)
 
         # End and return the figure.
         if ax is None:

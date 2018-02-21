@@ -113,13 +113,6 @@ def compute_percent_feeding(metadata, feeds, group_by, start=0, end=30):
     return percent_feeding_summary
 
 
- #    #   ##   #    # ######    #####    ##   #      ###### ##### ##### ######  ####
- ##  ##  #  #  #   #  #         #    #  #  #  #      #        #     #   #      #
- # ## # #    # ####   #####     #    # #    # #      #####    #     #   #####   ####
- #    # ###### #  #   #         #####  ###### #      #        #     #   #           #
- #    # #    # #   #  #         #      #    # #      #        #     #   #      #    #
- #    # #    # #    # ######    #      #    # ###### ######   #     #   ######  ####
-
 
 def _make_categorial_palette(df, group_by, pal='tab10'):
     """
@@ -131,6 +124,8 @@ def _make_categorial_palette(df, group_by, pal='tab10'):
     _cat_palette = sns.color_palette(pal, n_colors=len(df[group_by].unique()))
     return _cat_palette
 
+
+
 def _make_sequential_palette(df, group_by):
     """
     Create a sequential color palette.
@@ -140,6 +135,8 @@ def _make_sequential_palette(df, group_by):
 
     _seq_palette = sns.cubehelix_palette(n_colors=len(df[group_by].unique()))
     return _seq_palette
+
+
 
 def format_timecourse_xaxis(ax, max_x):
     """

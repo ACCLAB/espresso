@@ -16,12 +16,6 @@ class timecourse_plotter():
     timecourse plotting class for espresso object.
     """
 
-#    #    #    #    #####
-#    ##   #    #      #
-#    # #  #    #      #
-#    #  # #    #      #
-#    #   ##    #      #
-#    #    #    #      #
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
