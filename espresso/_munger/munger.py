@@ -257,18 +257,16 @@ def check_group_by_color_by(col, row, color_by, df):
     If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
 
-    if col is None:
-        col = "Genotype"
-    else:
+    if col is not None:
         check_column(col, df)
+
+    if row is not None:
+        check_column(row, df)
 
     if color_by is None:
         color_by = "FoodChoice"
     else:
         check_column(color_by, df)
-
-    if row is not None:
-        check_column(col, df)
 
     if col == color_by or row == color_by:
         raise ValueError('{} is the same as {} or {}.'.format(color_by, row, col))
