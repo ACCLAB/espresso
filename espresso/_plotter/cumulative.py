@@ -62,14 +62,14 @@ class cumulative_plotter:
             except KeyError:
                 pass
 
-        print("Coloring feed volume time course by {0}".format(color_by))
+        # print("Coloring cumulative plot by {0}".format(color_by))
         if row is not None:
-            print("Plotting rows by {0}".format(row))
+            # print("Plotting rows by {0}".format(row))
             row_count = int(len(plotdf[row].cat.categories))
         else:
             row_count = 1
         if col is not None:
-            print("Plotting columns by {0}".format(col))
+            # print("Plotting columns by {0}".format(col))
             col_count = int(len(plotdf[col].cat.categories))
         else:
             col_count = 1
