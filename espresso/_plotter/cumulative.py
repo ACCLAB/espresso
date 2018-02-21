@@ -24,7 +24,7 @@ class cumulative_plotter:
                              col=None,
                              row=None,
                              color_by=None,
-                             resample_by='10min',
+                             resample_by='5min',
                              fig_size=None,
                              gridlines=True,
                              ax=None):
@@ -172,7 +172,7 @@ class cumulative_plotter:
                     col=None,
                     row=None,
                     color_by=None,
-                    resample_by='10min',
+                    resample_by='5min',
                     fig_size=None,
                     gridlines=True,
                     ax=None):
@@ -193,7 +193,7 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        resample_by: string, default '10min'
+        resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -226,7 +226,7 @@ class cumulative_plotter:
                    col=None,
                    row=None,
                    color_by=None,
-                   resample_by='10min',
+                   resample_by='5min',
                    fig_size=None,
                    gridlines=True,
                    ax=None):
@@ -247,7 +247,7 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        resample_by: string, default '10min'
+        resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
