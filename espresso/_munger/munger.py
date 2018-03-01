@@ -256,26 +256,14 @@ def check_group_by_color_by(col, row, color_by, df):
     Check to see if `row`, `col` and `color_by` (if supplied) are columns in `df`.
     If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
-
-    if col is not None:
-        check_column(col, df)
-    else:
-        col = "Genotype"
-
-    if row is not None:
-        check_column(row, df)
-
-    if color_by is not None:
-        check_column(color_by, df)
-    else:
-        color_by = "FoodChoice"
+    not_none = [c for c in [col, row, color_by] if c is not None]
+    for contrast in not_none:
+        check_column(contrast, df)
 
     if col == color_by or row == color_by:
         raise ValueError('{} is the same as {} or {}.'.format(color_by, row, col))
     if col == row:
         raise ValueError('Row variable {} is the same as column variable {}.'.format(row, col))
-
-    return col, row, color_by
 
 def groupby_resamp_sum(df, resample_by='10min'):
     """
