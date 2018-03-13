@@ -4,13 +4,6 @@
 # Email : joseshowh@gmail.com
 
 
-#####  #       ####  #####    #    # ###### #      #####  ###### #####   ####
-#    # #      #    #   #      #    # #      #      #    # #      #    # #
-#    # #      #    #   #      ###### #####  #      #    # #####  #    #  ####
-#####  #      #    #   #      #    # #      #      #####  #      #####       #
-#      #      #    #   #      #    # #      #      #      #      #   #  #    #
-#      ######  ####    #      #    # ###### ###### #      ###### #    #  ####
-
 def normalize_ylims(ax_arr,include_zero = False,draw_zero_line = False):
     """Custom function to normalize ylims for an array of axes."""
     import numpy as np
