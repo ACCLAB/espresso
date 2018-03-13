@@ -21,9 +21,9 @@ class cumulative_plotter:
 
     def __cumulative_plotter(self,
                              yvar,
-                             col=None,
-                             row=None,
-                             color_by=None,
+                             col,
+                             row,
+                             color_by,
                              resample_by='5min',
                              fig_size=None,
                              gridlines=True,
@@ -36,8 +36,7 @@ class cumulative_plotter:
         from .._munger import munger as munge
 
         # Handle the group_by and color_by keywords.
-        col, row, color_by = munge.check_group_by_color_by(col, row,
-                                            color_by, self.__feeds)
+        munge.check_group_by_color_by(col, row, color_by, self.__feeds)
 
 
         resamp_feeds = munge.groupby_resamp_sum(self.__feeds, resample_by)
@@ -89,7 +88,6 @@ class cumulative_plotter:
 
         # groupby_grps = plotdf[group_by].cat.categories.tolist()
         # num_plots = int(len(groupby_grps))
-
 
         # Initialise figure.
         sns.set(style='ticks',context='poster',font_scale=1.25)
@@ -160,8 +158,13 @@ class cumulative_plotter:
 
         for ax in axx.flatten()[:-1]:
             ax.legend().set_visible(False)
+
+        if color_by is not None:
+            legend_title = ' '
+        else:
+            legend_title = color_by
         axx.flatten()[-1].legend(loc='upper left',
-                                 title=color_by,
+                                 title=legend_title,
                                  bbox_to_anchor=(-0.05, -0.15))
 
 
@@ -170,9 +173,9 @@ class cumulative_plotter:
             return axx
 
     def consumption(self,
-                    col=None,
-                    row=None,
-                    color_by=None,
+                    col,
+                    row,
+                    color_by,
                     resample_by='5min',
                     fig_size=None,
                     gridlines=True,
@@ -186,11 +189,11 @@ class cumulative_plotter:
 
         keywords
         --------
-        col, row: string, default None
+        col, row: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        color_by: string, default None
+        color_by: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
@@ -224,9 +227,9 @@ class cumulative_plotter:
         return out
 
     def feed_count(self,
-                   col=None,
-                   row=None,
-                   color_by=None,
+                   col,
+                   row,
+                   color_by,
                    resample_by='5min',
                    fig_size=None,
                    gridlines=True,
@@ -240,11 +243,11 @@ class cumulative_plotter:
 
         keywords
         --------
-        col, row: string, default None
+        col, row: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        color_by: string, default None
+        color_by: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 

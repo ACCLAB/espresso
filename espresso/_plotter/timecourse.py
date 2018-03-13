@@ -34,9 +34,9 @@ class timecourse_plotter():
 
     def __timecourse_plotter(self,
                              yvar,
-                             col=None,
-                             row=None,
-                             color_by=None,
+                             col,
+                             row,
+                             color_by,
                              resample_by='5min',
                              fig_size=None,
                              gridlines=True,
@@ -52,8 +52,7 @@ class timecourse_plotter():
         feeds = self.__feeds.copy()
 
         # Handle the group_by and color_by keywords.
-        col, row, color_by = munge.check_group_by_color_by(col, row,
-                                            color_by, feeds)
+        munge.check_group_by_color_by(col, row, color_by, feeds)
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
         yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
@@ -155,8 +154,12 @@ class timecourse_plotter():
         for ax in axx.flatten()[:-1]:
             ax.legend().set_visible(False)
 
+        if color_by is not None:
+            legend_title = ' '
+        else:
+            legend_title = color_by
         axx.flatten()[-1].legend(loc='upper left',
-                                 title=color_by,
+                                 title=legend_title,
                                  bbox_to_anchor=(-0.05, -0.15))
 
         # End and return the figure.
@@ -167,9 +170,9 @@ class timecourse_plotter():
 
 
     def feed_volume(self,
-                    col=None,
-                    row=None,
-                    color_by=None,
+                    col,
+                    row,
+                    color_by,
                     resample_by='5min',
                     fig_size=None,
                     gridlines=True,
@@ -183,11 +186,11 @@ class timecourse_plotter():
 
         keywords
         --------
-        col, row: string, default None
+        col, row: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        color_by: string, default None
+        color_by: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
@@ -225,9 +228,9 @@ class timecourse_plotter():
 
 
     def feed_count(self,
-                    col=None,
-                    row=None,
-                    color_by=None,
+                    col,
+                    row,
+                    color_by,
                     resample_by='5min',
                     fig_size=None,
                     gridlines=True,
@@ -241,11 +244,11 @@ class timecourse_plotter():
 
         keywords
         --------
-        col, row: string, default None
+        col, row: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        color_by: string, default None
+        color_by: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
@@ -282,9 +285,9 @@ class timecourse_plotter():
 
 
     def feed_speed(self,
-                    col=None,
-                    row=None,
-                    color_by=None,
+                    col,
+                    row,
+                    color_by,
                     resample_by='5min',
                     fig_size=None,
                     gridlines=True,
