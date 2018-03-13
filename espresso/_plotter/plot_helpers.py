@@ -74,7 +74,7 @@ def sci_nota(num, decimal_digits=2, precision=None, exponent=None):
 
     return r"${0:.{2}f}\times10^{{{1:d}}}$".format(coeff, exponent, precision)
 
-def compute_percent_feeding(metadata, feeds, group_by, start=0, end=30):
+def compute_percent_feeding(all_feeds, all_flies, facets, start=0, end=60):
     """
     Used to compute the percent of flies feeding from
     a processed dataset of feedlogs.
@@ -82,19 +82,32 @@ def compute_percent_feeding(metadata, feeds, group_by, start=0, end=30):
     import numpy as np
     import pandas as pd
 
-    feeds_plot = feeds.copy()
+    if isinstance(facets, list):
+        grpby = facets
+        feed_boolean_grpby = grpby.copy()
+        feed_boolean_grpby.append('FlyID')
+    else:
+        raise TypeError('`facet` needs to be a list.')
+    try:
+        flies_group_by = [a for a in facets if a in all_flies.columns]
+        fly_counts = all_flies.groupby(flies_group_by)\
+                              .count()\
+                              .FlyID
+    except ValueError: # flies_group_by is []
+        fly_counts = len(all_flies)
 
-    fly_counts = metadata.groupby(group_by).count().FlyID
-    data_timewin = feeds_plot[(feeds_plot.RelativeTime_s > start*60) &
-                             (feeds_plot.RelativeTime_s < end*60)]
+    filter_feeds = ((all_feeds.RelativeTime_s > start*60) &
+                   (all_feeds.RelativeTime_s < end*60) &
+                   (all_feeds.Valid))
+    feeds_timewin = all_feeds[filter_feeds]
     # To count total flies that fed, I adapted the methods here:
     # https://stackoverflow.com/questions/8364674/python-numpy-how-to-count-the-number-of-true-elements-in-a-bool-array
-    feed_boolean_by_fly= ~np.isnan( data_timewin\
-                                    .groupby([group_by,'FlyID'])\
-                                    .sum()['FeedVol_µl'] )
+    feed_boolean_by_fly = ~np.isnan(feeds_timewin\
+                                    .groupby(feed_boolean_grpby)\
+                                    .sum()['FeedVol_µl'])
     fly_feed_counts = feed_boolean_by_fly\
-                      .apply(np.count_nonzero)\
-                      .groupby(group_by).sum()
+                        .apply(np.count_nonzero)\
+                        .groupby(grpby).sum()
     # Proportion code taken from here:
     # https://onlinecourses.science.psu.edu/stat100/node/56
     percent_feeding = (fly_feed_counts / fly_counts) * 100
@@ -104,7 +117,6 @@ def compute_percent_feeding(metadata, feeds, group_by, start=0, end=30):
                                           percent_feeding+half95ci]).T
     percent_feeding_summary.columns = ['percent_feeding','ci_lower','ci_upper']
     return percent_feeding_summary
-
 
 
 def _make_categorial_palette(df, group_by, pal='tab10'):

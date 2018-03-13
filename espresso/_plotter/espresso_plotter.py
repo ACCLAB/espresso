@@ -323,96 +323,109 @@ class espresso_plotter():
             return axx
 
 
-    # def __tuple_join(self, your_tuple, join_with='; '):
-    #     """Convenience function to create the ticks for percent feeding
-    #     from multiindexes."""
-    #     l = []
-    #     for a in your_tuple:
-    #         l.append(str(a))
-    #     return(join_with.join(l))
-
-    def percent_feeding(self,
-                        col=None,
-                        row=None,
-                        time_start=0,time_end=360,
-                        palette_type='categorical'):
+    def percent_feeding(self, group_by, compare_by,
+                        start_minute=0,
+                        end_minute=360):
         """
         Produces a lineplot depicting the percent of flies feeding for each condition.
         A 95% confidence interval for each proportion of flies feeding is also given.
 
         Keywords
         --------
-        group_by: string, default 'Genotype'
-            The column or label indicating the categorical grouping on the x-axis.
+        group_by: string,
+            The column or label indicating the variable used to group the
+            subplots.
 
-        time_start, time_end: integer, default 0 and 360 respectively
+        compare_by: string,
+            The percent feeding will be compared between the categories in this
+            column or label.
+
+        start_minute, end_minute: integer, default 0 and 360
             The time window (in minutes) during which to compute and display the
             percent flies feeding.
-
-        palette_type: string, 'categorical' or 'sequential'.
 
         Returns
         -------
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
+        import numpy as np
+        import matplotlib as mpl
         import matplotlib.pyplot as plt
-        from . import plot_helpers as plt_help
+        from .plot_helpers import compute_percent_feeding
         import seaborn as sns
 
+        # make a copy of the metadata and the feedlog.
+        all_feeds = self._experiment.feeds.copy()
+        all_flies = self._experiment.flies.copy()
+        facets = [group_by, compare_by]
 
-        # Get plotting variables.
-        percent_feeding_summary = plt_help.compute_percent_feeding(self._experiment.flies,
-                                                             self._experiment.feeds,
-                                                             group_by,
-                                                             start=time_start,
-                                                             end=time_end)
+        for z in facets:
+            if z not in all_feeds.columns:
+                raise KeyError('{} is not a column in FeedLog. Please check'.format(z))
+            if z not in all_flies.columns:
+                raise KeyError('{} is not a column in CountLog. Please check'.format(z))
 
-
-        cilow = percent_feeding_summary.ci_lower.tolist()
-        cihigh = percent_feeding_summary.ci_upper.tolist()
-        ydata = percent_feeding_summary.percent_feeding.tolist()
-
-        # Select palette.
-        if palette_type == 'categorical':
-            color_palette = plt_help._make_categorial_palette(self._experiment.feeds,
-                group_by)
-        elif palette_type == 'sequential':
-            color_palette = plt_help._make_sequential_palette(self._experiment.feeds,
-                group_by)
+        percent_feeding_summary = compute_percent_feeding(all_feeds, all_flies,
+                                                          facets,
+                                                          start=start_minute,
+                                                          end=end_minute)
 
         # Set style.
         sns.set(style='ticks',context='talk',font_scale=1.1)
+        subplots = percent_feeding_summary.index.levels[0].categories
+        subplot_title_preface = percent_feeding_summary.index.levels[0].name
 
         # Initialise figure.
-        f,ax = plt.subplots(1,figsize=(8,5))
-        ax.set_ylim(0,110)
-        # Plot 95CI first.
-        ax.fill_between(range(0,len(percent_feeding_summary)),
-                        cilow,cihigh,
-                        alpha=0.25,
-                        color='grey' )
-        # Then plot the line.
-        percent_feeding_summary.percent_feeding.plot.line(ax=ax,
-            color='k',lw=1.2)
+        f, ax = plt.subplots(ncols=len(subplots),
+                             figsize=(8,5),
+                             sharey=True)
 
-        for j, s in enumerate(ydata):
-            ax.plot(j, s, 'o',
-                    color=color_palette[j])
+        if isinstance(ax, np.ndarray):
+            axx = ax
+        elif isinstance(ax, mpl.axes.Axes):
+            axx = [ax]
 
-        # Aesthetic tweaks.
-        ax.xaxis.set_ticks([i for i in range(0,len(percent_feeding_summary))])
-        ax.xaxis.set_ticklabels(percent_feeding_summary.index.tolist())
+        for j, group_by in enumerate(subplots):
+            plot_ax = axx[j]
 
-        xmax = ax.xaxis.get_ticklocs()[-1]
-        ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
+            plot_df = percent_feeding_summary.loc[group_by]
+            cilow = plot_df.ci_lower.tolist()
+            cihigh = plot_df.ci_upper.tolist()
+            ydata = plot_df.percent_feeding.tolist()
 
-        # __rotate_ticks(ax, angle=45, alignment='right')
-        for tick in ax.get_xticklabels():
-            tick.set_rotation(45)
-            tick.set_horizontalalignment('right')
+            plot_ax.set_ylim(0,100)
+            # Plot 95CI first.
+            if len(plot_df) > 1:
+                plot_ax.fill_between(range(0,len(plot_df)),
+                                     cilow,cihigh,
+                                     alpha=0.25,
+                                     color='grey')
+            else:
+                plot_ax.axvline(x=0,
+                                ymin=cilow[0]/100,
+                                ymax=cihigh[0]/100,
+                                color='grey')
+            # Then plot the line.
+            plot_df.percent_feeding.plot.line(ax=plot_ax, color='k', lw=1.2)
 
-        sns.despine(ax=ax, trim=True, offset={'left':1})
-        ax.set_ylabel('Percent Feeding')
+            for j, s in enumerate(ydata):
+                plot_ax.plot(j, s, 'o', clip_on=False, color='k')
 
-        f.tight_layout()
+            # Aesthetic tweaks.
+            plot_ax.xaxis.set_ticks([i for i in range(0,len(plot_df))])
+            plot_ax.xaxis.set_ticklabels(plot_df.index.tolist())
+
+            xmax = plot_ax.xaxis.get_ticklocs()[-1]
+            plot_ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
+
+            sns.despine(ax=plot_ax, trim=True, offset={'left':1})
+
+            for tick in plot_ax.get_xticklabels():
+                tick.set_rotation(45)
+                tick.set_horizontalalignment('right')
+
+            plot_ax.set_title('{0}: {1}'.format(subplot_title_preface, group_by))
+            plot_ax.set_ylabel('Percent Feeding (%)')
+        f.suptitle('Percent flies feeding from {} min to {} min'.format(start_minute,
+                                                                 end_minute))
         return f, percent_feeding_summary
