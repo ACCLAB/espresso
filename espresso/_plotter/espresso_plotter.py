@@ -112,11 +112,12 @@ class espresso_plotter():
                                horizontalalignment='right',
                                fontsize=8)
 
+
     def rasters(self,
                 col=None,
                 row=None,
                 color_by=None,
-                add_flyid_labels=False,
+                add_flyid_labels=True,
                 fig_size=None,
                 ax=None,
                 gridlines=True):
@@ -255,13 +256,18 @@ class espresso_plotter():
                     plot_ax = axx[r, c] # the axes to plot on.
                     # Select the data of interest to plot.
                     try:
-                        current_facet_feeds = faceted_feeds.loc[col_].loc[row_].dropna()
+                        current_facet_feeds = faceted_feeds.loc[col_].loc[row_]
                         current_facet_flies = faceted_flies.loc[col_].loc[row_]
                     except TypeError:
+                        print('oh no')
                         # Sometimes there might be an error if one uses an integer to index
                         # a Categorical index... so index step-by-step instead.
-                        _temp_facet = faceted_feeds.loc[col_]
-                        current_facet = _temp_facet[_temp_facet.index == row_]
+                        _temp_facet_feeds = faceted_feeds.loc[col_]
+                        current_facet_feeds = _temp_facet_feeds[_temp_facet_feeds.index == row_]
+                        _temp_facet_flies = faceted_flies.loc[col_]
+                        current_facet_flies = _temp_facet_flies[_temp_facet_flies.index == row_]
+                    # Get valid feeds.
+                    current_facet_feeds = current_facet_feeds[current_facet_feeds.Valid]
                     self.__plot_rasters(current_facet_feeds, current_facet_flies,
                                         maxflycount, color_by, palette,
                                         plot_ax, add_flyid_labels)
@@ -270,10 +276,12 @@ class espresso_plotter():
         else:
             # We only have one dimension here.
             plot_dim = [d for d in [row, col] if d is not None][0]
-            for j, dim_ in enumerate(plot_feeds.index.get_level_values(plot_dim).unique()):
+
+            for j, dim_ in enumerate(faceted_feeds.index.get_level_values(plot_dim).unique()):
                 print("Plotting {}".format(dim_))
                 plot_ax = axx[j] # the axes to plot on.
                 current_facet_feeds = faceted_feeds[faceted_feeds.index == dim_].dropna()
+                current_facet_flies = faceted_flies[faceted_flies.index == dim_]
                 self.__plot_rasters(current_facet_feeds, current_facet_flies,
                                     maxflycount, color_by, palette,
                                     plot_ax, add_flyid_labels)
@@ -288,19 +296,19 @@ class espresso_plotter():
         if len(axx) > 1:
             for a in axx.flatten():
                 # Plot vertical grid lines if desired.
-                if gridlines_major:
+                if gridlines:
                     a.xaxis.grid(which='major',
                                         linewidth=0.25, **grid_kwargs)
-                plt_help.format_timecourse_xaxis(a, 21600) ## CHANGE ##
+                plt_help.format_timecourse_xaxis(a, self.__expt_end_time ) ## CHANGE ##
                 a.yaxis.set_visible(False)
                 sns.despine(ax=a, **despine_kwargs)
             rasterlegend_ax = axx.flatten()[-1]
 
         else:
-            if gridlines_major:
+            if gridlines:
                 axx.xaxis.grid(which='major',
                             linewidth=0.25, **grid_kwargs)
-            plt_help.format_timecourse_xaxis(axx, 21600) ## CHANGE ##
+            plt_help.format_timecourse_xaxis(axx, self.__expt_end_time ) ## CHANGE ##
             axx.yaxis.set_visible(False)
             sns.despine(ax=axx, **despine_kwargs)
             rasterlegend_ax = axx
@@ -315,8 +323,17 @@ class espresso_plotter():
             return axx
 
 
+    # def __tuple_join(self, your_tuple, join_with='; '):
+    #     """Convenience function to create the ticks for percent feeding
+    #     from multiindexes."""
+    #     l = []
+    #     for a in your_tuple:
+    #         l.append(str(a))
+    #     return(join_with.join(l))
 
-    def percent_feeding(self,group_by='Genotype',
+    def percent_feeding(self,
+                        col=None,
+                        row=None,
                         time_start=0,time_end=360,
                         palette_type='categorical'):
         """
