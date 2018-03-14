@@ -259,7 +259,6 @@ class espresso_plotter():
                         current_facet_feeds = faceted_feeds.loc[col_].loc[row_]
                         current_facet_flies = faceted_flies.loc[col_].loc[row_]
                     except TypeError:
-                        print('oh no')
                         # Sometimes there might be an error if one uses an integer to index
                         # a Categorical index... so index step-by-step instead.
                         _temp_facet_feeds = faceted_feeds.loc[col_]
