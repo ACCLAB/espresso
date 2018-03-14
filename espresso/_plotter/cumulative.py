@@ -126,8 +126,15 @@ class cumulative_plotter:
         else:
             # We only have one dimension here.
             plot_dim = [d for d in [row, col] if d is not None][0]
-            for j, dim_ in enumerate(plotdf[plot_dim].cat.categories):
-                plot_ax = axx[j] # the axes to plot on.
+            # check how many panels in the single row/column.
+            panels = plotdf[plot_dim].unique().tolist()
+            more_than_one_panel = len(panels) > 1
+            for j, dim_ in enumerate(panels):
+                # Get the axes to plot on.
+                if more_than_one_panel:
+                    plot_ax = axx[j]
+                else:
+                    plot_ax = axx
                 # Plot the means as cumulative lines.
                 plotdf_mean[(dim_)].plot(ax=plot_ax, lw=1)
                 # Now, plot the CIs individually.
@@ -139,34 +146,43 @@ class cumulative_plotter:
                 plot_ax.set_title(dim_)
 
         # Normalize all the y-axis limits.
-        if row_count + col_count > 1:
-            plt_helper.normalize_ylims(axx.flatten(),
+        if row_count + col_count > 2:
+            ax_arr = axx.flatten()
+            plt_helper.normalize_ylims(ax_arr,
                                        include_zero=True)
-            for plot_ax in axx.flatten():
-                # Format x-axis.
-                plt_helper.format_timecourse_xaxis(plot_ax,
-                                                   self.__expt_end_time)
-                # Set label for y-axis.
-                plot_ax.set_ylabel(yvar)
-                # Plot vertical grid lines if desired.
-                if gridlines:
-                    plot_ax.xaxis.grid(True, which='major',
-                                       linestyle='dotted', #linewidth=1,
-                                       alpha=0.5)
-                # Despine and offset each axis.
-                sns.despine(ax=plot_ax, trim=True, offset=3)
+        else:
+            ax_arr = [axx]
 
-        for ax in axx.flatten()[:-1]:
-            ax.legend().set_visible(False)
+        for plot_ax in ax_arr:
+            # Format x-axis.
+            plt_helper.format_timecourse_xaxis(plot_ax,
+                                               self.__expt_end_time)
+            # Set label for y-axis.
+            plot_ax.set_ylabel(yvar)
+            # Plot vertical grid lines if desired.
+            if gridlines:
+                plot_ax.xaxis.grid(True, which='major',
+                                   linestyle='dotted', #linewidth=1,
+                                   alpha=0.5)
 
+            # Despine and offset each axis.
+            sns.despine(ax=plot_ax, trim=True, offset=3)
         if color_by is not None:
             legend_title = ' '
         else:
             legend_title = color_by
-        axx.flatten()[-1].legend(loc='upper left',
-                                 title=legend_title,
-                                 bbox_to_anchor=(-0.05, -0.15))
 
+        if row_count + col_count > 2:
+            for ax in ax_arr[:-1]:
+                ax.legend().set_visible(False)
+
+            ax_arr[-1].legend(loc='upper left',
+                                title=legend_title,
+                                bbox_to_anchor=(-0.05, -0.15))
+        else:
+            ax_arr[0].legend(loc='upper left',
+                             title=legend_title,
+                             bbox_to_anchor=(1, 1))
 
         # End and return the figure.
         if ax is None:
