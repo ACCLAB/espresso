@@ -275,11 +275,20 @@ class espresso_plotter():
         else:
             # We only have one dimension here.
             plot_dim = [d for d in [row, col] if d is not None][0]
+            # check how many panels in the single row/column.
+            panels = faceted_feeds.index.get_level_values(plot_dim).unique().tolist()
+            more_than_one_panel = len(panels) > 1
 
-            for j, dim_ in enumerate(faceted_feeds.index.get_level_values(plot_dim).unique()):
+            for j, dim_ in enumerate(panels):
+                # Get the axes to plot on.
+                if more_than_one_panel:
+                    plot_ax = axx[j]
+                else:
+                    plot_ax = axx
                 print("Plotting {}".format(dim_))
                 plot_ax = axx[j] # the axes to plot on.
-                current_facet_feeds = faceted_feeds[faceted_feeds.index == dim_].dropna()
+                current_facet_feeds = faceted_feeds[(faceted_feeds.index == dim_) &
+                                                    (faceted_feeds.Valid)]
                 current_facet_flies = faceted_flies[faceted_flies.index == dim_]
                 self.__plot_rasters(current_facet_feeds, current_facet_flies,
                                     maxflycount, color_by, palette,
