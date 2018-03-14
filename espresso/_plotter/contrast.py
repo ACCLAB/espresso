@@ -51,11 +51,13 @@ class contrast_plotter:
         for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
             df[col].fillna(value=0,inplace=True)
 
-        plot_df = pd.DataFrame(df[['Temperature','Genotype','FoodChoice','FlyID',
+        plot_df = pd.DataFrame(df[['Temperature','Status','Genotype',
+                                   'FoodChoice','FlyID',
                                    'AverageFeedCountPerFly',
                                    'AverageFeedVolumePerFly_µl',
                                    'FeedDuration_ms']]\
-                            .groupby(['Temperature','Status','Genotype','FoodChoice','FlyID'])\
+                            .groupby(['Temperature','Status','Genotype',
+                                      'FoodChoice','FlyID'])\
                             .sum()\
                             .to_records() )\
                     .dropna() # for some reason, groupby produces NaN rows...
