@@ -406,8 +406,9 @@ def join_cols(df, cols, sep='; '):
     sep: str, default '; '
         The delimiter used to seperate the concatenated columns.
     """
-
+    
     try:
+        df.sort_values(cols, inplace=True)
         base_col = df[ cols[0] ].astype(str).copy()
 
         if len(cols)>1: # if more than one column...
@@ -436,6 +437,8 @@ def cat_categorical_columns(df, group_by, compare_by):
     """
 
     df_out = df.copy()
+
+    
 
     if isinstance(group_by, str):
         df_out['plot_groups'] = df_out[group_by]
