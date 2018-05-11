@@ -476,7 +476,7 @@ def assign_status_from_genotype(genotype):
     """
     Convenience function to map genotype to status.
     """
-    if genotype.lower().startswith('w1118'):
+    if genotype.lower().includes('w1118'):
         status = 'Sibling'
     else:
         status = 'Offspring'
