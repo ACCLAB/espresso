@@ -437,7 +437,7 @@ def cat_categorical_columns(df, group_by, compare_by):
     """
 
     df_out = df.copy()
-
+    df_out.sort_values([group_by, compare_by], inplace=True)
     
 
     if isinstance(group_by, str):
@@ -479,7 +479,7 @@ def assign_status_from_genotype(genotype):
     """
     Convenience function to map genotype to status.
     """
-    if genotype.lower().includes('w1118'):
+    if genotype.lower().startswith('w1118'):
         status = 'Sibling'
     else:
         status = 'Offspring'
