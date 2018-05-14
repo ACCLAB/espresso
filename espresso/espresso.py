@@ -34,7 +34,6 @@ class espresso(object):
         import os
 
         import numpy as np
-        import scipy as sp
         import pandas as pd
 
         from ._plotter import espresso_plotter as espresso_plotter
