@@ -40,7 +40,7 @@ class espresso(object):
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
-        self.version = '0.3.3'
+        self.version = '0.3.4'
 
         allflies= []
         allfeeds= []
