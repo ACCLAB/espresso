@@ -356,33 +356,6 @@ def cumsum_for_cumulative(df):
     # Add time column to facilitate plotting.
     grs_cumsum = __add_time_column(grs_cumsum)
 
-    # temp_cumsum = temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-    #                 .cumsum()\
-    #                 .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-    #                 .fillna(method='ffill')\
-    #                 .fillna(0)
-    #
-    # temp_cumsum = pd.DataFrame( temp_cumsum.to_records() )
-    #
-    # # Select only relavant columns.
-    # temp_cumsum = temp_cumsum[[group_by,color_by,
-    #                          'FlyID',
-    #                          'RelativeTime_s',
-    #                          'FlyCountInChamber',
-    #                          ### Below, add all the columns that are
-    #                          ### potentially used for timecourse plotting.
-    #                          'AverageFeedVolumePerFly_µl',
-    #                          'AverageFeedCountPerFly']]
-    #
-    # temp_cumsum.loc[:,'AverageFeedVolumePerFly_nl'] = temp_cumsum.loc[:,'AverageFeedVolumePerFly_µl']*1000
-    #
-    # temp_cumsum.rename( columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
-    #                              'AverageFeedCountPerFly':'Cumulative Feed Count',
-    #                                      },
-    #                          inplace = True)
-    #
-    # # # Add time column to facilitate plotting.
-    # temp_cumsum = __add_time_column(temp_cumsum)
 
     return grs_cumsum
 
