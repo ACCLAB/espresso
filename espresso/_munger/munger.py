@@ -482,3 +482,99 @@ def assign_status_from_genotype(genotype):
         status = 'Offspring'
 
     return status
+
+
+def volume_duration_munger(df,group_by,compare_by,color_by):
+    """Convenience Function for volume-duration munging. To Elaborate Soon."""
+
+    import pandas as pd
+
+    for c in [compare_by,color_by]:
+        munge.check_column(c,df)
+
+    if len( df[compare_by].unique() )<2:
+        err = '{} has less than 2 categories'.format(compare_by) + \
+              'and cannot be used for `compare_by`.'
+        raise ValueError(err)
+
+    for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
+        df[col].fillna(value=0,inplace=True)
+
+    plot_df = pd.DataFrame(df[['Temperature','Status','Genotype',
+                               'FoodChoice','FlyID',
+                               'AverageFeedCountPerFly',
+                               'AverageFeedVolumePerFly_µl',
+                               'FeedDuration_ms']]\
+                        .groupby(['Temperature','Status','Genotype',
+                                  'FoodChoice','FlyID'])\
+                        .sum()\
+                        .to_records() )\
+                .dropna() # for some reason, groupby produces NaN rows...
+
+    plot_df.reset_index(drop=True, inplace=True)
+    plot_df['FeedDuration_min']=plot_df['FeedDuration_ms']/60000
+
+    av = plot_df['AverageFeedVolumePerFly_µl']
+    t = plot_df['FeedDuration_ms']
+    plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
+
+    plot_df.rename(columns={'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
+                           'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+                           'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
+                   inplace=True)
+    plot_df = munge.cat_categorical_columns(plot_df,group_by,compare_by)
+
+    return plot_df
+
+def latency_munger(self,
+                     df,
+                     group_by,
+                     compare_by,
+                     color_by):
+    import pandas as pd
+    from .._munger import munger as munge
+
+    df = self.__feeds.copy()
+
+    for c in [compare_by,color_by]:
+        munge.check_column(c,df)
+
+    if len( df[compare_by].unique() )<2:
+        err = '{} has less than 2 categories'.format(compare_by) + \
+              'and cannot be used for `compare_by`.'
+        raise ValueError(err)
+
+    plot_df = pd.DataFrame(df.dropna()[['Temperature','Genotype',
+                                        'FoodChoice','FlyID',
+                                        'RelativeTime_s']]\
+                             .groupby(['Temperature','Status','Genotype',
+                                       'FoodChoice','FlyID'])\
+                             .min()\
+                             .to_records() )\
+                 .dropna() # for some reason, groupby produces NaN rows...
+
+    plot_df.reset_index(drop=True, inplace=True)
+    plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
+    plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
+                   inplace=True)
+    plot_df = munge.cat_categorical_columns(plot_df, group_by, compare_by)
+
+    return plot_df
+
+def merge_two_dicts(x, y):
+    """
+    Given two dicts, merge them into a new dict as a shallow copy.
+    Any overlapping keys in `y` will override the values in `x`.
+
+    Taken from https://stackoverflow.com/questions/38987/
+    how-to-merge-two-python-dictionaries-in-a-single-expression
+
+    Keywords:
+        x, y: dicts
+
+    Returns:
+        A dictionary containing a union of all keys in both original dicts.
+    """
+    z = x.copy()
+    z.update(y)
+    return z
