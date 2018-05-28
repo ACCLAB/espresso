@@ -191,9 +191,8 @@ def generic_contrast_plotter(plot_df, yvar,
                           color_palette))
 
     # Properly arrange idx for grouping.
-    unique_ids = np.sort(plot_df.plot_groups_with_contrast.unique())
-    split_idxs = np.array_split(unique_ids,
-        len(plot_df.plot_groups.unique()))
+    unique_ids = plot_df.plot_groups_with_contrast.unique()
+    split_idxs = np.array_split(unique_ids, len(plot_df.plot_groups.unique()))
     idx = [tuple(i) for i in split_idxs]
 
     # Make sure the ylims don't stretch below zero but still capture all
