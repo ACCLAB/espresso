@@ -231,7 +231,8 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
     Pass along a munged metadata and corresponding munged feedlog.
     Returns the non-feeding flies as a list.
     """
-    non_feeding_flies=[ flyid for flyid in metadata_df.FlyID.unique() if flyid not in feedlog_df.dropna().FlyID.unique() ]
+    non_feeding_flies=[flyid for flyid in metadata_df.FlyID.unique()
+                       if flyid not in feedlog_df.dropna().FlyID.unique()]
     return non_feeding_flies
 
 
@@ -243,7 +244,9 @@ def check_column(col, df):
     Convenience function to check if a dataframe has a column of interest.
     """
     if not isinstance(col, str): # if col is not a string.
-        raise TypeError("{} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+        err = "{} is not a string.".format(col) + \
+              " Please enter a column name from `feeds` with quotation marks."
+        raise TypeError(errstr)
     if col not in df.columns: # make sure col is a column in df.
         raise KeyError("{} is not a column in the feedlog. Please check.".format(col))
     pass
@@ -490,7 +493,7 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
     import pandas as pd
 
     for c in [compare_by,color_by]:
-        munge.check_column(c,df)
+        check_column(c,df)
 
     if len( df[compare_by].unique() )<2:
         err = '{} has less than 2 categories'.format(compare_by) + \
@@ -522,7 +525,7 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
                            'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
                            'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
                    inplace=True)
-    plot_df = munge.cat_categorical_columns(plot_df,group_by,compare_by)
+    plot_df = cat_categorical_columns(plot_df,group_by,compare_by)
 
     return plot_df
 
@@ -532,12 +535,11 @@ def latency_munger(self,
                      compare_by,
                      color_by):
     import pandas as pd
-    from .._munger import munger as munge
 
     df = self.__feeds.copy()
 
     for c in [compare_by,color_by]:
-        munge.check_column(c,df)
+        check_column(c,df)
 
     if len( df[compare_by].unique() )<2:
         err = '{} has less than 2 categories'.format(compare_by) + \
@@ -557,7 +559,7 @@ def latency_munger(self,
     plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
     plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
                    inplace=True)
-    plot_df = munge.cat_categorical_columns(plot_df, group_by, compare_by)
+    plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
 
     return plot_df
 
