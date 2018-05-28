@@ -20,15 +20,11 @@ class contrast_plotter:
     latency_to_feed_per_fly
     """
 
-    #    #    #    #    #####
-    #    ##   #    #      #
-    #    # #  #    #      #
-    #    #  # #    #      #
-    #    #   ##    #      #
-    #    #    #    #      #
+
 
     def __init__(self,plotter):
         self.__feeds=plotter._experiment.feeds.copy()
+
 
 
     def feed_count_per_fly(self,
@@ -86,6 +82,8 @@ class contrast_plotter:
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
+
+
     def feed_volume_per_fly(self,
                            group_by,
                            compare_by,
@@ -137,6 +135,8 @@ class contrast_plotter:
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
+
+
 
     def feed_duration_per_fly(self,
                            group_by,
@@ -193,6 +193,8 @@ class contrast_plotter:
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
+
+
     def feed_speed_per_fly(self,
                            group_by,
                            compare_by,
@@ -244,6 +246,8 @@ class contrast_plotter:
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
+
+
 
     def latency_to_feed_per_fly(self,
                                 group_by,
