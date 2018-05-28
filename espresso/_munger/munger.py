@@ -288,7 +288,7 @@ def groupby_resamp_sum(df, resample_by='10min'):
     df_groupby_resamp_sum = df.groupby(static.grpby_cols)\
                               .resample(resample_by,
                                         on='RelativeTime_s')\
-                              .sum()
+                              .sum().reset_index()
 
     return df_groupby_resamp_sum
 
@@ -341,13 +341,15 @@ def cumsum_for_cumulative(df):
     # Select only relevant columns.
     relevant_cols = ['RelativeTime_s'] + grpby_cols + \
                     ['Cumulative Feed Count', 'Cumulative Volume (nl)']
-    temp = pd.DataFrame(temp.to_records())[relevant_cols]
+    # temp = pd.DataFrame(temp.to_records())[relevant_cols]
+    temp_selection = temp[relevant_cols]
 
     # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = temp.groupby(grpby_cols).cumsum()
+    grs_cumsum_a = temp_selection.groupby(grpby_cols).cumsum()
 
     # Combine metadata with cumsum.
-    grs_cumsum = pd.merge(temp[grpby_cols], grs_cumsum_a,
+    grs_cumsum = pd.merge(temp[['RelativeTime_s'] + grpby_cols],
+                          grs_cumsum_a,
                           left_index=True,
                           right_index=True)
 
