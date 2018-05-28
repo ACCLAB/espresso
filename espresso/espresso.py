@@ -165,8 +165,6 @@ class espresso(object):
                                                     ordered=True)
 
         # merge metadata with feedlogs.
-        print("\nDon't worry about the exception/error below. "
-              "It's a harmless pandas bug.")
         allfeeds = pd.merge(allfeeds, allflies,
                             left_on='FlyID', right_on='FlyID')
 
