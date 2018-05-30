@@ -70,10 +70,9 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        from .._munger import munger as munge
         from . import plot_helpers as pth
-        plot_df = munge.volume_duration_munger(self.__feeds,
-                                              group_by, compare_by, color_by)
+        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
+                                               group_by, compare_by, color_by)
 
         yvar = 'Total Feed Count\nPer Fly'
 
@@ -124,13 +123,11 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        from .._munger import munger as munge
         from . import plot_helpers as pth
-        plot_df = munge.volume_duration_munger(self.__feeds,
-                                              group_by, compare_by, color_by)
+        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
+                                               group_by, compare_by, color_by)
 
         yvar = 'Total Feed Volume\nPer Fly (µl)'
-
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
@@ -181,13 +178,11 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        from .._munger import munger as munge
         from . import plot_helpers as pth
-        plot_df = munge.volume_duration_munger(self.__feeds,
-                                              group_by, compare_by, color_by)
+        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
+                                               group_by, compare_by, color_by)
 
         yvar = 'Total Time\nFeeding Per Fly (min)'
-
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
@@ -235,13 +230,11 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        from .._munger import munger as munge
         from . import plot_helpers as pth
-        plot_df = munge.volume_duration_munger(self.__feeds,
-                                              group_by, compare_by, color_by)
+        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
+                                               group_by, compare_by, color_by)
 
         yvar = 'Feed Speed\nPer Fly (nl/s)'
-
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
@@ -289,13 +282,11 @@ class contrast_plotter:
 
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
-        from .._munger import munger as munge
         from . import plot_helpers as pth
-        plot_df = munge.latency_munger(self.__feeds,
-                                      group_by, compare_by, color_by)
+        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
+                                               group_by, compare_by, color_by)
 
         yvar = 'Latency to\nFirst Feed (min)'
-
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size,
                                      palette_type=palette_type,
