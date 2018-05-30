@@ -19,24 +19,24 @@ def check_dependencies():
         import dabest
     except ImportError:
         to_install.append('dabest>=0.1')
+
     try:
         import numpy
     except ImportError:
         to_install.append('numpy')
-    try:
-        import scipy
-    except ImportError:
-        to_install.append('scipy')
+
     try:
         import matplotlib
     except ImportError:
         to_install.append('matplotlib')
+
     try:
         import pandas
-        if int(pandas.__version__.split('.')[1])<20:
-            to_install.append('pandas>=0.21')
+        if int(pandas.__version__.split('.')[1])<23:
+            to_install.append('pandas>=0.23')
     except ImportError:
-        to_install.append('pandas>=0.21')
+        to_install.append('pandas>=0.23')
+
     try:
         import seaborn
     except ImportError:
@@ -50,7 +50,7 @@ if __name__=="__main__":
     setup(name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.3.3',
+        version='0.3.4',
         description='Analysis of ESPRESSO experiments run on CRITTA.',
         packages=find_packages(),
         install_requires=installs,

@@ -157,3 +157,72 @@ def format_timecourse_xaxis(ax, max_x):
     ax.set_xticklabels(newlabels)
     ax.tick_params(axis='x', which='major', length=10)
     ax.tick_params(axis='x', which='minor', length=6)
+
+
+
+def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
+    """Convenience function to munge the feeds for contrast plotting."""
+    import pandas as pd
+    from .._munger import munger as munge
+    plot_df = munge.volume_duration_munger(feeds,
+                                          group_by, compare_by, color_by)
+
+    for col in [group_by, compare_by]:
+        cat_from_feeds = feeds[col].cat.categories
+        plot_df.loc[:, col] = pd.Categorical(plot_df[col],
+                                            categories=cat_from_feeds,
+                                            ordered=True)
+    plot_df.sort_values([group_by, compare_by], axis=0,
+                        ascending=True, inplace=True)
+    return plot_df
+
+
+
+def generic_contrast_plotter(plot_df, yvar,
+                               color_by,
+                               fig_size=None,
+                               palette_type='categorical',
+                               contrastplot_kwargs=None):
+
+    import numpy as np
+    import dabest
+    from .._munger import munger as munge
+
+    # Handle contrastplot keyword arguments.
+    default_kwargs = dict(fig_size=(12,9),
+                          float_contrast=False,
+                          font_scale=1.4,
+                          swarmplot_kwargs={'size':6})
+    if contrastplot_kwargs is None:
+        contrastplot_kwargs = default_kwargs
+    else:
+        contrastplot_kwargs = munge.merge_two_dicts(default_kwargs,
+            contrastplot_kwargs)
+
+    # Select palette.
+    if palette_type == 'categorical':
+        color_palette = _make_categorial_palette(plot_df, color_by)
+    elif palette_type == 'sequential':
+        color_palette = _make_sequential_palette(plot_df, color_by)
+
+    custom_pal = dict(zip(plot_df[color_by].unique(),
+                          color_palette))
+
+    # Properly arrange idx for grouping.
+    unique_ids = plot_df.plot_groups_with_contrast.unique()
+    split_idxs = np.array_split(unique_ids, len(plot_df.plot_groups.unique()))
+    idx = [tuple(i) for i in split_idxs]
+
+    # Make sure the ylims don't stretch below zero but still capture all
+    # the datapoints.
+    ymax = np.max(plot_df[yvar])*1.1
+
+    f,b = dabest.plot(plot_df,
+                      x='plot_groups_with_contrast',
+                      y=yvar,
+                      idx=idx,
+                      color_col=color_by,
+                      custom_palette=custom_pal,
+                      swarm_ylim=(-ymax/70, ymax),
+                      **contrastplot_kwargs)
+    return f, b

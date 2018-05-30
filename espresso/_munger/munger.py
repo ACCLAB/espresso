@@ -9,18 +9,17 @@ Convenience functions for munging of metadata and feedlogs.
 
 
 
-
 def metadata(path_to_csv):
     """
     Munges a metadata CSV from an ESPRESSO experiment.
     Returns a pandas DataFrame.
     """
     import os
-    import numpy as np
-    import pandas as pd
+    from numpy import repeat as nprepeat
+    from pandas import read_csv
 
     ## Read in metadata.
-    metadata_csv = pd.read_csv(path_to_csv)
+    metadata_csv = read_csv(path_to_csv)
     ## Check that the metadata has a nonzero number of rows.
     if len(metadata_csv) == 0:
         raise ValueError(metadata+' has 0 rows. Please check!!!')
@@ -29,7 +28,7 @@ def metadata(path_to_csv):
     ## Assume that there is 1 fly per chamber if the metadata did not
     ## have a `#Flies` column.
     if '#Flies' not in metadata_csv.columns:
-        metadata_csv['#Flies'] = np.repeat(1, len(metadata_csv))
+        metadata_csv['#Flies'] = nprepeat(1, len(metadata_csv))
 
     ## Rename columns.
     food_cols = metadata_csv.filter(regex='Food').columns
@@ -53,8 +52,9 @@ def metadata(path_to_csv):
         except AttributeError:
             pass
 
-    # Turn N/A in #Flies to 1.
-    metadata_csv.loc[:,'FlyCountInChamber'] = metadata_csv.FlyCountInChamber.fillna(value=1).astype(int)
+    # Turn N/A in FlyCountInChamber to 1.
+    fc = metadata_csv.FlyCountInChamber
+    metadata_csv.loc[:,'FlyCountInChamber'] = fc.fillna(value=1).astype(int)
 
     return metadata_csv
 
@@ -66,10 +66,10 @@ def feedlog(path_to_csv):
     Munges a feedlog CSV from an ESPRESSO experiment.
     Returns a pandas DataFrame.
     """
-    import pandas as pd
+    from pandas import read_csv
 
     # Read in the CSV.
-    feedlog_csv = pd.read_csv( path_to_csv )
+    feedlog_csv = read_csv( path_to_csv )
 
     # Rename columns.
     feedlog_csv.rename(columns={"Food 1":"Tube1",
@@ -121,23 +121,23 @@ def add_padrows(metadata_df, feedlog_df, expt_duration):
     seconds, and a padrow at `expt_duration` with 4 min and 49 seconds added.
     """
 
-    import numpy as np
-    import pandas as pd
+    from numpy import nan as npnan
+    from pandas import DataFrame
 
     f = feedlog_df.copy()
     end_time = expt_duration + 289 # 289 seconds = # 4 min, 49 sec.
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
-            padrows = pd.DataFrame( [
-                                    [np.nan,np.nan,choice,
-                                     flyid,choice,'NIL',
-                                     np.nan,np.nan,np.nan,
-                                     False,0.5,'PAD'], # 0.5 seconds
+            padrows = DataFrame( [
+                                [npnan, npnan, choice,
+                                 flyid,choice,'NIL',
+                                 npnan, npnan, npnan,
+                                 False, 0.5,' PAD'], # 0.5 seconds
 
-                                   [np.nan,np.nan,choice,
-                                    flyid,choice,'NIL',
-                                    np.nan,np.nan,np.nan,
-                                    False, end_time,'PAD']
+                               [npnan, npnan, choice,
+                                flyid,choice,'NIL',
+                                npnan, npnan, npnan,
+                                False, end_time, 'PAD']
                                    ] )
             padrows.columns = f.columns
             # Add the padrows to feedlog.
@@ -196,7 +196,8 @@ def average_feed_vol_per_fly(df):
     Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
     """
     f = df.copy()
-    f['AverageFeedVolumePerFly_µl'] = f['FeedVol_µl'] / f['FlyCountInChamber']
+    fly_count_in_chamber = f['FlyCountInChamber'].astype(float)
+    f['AverageFeedVolumePerFly_µl'] = f['FeedVol_µl'] / fly_count_in_chamber
     return f
 
 def average_feed_count_per_fly(df):
@@ -208,7 +209,8 @@ def average_feed_count_per_fly(df):
     Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
     """
     f = df.copy()
-    f['AverageFeedCountPerFly'] = f['Valid'] / f['FlyCountInChamber']
+    fly_count_in_chamber = f['FlyCountInChamber'].astype(float)
+    f['AverageFeedCountPerFly'] = f['Valid'] / fly_count_in_chamber
     return f
 
 def average_feed_speed_per_fly(df):
@@ -218,7 +220,8 @@ def average_feed_speed_per_fly(df):
     Pass along a merged feedlog-metadata DataFrame. Returns the modified DataFrame.
     """
     f = df.copy()
-    f['AverageFeedSpeedPerFly_µl/s'] = (f['FeedVol_µl'] / (f['FeedDuration_ms']/1000)) / f['FlyCountInChamber']
+    fly_count_in_chamber = f['FlyCountInChamber'].astype(float)
+    f['AverageFeedSpeedPerFly_µl/s'] = (f['FeedVol_µl'] / (f['FeedDuration_ms']/1000)) / fly_count_in_chamber
     return f
 
 
@@ -231,7 +234,8 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
     Pass along a munged metadata and corresponding munged feedlog.
     Returns the non-feeding flies as a list.
     """
-    non_feeding_flies=[ flyid for flyid in metadata_df.FlyID.unique() if flyid not in feedlog_df.dropna().FlyID.unique() ]
+    non_feeding_flies=[flyid for flyid in metadata_df.FlyID.unique()
+                       if flyid not in feedlog_df.dropna().FlyID.unique()]
     return non_feeding_flies
 
 
@@ -243,7 +247,9 @@ def check_column(col, df):
     Convenience function to check if a dataframe has a column of interest.
     """
     if not isinstance(col, str): # if col is not a string.
-        raise TypeError("{} is not a string. Please enter a column name from `feeds` with quotation marks.".format(col))
+        err = "{} is not a string.".format(col) + \
+              " Please enter a column name from `feeds` with quotation marks."
+        raise TypeError(errstr)
     if col not in df.columns: # make sure col is a column in df.
         raise KeyError("{} is not a column in the feedlog. Please check.".format(col))
     pass
@@ -265,23 +271,24 @@ def check_group_by_color_by(col, row, color_by, df):
     if col == row:
         raise ValueError('Row variable {} is the same as column variable {}.'.format(row, col))
 
+
+
 def groupby_resamp_sum(df, resample_by='10min'):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
+    from pandas import to_datetime
+    from . import __static as static
 
-    import pandas as pd
     # Convert RelativeTime_s to datetime if not done so already.
     if df.RelativeTime_s.dtype == 'float64':
-        df.loc[:,'RelativeTime_s'] = pd.to_datetime(df['RelativeTime_s'],
+        df.loc[:,'RelativeTime_s'] = to_datetime(df['RelativeTime_s'],
                                                     unit='s')
 
-    df_groupby_resamp_sum = df.groupby(['Temperature','Status',
-                                        'Genotype','Sex',
-                                        'FlyID','FoodChoice'])\
+    df_groupby_resamp_sum = df.groupby(static.grpby_cols)\
                               .resample(resample_by,
                                         on='RelativeTime_s')\
-                              .sum()
+                              .sum().reset_index()
 
     return df_groupby_resamp_sum
 
@@ -293,19 +300,18 @@ def sum_for_timecourse(df):
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
     import pandas as pd
+    from . import __static as static
 
     temp = df.copy()
     temp_sum = pd.DataFrame(temp.to_records())
 
-    temp_sum = temp_sum[['Temperature','Status','Genotype',
-                        'Sex','FlyID','FoodChoice',
-                        'RelativeTime_s',
-                        'FlyCountInChamber',
-                        ### Below, add all the columns that are
-                         ### potentially used for plotting.
-                         'AverageFeedVolumePerFly_µl',
-                         'AverageFeedCountPerFly',
-                         'AverageFeedSpeedPerFly_µl/s']]
+    cols_of_interest = static.grpby_cols.copy()
+    # Below, add any columns that are potentially used for plotting.
+    cols_of_interest = cols_of_interest + ['AverageFeedVolumePerFly_µl',
+                                            'AverageFeedCountPerFly',
+                                            'AverageFeedSpeedPerFly_µl/s']
+
+    temp_sum = temp_sum[cols_of_interest]
 
     temp_sum.fillna(0,inplace = True)
     temp_sum = __add_time_column(temp_sum)
@@ -319,15 +325,11 @@ def cumsum_for_cumulative(df):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
-    import pandas as pd
+    from pandas import merge
+    from . import __static as static
 
     temp = df.copy()
-
-    # # Drop duplicate columns:
-    # duplicated_cols = [col for col in [group_by, color_by]
-    #                    if col in temp.columns]
-    # for col in [duplicated_cols]:
-    #     temp.drop(col, axis=1, inplace=True)
+    grpby_cols = static.grpby_cols.copy()
 
     # Rename for facility in plotting.
     temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
@@ -337,21 +339,15 @@ def cumsum_for_cumulative(df):
     temp['Cumulative Volume (nl)'] = temp['Cumulative Volume (µl)'] * 1000
 
     # Select only relevant columns.
-    temp = pd.DataFrame(temp.to_records())[['RelativeTime_s','FlyID',
-                                            'Temperature','Status',
-                                            'Genotype','Sex','FoodChoice',
-                                            'Cumulative Feed Count',
-                                            'Cumulative Volume (nl)']]
+    relevant_cols = ['RelativeTime_s'] + grpby_cols + \
+                    ['Cumulative Feed Count', 'Cumulative Volume (nl)']
+    temp_selection = temp[relevant_cols]
 
     # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = temp.groupby(['Temperature','Status',
-                                'Genotype','Sex',
-                                'FlyID','FoodChoice']).cumsum()
+    grs_cumsum_a = temp_selection.groupby(grpby_cols).cumsum()
 
     # Combine metadata with cumsum.
-    grs_cumsum = pd.merge(temp[['RelativeTime_s','Temperature',
-                                'Status','Genotype','Sex',
-                                'FlyID','FoodChoice']],
+    grs_cumsum = merge(temp[['RelativeTime_s'] + grpby_cols],
                           grs_cumsum_a,
                           left_index=True,
                           right_index=True)
@@ -359,36 +355,42 @@ def cumsum_for_cumulative(df):
     # Add time column to facilitate plotting.
     grs_cumsum = __add_time_column(grs_cumsum)
 
-    # temp_cumsum = temp.groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-    #                 .cumsum()\
-    #                 .groupby(['Temperature','Genotype','FlyID','FoodChoice'])\
-    #                 .fillna(method='ffill')\
-    #                 .fillna(0)
-    #
-    # temp_cumsum = pd.DataFrame( temp_cumsum.to_records() )
-    #
-    # # Select only relavant columns.
-    # temp_cumsum = temp_cumsum[[group_by,color_by,
-    #                          'FlyID',
-    #                          'RelativeTime_s',
-    #                          'FlyCountInChamber',
-    #                          ### Below, add all the columns that are
-    #                          ### potentially used for timecourse plotting.
-    #                          'AverageFeedVolumePerFly_µl',
-    #                          'AverageFeedCountPerFly']]
-    #
-    # temp_cumsum.loc[:,'AverageFeedVolumePerFly_nl'] = temp_cumsum.loc[:,'AverageFeedVolumePerFly_µl']*1000
-    #
-    # temp_cumsum.rename( columns={'AverageFeedVolumePerFly_nl':'Cumulative Volume (nl)',
-    #                              'AverageFeedCountPerFly':'Cumulative Feed Count',
-    #                                      },
-    #                          inplace = True)
-    #
-    # # # Add time column to facilitate plotting.
-    # temp_cumsum = __add_time_column(temp_cumsum)
 
     return grs_cumsum
 
+
+
+def assign_food_choice(flyid, choiceid, mapper):
+    """
+    Convenience function used to assign the food choice.
+    """
+
+    return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
+
+
+def get_expt_duration(path_to_feedstats):
+    """
+    Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
+    the last timestamp, and assigns that as the experiment duration.
+    """
+    from numpy import int as npint
+    from numpy import round as npround
+    from pandas import read_csv
+
+    feedstats = read_csv(path_to_feedstats)
+    return npint(npround(feedstats.Minutes.values[-1]))
+
+
+def assign_status_from_genotype(genotype):
+    """
+    Convenience function to map genotype to status.
+    """
+    if genotype.lower().startswith('w1118'):
+        status = 'Sibling'
+    else:
+        status = 'Offspring'
+
+    return status
 
 
 def join_cols(df, cols, sep='; '):
@@ -428,13 +430,12 @@ def join_cols(df, cols, sep='; '):
 
 
 
-
 def cat_categorical_columns(df, group_by, compare_by):
     """
     Convenience function to concatenate categorical columns for
     contrast plotting purposes.
     """
-
+    from pandas import Categorical
     df_out = df.copy()
 
     if isinstance(group_by, str):
@@ -448,37 +449,113 @@ def cat_categorical_columns(df, group_by, compare_by):
     gby.append(compare_by)
     # Create another categorical column.
     df_out['plot_groups_with_contrast'] = join_cols(df_out, gby)
+    sorted_plot_groups = df_out.plot_groups_with_contrast.unique()
+    df_out.loc[:, 'plot_groups_with_contrast'] = Categorical(
+                                                df_out.plot_groups_with_contrast,
+                                                categories=sorted_plot_groups,
+                                                ordered=True)
 
     return df_out
 
 
-def assign_food_choice(flyid, choiceid, mapper):
+
+def volume_duration_munger(df,group_by,compare_by,color_by):
+    """Convenience Function for volume-duration munging."""
+    from numpy import unique
+    from pandas import DataFrame
+    from . import __static as static
+
+    grpby_cols = static.grpby_cols.copy()
+    grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by]).tolist()
+
+    for c in [compare_by, color_by]:
+        check_column(c, df)
+
+    if len(df[compare_by].unique()) < 2:
+        err = '{} has less than 2 categories'.format(compare_by) + \
+              'and cannot be used for `compare_by`.'
+        raise ValueError(err)
+
+    for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
+        df[col].fillna(value=0,inplace=True)
+
+    cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
+                                         'AverageFeedVolumePerFly_µl',
+                                         'FeedDuration_ms']
+
+    plot_df = DataFrame(df[cols_of_interest]\
+                            .groupby(grpby_cols_all)\
+                            .sum().to_records()
+                          ).dropna()
+    # for some reason, groupby produces NaN rows...
+
+    plot_df.reset_index(drop=True, inplace=True)
+    plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
+
+    av = plot_df['AverageFeedVolumePerFly_µl']
+    t = plot_df['FeedDuration_ms']
+    plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
+
+    plot_df.rename(columns={'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
+                           'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+                           'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
+                   inplace=True)
+    plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
+
+    return plot_df
+
+
+
+def latency_munger(self, df,
+                   group_by, compare_by, color_by):
+    from numpy import unique
+    from pandas import DataFrame
+    from . import __static as static
+    grpby_cols = static.grpby_cols.copy()
+    grpby_cols_all = unique(grpby_cols +
+                               [group_by, compare_by, color_by]).tolist()
+
+    df = self.__feeds.copy()
+
+    for c in [compare_by,color_by]:
+        check_column(c,df)
+
+    if len( df[compare_by].unique() )<2:
+        err = '{} has less than 2 categories'.format(compare_by) + \
+              'and cannot be used for `compare_by`.'
+        raise ValueError(err)
+
+    to_drop_na_cols = grpby_cols_all + ['RelativeTime_s']
+
+    plot_df = DataFrame(df.dropna()[to_drop_na_cols]\
+                             .groupby(grpby_cols_all).min().to_records()
+                           ) .dropna()
+                           # for some reason, groupby produces NaN rows...
+
+    plot_df.reset_index(drop=True, inplace=True)
+    plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
+    plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
+                   inplace=True)
+    plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
+
+    return plot_df
+
+
+
+def merge_two_dicts(x, y):
     """
-    Convenience function used to assign the food choice.
+    Given two dicts, merge them into a new dict as a shallow copy.
+    Any overlapping keys in `y` will override the values in `x`.
+
+    Taken from https://stackoverflow.com/questions/38987/
+    how-to-merge-two-python-dictionaries-in-a-single-expression
+
+    Keywords:
+        x, y: dicts
+
+    Returns:
+        A dictionary containing a union of all keys in both original dicts.
     """
-
-    return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
-
-
-def get_expt_duration(path_to_feedstats):
-    """
-    Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
-    the last timestamp, and assigns that as the experiment duration.
-    """
-    import numpy as np
-    import pandas as pd
-
-    feedstats = pd.read_csv(path_to_feedstats)
-    return np.int(np.round(feedstats.Minutes.values[-1]))
-
-
-def assign_status_from_genotype(genotype):
-    """
-    Convenience function to map genotype to status.
-    """
-    if genotype.lower().startswith('w1118'):
-        status = 'Sibling'
-    else:
-        status = 'Offspring'
-
-    return status
+    z = x.copy()
+    z.update(y)
+    return z

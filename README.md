@@ -3,7 +3,7 @@
 ## About
 This is a Python package for ESPRESSO analysis. This Python package will process raw output from ESPRESSO experiments produced by CRITTA. It is designed for use within the Claridge-Chang lab.
 
-Version: 0.3.3
+Version: 0.3.4
 
 ## Installation and Usage
 

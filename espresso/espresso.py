@@ -34,13 +34,12 @@ class espresso(object):
         import os
 
         import numpy as np
-        import scipy as sp
         import pandas as pd
 
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
-        self.version = '0.3.3'
+        self.version = '0.3.4'
 
         allflies= []
         allfeeds= []
@@ -152,22 +151,27 @@ class espresso(object):
                                             categories=['Sibling','Offspring'],
                                             ordered=True)
 
+        # Turn Genotype into an Ordered Categorical
+        genotypes_ordered = allflies.sort_values('Status').Genotype.unique()
+        allflies.loc[:, 'Genotype'] = pd.Categorical(allflies.Genotype,
+                                                categories=genotypes_ordered,
+                                                ordered=True)
 
         # Change relevant columns to categorical.
-        for col in ['Genotype', 'Temperature', 'Sex']:
+        for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
             try:
-                allflies.loc[:, col] = pd.Categorical(allflies[col],
-                                            categories=np.sort(allflies[col].unique()),
+                c = allflies[col]
+                allflies.loc[:, col] = pd.Categorical(c,
+                                            categories=np.sort(c.unique()),
                                             ordered=True)
             except KeyError:
                 pass
-        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(allfeeds.FoodChoice,
-                                                    categories=np.sort(allfeeds.FoodChoice.unique()),
-                                                    ordered=True)
+        fc = allfeeds.FoodChoice
+        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(fc,
+                                                categories=np.sort(fc.unique()),
+                                                ordered=True)
 
         # merge metadata with feedlogs.
-        print("\nDon't worry about the exception/error below. "
-              "It's a harmless pandas bug.")
         allfeeds = pd.merge(allfeeds, allflies,
                             left_on='FlyID', right_on='FlyID')
 
@@ -204,7 +208,9 @@ class espresso(object):
         self.genotypes = allflies.Genotype.unique()
         self.temperatures = allflies.Temperature.unique()
         self.sexes = allflies.Sex.unique()
-        self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
+        self.foodtypes = allfeeds.FoodChoice.unique()
+        self.chamber_fly_counts = allfeeds.FlyCountInChamber.unique()
+        # self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
 
         # Passes an instance of `self` to plotter.
         self.plot = espresso_plotter.espresso_plotter(self)
@@ -217,7 +223,8 @@ class espresso(object):
         plural_list = []
 
         for value in [self.feedlog_count, len(self.genotypes),
-                      len(self.temperatures), len(self.foodtypes)]:
+                      len(self.temperatures), len(self.foodtypes),
+                      len(self.chamber_fly_counts)]:
             if value > 1:
                 plural_list.append('s')
             else:
@@ -247,9 +254,14 @@ class espresso(object):
                                                             plural_list[3],
                                                             self.foodtypes)
 
+        chamber_summary = "\n{0} type{1} of chamber fly count {2}.\n"\
+                            .format(len(self.chamber_fly_counts),
+                                    plural_list[4],
+                                    self.chamber_fly_counts)
+
         try:
             gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
-                                                             plural_list[4],
+                                                             plural_list[5],
                                                              self.sexes)
         except AttributeError:
             gender_summary = ''
@@ -260,7 +272,8 @@ class espresso(object):
             expt_duration_summary = ''
 
         rep_str = feedlog_summary + genotype_summary + temp_summary + \
-                  foodtypes_summary + gender_summary + expt_duration_summary
+                  foodtypes_summary + gender_summary + chamber_summary + \
+                  expt_duration_summary
 
 
         if hasattr(self, "added_labels"):
@@ -293,8 +306,6 @@ class espresso(object):
 
 
         # Merge the flies and feeds attributes.
-        print("\nDon't worry about the above exception. "
-                      "It's a harmless pandas bug.")
         self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
             how='outer')
         self_copy.feeds = pd.merge(self_copy.feeds, other_copy.feeds,
