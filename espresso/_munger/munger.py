@@ -456,15 +456,18 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 def volume_duration_munger(df,group_by,compare_by,color_by):
     """Convenience Function for volume-duration munging."""
-
+    import numpy as np
     import pandas as pd
     from . import __static as static
+    
     grpby_cols = static.grpby_cols.copy()
+    grpby_cols_all = np.unique(grpby_cols +
+                               [group_by, compare_by, color_by]).tolist()
 
     for c in [compare_by, color_by]:
         check_column(c, df)
 
-    if len(df[compare_by].unique())<2:
+    if len(df[compare_by].unique()) < 2:
         err = '{} has less than 2 categories'.format(compare_by) + \
               'and cannot be used for `compare_by`.'
         raise ValueError(err)
@@ -472,17 +475,18 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
     for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
         df[col].fillna(value=0,inplace=True)
 
-    cols_of_interest = grpby_cols + ['AverageFeedCountPerFly',
-                                    'AverageFeedVolumePerFly_µl',
-                                    'FeedDuration_ms']
+    cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
+                                         'AverageFeedVolumePerFly_µl',
+                                         'FeedDuration_ms']
 
     plot_df = pd.DataFrame(df[cols_of_interest]\
-                            .groupby(grpby_cols).sum().to_records()
-                            ).dropna()
-                            # for some reason, groupby produces NaN rows...
+                            .groupby(grpby_cols_all)\
+                            .sum().to_records()
+                          ).dropna()
+    # for some reason, groupby produces NaN rows...
 
     plot_df.reset_index(drop=True, inplace=True)
-    plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms']/60000
+    plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
 
     av = plot_df['AverageFeedVolumePerFly_µl']
     t = plot_df['FeedDuration_ms']
