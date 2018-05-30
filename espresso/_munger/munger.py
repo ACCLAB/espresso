@@ -15,11 +15,11 @@ def metadata(path_to_csv):
     Returns a pandas DataFrame.
     """
     import os
-    import numpy as np
-    import pandas as pd
+    from numpy import repeat as nprepeat
+    from pandas import read_csv
 
     ## Read in metadata.
-    metadata_csv = pd.read_csv(path_to_csv)
+    metadata_csv = read_csv(path_to_csv)
     ## Check that the metadata has a nonzero number of rows.
     if len(metadata_csv) == 0:
         raise ValueError(metadata+' has 0 rows. Please check!!!')
@@ -28,7 +28,7 @@ def metadata(path_to_csv):
     ## Assume that there is 1 fly per chamber if the metadata did not
     ## have a `#Flies` column.
     if '#Flies' not in metadata_csv.columns:
-        metadata_csv['#Flies'] = np.repeat(1, len(metadata_csv))
+        metadata_csv['#Flies'] = nprepeat(1, len(metadata_csv))
 
     ## Rename columns.
     food_cols = metadata_csv.filter(regex='Food').columns
@@ -66,10 +66,10 @@ def feedlog(path_to_csv):
     Munges a feedlog CSV from an ESPRESSO experiment.
     Returns a pandas DataFrame.
     """
-    import pandas as pd
+    from pandas import read_csv
 
     # Read in the CSV.
-    feedlog_csv = pd.read_csv( path_to_csv )
+    feedlog_csv = read_csv( path_to_csv )
 
     # Rename columns.
     feedlog_csv.rename(columns={"Food 1":"Tube1",
@@ -121,23 +121,23 @@ def add_padrows(metadata_df, feedlog_df, expt_duration):
     seconds, and a padrow at `expt_duration` with 4 min and 49 seconds added.
     """
 
-    import numpy as np
-    import pandas as pd
+    from numpy import nan as npnan
+    from pandas import DataFrame
 
     f = feedlog_df.copy()
     end_time = expt_duration + 289 # 289 seconds = # 4 min, 49 sec.
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
-            padrows = pd.DataFrame( [
-                                    [np.nan,np.nan,choice,
-                                     flyid,choice,'NIL',
-                                     np.nan,np.nan,np.nan,
-                                     False,0.5,'PAD'], # 0.5 seconds
+            padrows = DataFrame( [
+                                [npnan, npnan, choice,
+                                 flyid,choice,'NIL',
+                                 npnan, npnan, npnan,
+                                 False, 0.5,' PAD'], # 0.5 seconds
 
-                                   [np.nan,np.nan,choice,
-                                    flyid,choice,'NIL',
-                                    np.nan,np.nan,np.nan,
-                                    False, end_time,'PAD']
+                               [npnan, npnan, choice,
+                                flyid,choice,'NIL',
+                                npnan, npnan, npnan,
+                                False, end_time, 'PAD']
                                    ] )
             padrows.columns = f.columns
             # Add the padrows to feedlog.
@@ -277,12 +277,12 @@ def groupby_resamp_sum(df, resample_by='10min'):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
-    import pandas as pd
+    from pandas import to_datetime
     from . import __static as static
 
     # Convert RelativeTime_s to datetime if not done so already.
     if df.RelativeTime_s.dtype == 'float64':
-        df.loc[:,'RelativeTime_s'] = pd.to_datetime(df['RelativeTime_s'],
+        df.loc[:,'RelativeTime_s'] = to_datetime(df['RelativeTime_s'],
                                                     unit='s')
 
     df_groupby_resamp_sum = df.groupby(static.grpby_cols)\
@@ -325,7 +325,7 @@ def cumsum_for_cumulative(df):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
-    import pandas as pd
+    from pandas import merge
     from . import __static as static
 
     temp = df.copy()
@@ -341,14 +341,13 @@ def cumsum_for_cumulative(df):
     # Select only relevant columns.
     relevant_cols = ['RelativeTime_s'] + grpby_cols + \
                     ['Cumulative Feed Count', 'Cumulative Volume (nl)']
-    # temp = pd.DataFrame(temp.to_records())[relevant_cols]
     temp_selection = temp[relevant_cols]
 
     # Compute the cumulative sum, by Fly.
     grs_cumsum_a = temp_selection.groupby(grpby_cols).cumsum()
 
     # Combine metadata with cumsum.
-    grs_cumsum = pd.merge(temp[['RelativeTime_s'] + grpby_cols],
+    grs_cumsum = merge(temp[['RelativeTime_s'] + grpby_cols],
                           grs_cumsum_a,
                           left_index=True,
                           right_index=True)
@@ -374,11 +373,12 @@ def get_expt_duration(path_to_feedstats):
     Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
     the last timestamp, and assigns that as the experiment duration.
     """
-    import numpy as np
-    import pandas as pd
+    from numpy import int as npint
+    from numpy import round as npround
+    from pandas import read_csv
 
-    feedstats = pd.read_csv(path_to_feedstats)
-    return np.int(np.round(feedstats.Minutes.values[-1]))
+    feedstats = read_csv(path_to_feedstats)
+    return npint(npround(feedstats.Minutes.values[-1]))
 
 
 def assign_status_from_genotype(genotype):
@@ -435,7 +435,7 @@ def cat_categorical_columns(df, group_by, compare_by):
     Convenience function to concatenate categorical columns for
     contrast plotting purposes.
     """
-
+    from pandas import Categorical
     df_out = df.copy()
 
     if isinstance(group_by, str):
@@ -449,6 +449,11 @@ def cat_categorical_columns(df, group_by, compare_by):
     gby.append(compare_by)
     # Create another categorical column.
     df_out['plot_groups_with_contrast'] = join_cols(df_out, gby)
+    sorted_plot_groups = df_out.plot_groups_with_contrast.unique()
+    df_out.loc[:, 'plot_groups_with_contrast'] = Categorical(
+                                                df_out.plot_groups_with_contrast,
+                                                categories=sorted_plot_groups,
+                                                ordered=True)
 
     return df_out
 
@@ -456,13 +461,12 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 def volume_duration_munger(df,group_by,compare_by,color_by):
     """Convenience Function for volume-duration munging."""
-    import numpy as np
-    import pandas as pd
+    from numpy import unique
+    from pandas import DataFrame
     from . import __static as static
-    
+
     grpby_cols = static.grpby_cols.copy()
-    grpby_cols_all = np.unique(grpby_cols +
-                               [group_by, compare_by, color_by]).tolist()
+    grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by]).tolist()
 
     for c in [compare_by, color_by]:
         check_column(c, df)
@@ -479,7 +483,7 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
                                          'AverageFeedVolumePerFly_µl',
                                          'FeedDuration_ms']
 
-    plot_df = pd.DataFrame(df[cols_of_interest]\
+    plot_df = DataFrame(df[cols_of_interest]\
                             .groupby(grpby_cols_all)\
                             .sum().to_records()
                           ).dropna()
@@ -502,14 +506,14 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
 
 
 
-def latency_munger(self,
-                     df,
-                     group_by,
-                     compare_by,
-                     color_by):
-    import pandas as pd
+def latency_munger(self, df,
+                   group_by, compare_by, color_by):
+    from numpy import unique
+    from pandas import DataFrame
     from . import __static as static
     grpby_cols = static.grpby_cols.copy()
+    grpby_cols_all = unique(grpby_cols +
+                               [group_by, compare_by, color_by]).tolist()
 
     df = self.__feeds.copy()
 
@@ -521,10 +525,10 @@ def latency_munger(self,
               'and cannot be used for `compare_by`.'
         raise ValueError(err)
 
-    to_drop_na_cols = grpby_cols + ['RelativeTime_s']
+    to_drop_na_cols = grpby_cols_all + ['RelativeTime_s']
 
-    plot_df = pd.DataFrame(df.dropna()[to_drop_na_cols]\
-                             .groupby(grpby_cols).min().to_records()
+    plot_df = DataFrame(df.dropna()[to_drop_na_cols]\
+                             .groupby(grpby_cols_all).min().to_records()
                            ) .dropna()
                            # for some reason, groupby produces NaN rows...
 
