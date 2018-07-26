@@ -9,50 +9,115 @@ os.environ["MPLCONFIGDIR"]="."
 # Modified from from setup.py in seaborn.
 try:
     from setuptools import setup
-    _has_setuptools=True
 except ImportError:
     from distutils.core import setup
 
+
+
+def need_to_install(library, desired_major_version, desired_minor_version):
+    LIB_INSTALLED_VERSION = library.__version__
+    LIB_INSTALLED_VERSION_MAJOR = int(LIB_INSTALLED_VERSION.split('.')[0])
+    LIB_INSTALLED_VERSION_MINOR = int(LIB_INSTALLED_VERSION.split('.')[1])
+
+    if LIB_INSTALLED_VERSION_MAJOR < desired_major_version:
+        return True
+
+    elif LIB_INSTALLED_VERSION_MINOR < desired_minor_version:
+        return True
+
+    else:
+        return False
+
+
+
 def check_dependencies():
-    to_install=[]
-    try:
-        import dabest
-    except ImportError:
-        to_install.append('dabest>=0.1')
+    to_install = []
 
     try:
         import numpy
+        NUMPY_LATEST_MAJOR = 1
+        NUMPY_LATEST_MINOR = 15
+        TO_INSTALL = 'numpy=={}.{}'.format(NUMPY_LATEST_MAJOR,
+                                           NUMPY_LATEST_MINOR)
+        if need_to_install(numpy, NUMPY_LATEST_MAJOR, NUMPY_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
     except ImportError:
-        to_install.append('numpy')
+        to_install.append(TO_INSTALL)
+
 
     try:
-        import matplotlib
+        import scipy
+        SCIPY_LATEST_MAJOR = 1
+        SCIPY_LATEST_MINOR = 1
+        TO_INSTALL = 'scipy=={}.{}'.format(SCIPY_LATEST_MAJOR,
+                                           SCIPY_LATEST_MINOR)
+        if need_to_install(scipy, SCIPY_LATEST_MAJOR, SCIPY_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
     except ImportError:
-        to_install.append('matplotlib')
+        to_install.append(TO_INSTALL)
+
 
     try:
         import pandas
-        if int(pandas.__version__.split('.')[1])<23:
-            to_install.append('pandas>=0.23')
+        PANDAS_LATEST_MAJOR = 0
+        PANDAS_LATEST_MINOR = 23
+        TO_INSTALL = 'pandas=={}.{}'.format(PANDAS_LATEST_MAJOR,
+                                            PANDAS_LATEST_MINOR)
+        if need_to_install(pandas, PANDAS_LATEST_MAJOR, PANDAS_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
     except ImportError:
-        to_install.append('pandas>=0.23')
+        to_install.append(TO_INSTALL)
+
+
+    try:
+        import matplotlib as mpl
+        MPL_LATEST_MAJOR = 2
+        MPL_LATEST_MINOR = 2
+        TO_INSTALL = 'matplotlib=={}.{}'.format(MPL_LATEST_MAJOR,
+                                                MPL_LATEST_MINOR)
+        if need_to_install(mpl, MPL_LATEST_MAJOR, MPL_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
+    except ImportError:
+        to_install.append(TO_INSTALL)
+
 
     try:
         import seaborn
+        SNS_LATEST_MAJOR = 0
+        SNS_LATEST_MINOR = 9
+        TO_INSTALL = 'seaborn=={}.{}'.format(SNS_LATEST_MAJOR,
+                                            SNS_LATEST_MINOR)
+        if need_to_install(pandas, SNS_LATEST_MAJOR, SNS_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
     except ImportError:
-        to_install.append('seaborn>=0.8.0')
+        to_install.append(TO_INSTALL)
+
+
+    try:
+        import dabest
+        DABEST_LATEST_MAJOR = 0
+        DABEST_LATEST_MINOR = 1
+        TO_INSTALL = 'dabest=={}.{}'.format(DABEST_LATEST_MAJOR,
+                                             DABEST_LATEST_MINOR)
+        if need_to_install(dabest, DABEST_LATEST_MAJOR, DABEST_LATEST_MINOR):
+            to_install.append(TO_INSTALL)
+    except ImportError:
+        to_install.append(TO_INSTALL)
 
     return to_install
+
 
 if __name__=="__main__":
 
     installs=check_dependencies()
-    setup(name='espresso',
+
+    setup(
+        name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.3.4',
+        version='0.3.5',
         description='Analysis of ESPRESSO experiments run on CRITTA.',
         packages=find_packages(),
         install_requires=installs,
-        url='http://github.com/josesho/espresso',
+        url='https://www.github.com/ACCLAB/espresso',
         )
