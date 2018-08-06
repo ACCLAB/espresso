@@ -111,21 +111,21 @@ def add_padrows(metadata_df, feedlog_df, expt_duration):
     feedlog_df: pandas DataFrame
         The corresponding (munged) Espresso feedlog.
 
-    expt_duration: int, default 21600
-        The total length of the experiment, in seconds. The default is six
-        hours.
+    expt_duration_seconds: int
+        The total length of the experiment, in seconds.
 
     Returns
     -------
     The modified feedlog. By default, two padrows will be added: a padrow at 0.5
-    seconds, and a padrow at `expt_duration` with 4 min and 49 seconds added.
+    seconds after the start of the experiment, and a padrow 4 min, 49 sec seconds
+    after the experiment was concluded.
     """
 
     from numpy import nan as npnan
     from pandas import DataFrame
 
     f = feedlog_df.copy()
-    end_time = expt_duration + 289 # 289 seconds = # 4 min, 49 sec.
+    end_time = expt_duration_seconds + 289 # 289 seconds = 4 min, 49 sec.
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
             padrows = DataFrame( [
