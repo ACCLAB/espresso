@@ -494,16 +494,17 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 
 
-def volume_duration_munger(df,group_by,compare_by,color_by):
+def volume_duration_munger(df, group_by, compare_by, color_by):
     """Convenience Function for volume-duration munging."""
     from numpy import unique
     from pandas import DataFrame
     from . import __static as static
 
     grpby_cols = static.grpby_cols.copy()
-    grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by]).tolist()
+    grpby_cols_all = unique([*grpby_cols, *group_by,
+                            compare_by, color_by]).tolist()
 
-    for c in [compare_by, color_by]:
+    for c in [*group_by, compare_by, color_by]:
         check_column(c, df)
 
     if len(df[compare_by].unique()) < 2:
@@ -512,17 +513,16 @@ def volume_duration_munger(df,group_by,compare_by,color_by):
         raise ValueError(err)
 
     for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
-        df[col].fillna(value=0,inplace=True)
+        df[col].fillna(value=0, inplace=True)
 
     cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
                                          'AverageFeedVolumePerFly_µl',
                                          'FeedDuration_ms']
 
     plot_df = DataFrame(df[cols_of_interest]\
-                            .groupby(grpby_cols_all)\
-                            .sum().to_records()
-                          ).dropna()
-    # for some reason, groupby produces NaN rows...
+                        .groupby(grpby_cols_all)\
+                        .sum().to_records()
+                       ).dropna() # for some reason, groupby produces NaN rows..
 
     plot_df.reset_index(drop=True, inplace=True)
     plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
