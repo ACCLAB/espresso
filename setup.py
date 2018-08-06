@@ -6,6 +6,15 @@ import os
 # certain easy_install versions
 os.environ["MPLCONFIGDIR"]="."
 
+
+DESCRIPTION = 'Package for analysis of ESPRESSO experiments'
+LONG_DESCRIPTION = """\
+This Python package enables analysis of feeding experiments done on the
+ESPRESSO rigs, and monitored via CRITTA.
+
+For use in the Claridge-Chang lab.
+"""
+
 # Modified from from setup.py in seaborn.
 try:
     from setuptools import setup
@@ -99,7 +108,7 @@ def check_dependencies():
     DABEST_LATEST_MAJOR = 0
     DABEST_LATEST_MINOR = 1
     TO_INSTALL = 'dabest=={}.{}'.format(DABEST_LATEST_MAJOR,
-                                         DABEST_LATEST_MINOR)
+                                           DABEST_LATEST_MINOR)
     try:
         import dabest
         if need_to_install(dabest, DABEST_LATEST_MAJOR, DABEST_LATEST_MINOR):
@@ -119,7 +128,8 @@ if __name__=="__main__":
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
         version='0.3.5',
-        description='Analysis of ESPRESSO experiments run on CRITTA.',
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
         packages=find_packages(),
         install_requires=installs,
         url='https://www.github.com/ACCLAB/espresso',
