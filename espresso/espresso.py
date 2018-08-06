@@ -32,6 +32,7 @@ class espresso(object):
 
 
     def __init__(self, folder, expt_duration_minutes=None):
+
         import os
 
         import numpy as np
@@ -198,12 +199,9 @@ class espresso(object):
         self.sexes = allflies.Sex.unique()
         self.foodtypes = allfeeds.FoodChoice.unique()
         self.chamber_fly_counts = allfeeds.FlyCountInChamber.unique()
-        # self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
 
         # Passes an instance of `self` to plotter.
         self.plot = espresso_plotter.espresso_plotter(self)
-
-
 
 
 
@@ -230,25 +228,25 @@ class espresso(object):
                                                     plural_list[0]) + \
                           "a total of {} flies.\n".format(len(self.flies))
 
-        genotype_summary = "\n{0} genotype{1} {2}.\n".format(len(self.genotypes),
+        genotype_summary = "\n{0} Genotype{1} {2}.\n".format(len(self.genotypes),
                                                           plural_list[1],
                                                           self.genotypes)
 
-        temp_summary = "\n{0} temperature{1} {2}.\n".format(len(self.temperatures),
+        temp_summary = "\n{0} Temperature{1} {2}.\n".format(len(self.temperatures),
                                                           plural_list[2],
                                                           self.temperatures)
 
-        foodtypes_summary = "\n{0} foodtype{1} {2}.\n".format(len(self.foodtypes),
+        foodtypes_summary = "\n{0} FoodChoice{1} {2}.\n".format(len(self.foodtypes),
                                                             plural_list[3],
                                                             self.foodtypes)
 
-        chamber_summary = "\n{0} type{1} of chamber fly count {2}.\n"\
+        chamber_summary = "\n{0} type{1} of FlyCountInChamber {2}.\n"\
                             .format(len(self.chamber_fly_counts),
                                     plural_list[4],
                                     self.chamber_fly_counts)
 
         try:
-            gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
+            gender_summary = "\n{0} Sex type{1} {2}.\n".format(len(self.sexes),
                                                              plural_list[5],
                                                              self.sexes)
         except AttributeError:
@@ -283,13 +281,13 @@ class espresso(object):
 
 
 
-
-
     def __add__(self, other):
+
         from copy import copy as deepcopy
         import numpy as np
         import pandas as pd
         from ._plotter import espresso_plotter as espresso_plotter
+        from ._munger import munger as munge
 
         self_copy = deepcopy(self) # Create a copy of the first espresso object to be summed.
         other_copy = deepcopy(other) # Create a copy of the other espresso object.
@@ -321,25 +319,31 @@ class espresso(object):
         self_copy.feedlogs = list(set(self_copy.feedlogs + other_copy.feedlogs))
         self_copy.feedlog_count = len(self_copy.feedlogs)
 
+        munge.make_categorical_columns(self_copy.flies)
         self_copy.genotypes = self_copy.flies.Genotype.unique()
         self_copy.temperatures = self_copy.flies.Temperature.unique()
+        self_copy.sexes = self_copy.flies.Sex.unique()
 
-        self_copy.foodtypes = np.unique(self_copy.flies\
-                                        .dropna(axis = 1)\
-                                        .filter(regex='Tube'))
+        food_choice_col = self_copy.feeds.FoodChoice
+        food_choices = np.sort(food_choice_col.unique())
+        self_copy.feeds.loc[:, "FoodChoice"] = pd.Categorical(food_choice_col,
+                                                       categories=food_choices,
+                                                       ordered=True)
+
+        munge.make_categorical_columns(self_copy.feeds)
+        self_copy.foodtypes = self_copy.feeds.FoodChoice.unique()
+        self_copy.chamber_fly_counts = self_copy.feeds.FlyCountInChamber.unique()
+
         self_copy.plot = espresso_plotter.espresso_plotter(self_copy)
 
         return self_copy
+
 
     def __radd__(self, other):
         if other == 0:
             return self
         else:
             return self.__add__(other)
-
-
-
-
 
 
     def attach_label(self, label_name,
@@ -409,9 +413,6 @@ class espresso(object):
             print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
 
 
-
-
-
     def remove_labels(self, labels):
         """
         Removes the label(s) from the `flies` and `feeds` DataFrames of an espresso experiment.
@@ -468,6 +469,7 @@ class espresso(object):
 
         return "All added labels {0} have been dropped.".format(dropped)
 
+
     def save(self, filename):
         '''Saves the current espresso object as a Python pickle.'''
         import pickle as pk
@@ -475,6 +477,8 @@ class espresso(object):
         with open(filename, 'wb') as f:
             # To ensure compatibility with Py2, set protocol = 2
             pk.dump(self, f, protocol = 2)
+
+
 
 def load(filename):
     '''Loads a saved espresso object.'''

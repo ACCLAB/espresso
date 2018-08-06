@@ -200,6 +200,8 @@ def average_feed_vol_per_fly(df):
     f['AverageFeedVolumePerFly_µl'] = f['FeedVol_µl'] / fly_count_in_chamber
     return f
 
+
+
 def average_feed_count_per_fly(df):
     """
     Computes AverageFeedCountPerChamber for each feed. This seems redundant,
@@ -213,6 +215,8 @@ def average_feed_count_per_fly(df):
     f['AverageFeedCountPerFly'] = f['Valid'] / fly_count_in_chamber
     return f
 
+
+
 def average_feed_speed_per_fly(df):
     """
     Computes AverageFeedSpeedPerFly_µl/s for each feed.
@@ -223,7 +227,6 @@ def average_feed_speed_per_fly(df):
     fly_count_in_chamber = f['FlyCountInChamber'].astype(float)
     f['AverageFeedSpeedPerFly_µl/s'] = (f['FeedVol_µl'] / (f['FeedDuration_ms']/1000)) / fly_count_in_chamber
     return f
-
 
 
 

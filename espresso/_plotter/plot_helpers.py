@@ -32,6 +32,8 @@ def normalize_ylims(ax_arr, include_zero=False, draw_zero_line=False):
         for ax in ax_arr:
             ax.axhline(y = 0,linestyle='solid',linewidth = 0.5,color='k')
 
+
+
 def meanci(mean, cilow, cihigh, idx, ax,
             alpha=0.8, marker='o',color='black',
             size=8, ls='solid',lw = 1.2):
@@ -53,6 +55,8 @@ def meanci(mean, cilow, cihigh, idx, ax,
             linewidth=lw
             )
 
+
+
 # Define function for string formatting of scientific notation.
 def sci_nota(num, decimal_digits=2, precision=None, exponent=None):
     """
@@ -73,6 +77,8 @@ def sci_nota(num, decimal_digits=2, precision=None, exponent=None):
         precision = decimal_digits
 
     return r"${0:.{2}f}\times10^{{{1:d}}}$".format(coeff, exponent, precision)
+
+
 
 def compute_percent_feeding(all_feeds, all_flies, facets, start=0, end=60):
     """
@@ -117,6 +123,7 @@ def compute_percent_feeding(all_feeds, all_flies, facets, start=0, end=60):
                                           percent_feeding+half95ci]).T
     percent_feeding_summary.columns = ['percent_feeding','ci_lower','ci_upper']
     return percent_feeding_summary
+
 
 
 def _make_categorial_palette(df, group_by, pal='tab10'):
@@ -191,8 +198,7 @@ def generic_contrast_plotter(plot_df, yvar,
     # Handle contrastplot keyword arguments.
     default_kwargs = dict(fig_size=(12,9),
                           float_contrast=False,
-                          font_scale=1.4,
-                          swarmplot_kwargs={'size':6})
+                          font_scale=1.4)
     if contrastplot_kwargs is None:
         contrastplot_kwargs = default_kwargs
     else:
