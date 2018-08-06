@@ -368,17 +368,17 @@ def assign_food_choice(flyid, choiceid, mapper):
     return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
 
 
-def get_expt_duration(path_to_feedstats):
-    """
-    Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
-    the last timestamp, and assigns that as the experiment duration.
-    """
-    from numpy import int as npint
-    from numpy import round as npround
-    from pandas import read_csv
-
-    feedstats = read_csv(path_to_feedstats)
-    return npint(npround(feedstats.Minutes.values[-1]))
+# def get_expt_duration(path_to_feedstats):
+#     """
+#     Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
+#     the last timestamp, and assigns that as the experiment duration.
+#     """
+#     from numpy import int as npint
+#     from numpy import round as npround
+#     from pandas import read_csv
+#
+#     feedstats = read_csv(path_to_feedstats)
+#     return npint(npround(feedstats.Minutes.values[-1]))
 
 
 def assign_status_from_genotype(genotype):

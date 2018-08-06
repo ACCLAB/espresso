@@ -332,7 +332,7 @@ class espresso(object):
                 elif isinstance(o.added_labels, str):
                     new_labels.append(o.added_labels)
         new_labels = list( set(new_labels) )
-        if len(new_labels)>0:
+        if len(new_labels) > 0:
             self_copy.added_labels = new_labels
 
         self_copy.feedlogs = list(set(self_copy.feedlogs + other_copy.feedlogs))
