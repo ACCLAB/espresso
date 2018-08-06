@@ -240,6 +240,38 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
 
 
 
+def make_categorical_columns(df):
+    """
+    Turns Genotype, Status, Temperature, Sex, FlyCountInChamber columns
+    into Categorical columns, inplace.
+    """
+
+    import numpy as np
+    import pandas as pd
+
+    # Assign Status based on genotype.
+    assigned_status = df.Genotype.apply(assign_status_from_genotype)
+
+    # Turn Status into an Ordered Categorical.
+    df['Status'] = pd.Categorical(assigned_status,
+                                  categories=['Sibling', 'Offspring'],
+                                  ordered=True)
+
+    # Turn Genotype into an Ordered Categorical
+    genotypes_ordered = df.sort_values(['Status', 'Genotype'])\
+                                .Genotype.unique()
+    df.loc[:, 'Genotype'] = pd.Categorical(df.Genotype,
+                                           categories=genotypes_ordered,
+                                           ordered=True)
+
+    # Change relevant columns to Categorical.
+    for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
+        try:
+            c = df[col]
+            df.loc[:, col] = pd.Categorical(c, categories=np.sort(c.unique()),
+                                                  ordered=True)
+        except KeyError:
+            pass
 
 
 def check_column(col, df):

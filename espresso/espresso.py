@@ -151,30 +151,13 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
-        # Assign Status based on genotype.
-        allflies['Status'] = pd.Categorical(allflies.Genotype.apply(munge.assign_status_from_genotype),
-                                            categories=['Sibling','Offspring'],
-                                            ordered=True)
+        munge.make_categorical_columns(allflies)
 
-        # Turn Genotype into an Ordered Categorical
-        genotypes_ordered = allflies.sort_values('Status').Genotype.unique()
-        allflies.loc[:, 'Genotype'] = pd.Categorical(allflies.Genotype,
-                                                categories=genotypes_ordered,
-                                                ordered=True)
-
-        # Change relevant columns to categorical.
-        for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
-            try:
-                c = allflies[col]
-                allflies.loc[:, col] = pd.Categorical(c,
-                                            categories=np.sort(c.unique()),
-                                            ordered=True)
-            except KeyError:
-                pass
-        fc = allfeeds.FoodChoice
-        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(fc,
-                                                categories=np.sort(fc.unique()),
-                                                ordered=True)
+        food_choice_col = allfeeds.FoodChoice
+        food_choices = np.sort(food_choice_col.unique())
+        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(food_choice_col,
+                                                       categories=food_choices,
+                                                       ordered=True)
 
         # merge metadata with feedlogs.
         allfeeds = pd.merge(allfeeds, allflies,
