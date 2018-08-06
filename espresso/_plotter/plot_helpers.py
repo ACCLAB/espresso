@@ -169,17 +169,18 @@ def format_timecourse_xaxis(ax, max_x):
 
 def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
     """Convenience function to munge the feeds for contrast plotting."""
+
     import pandas as pd
     from .._munger import munger as munge
-    plot_df = munge.volume_duration_munger(feeds,
-                                          group_by, compare_by, color_by)
 
-    for col in [group_by, compare_by]:
+    plot_df = munge.volume_duration_munger(feeds, group_by, compare_by, color_by)
+
+    for col in [*group_by, compare_by]:
         cat_from_feeds = feeds[col].cat.categories
         plot_df.loc[:, col] = pd.Categorical(plot_df[col],
                                             categories=cat_from_feeds,
                                             ordered=True)
-    plot_df.sort_values([group_by, compare_by], axis=0,
+    plot_df.sort_values([*group_by, compare_by], axis=0,
                         ascending=True, inplace=True)
     return plot_df
 

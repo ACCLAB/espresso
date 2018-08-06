@@ -1,5 +1,5 @@
 #!/usr/bin/python
 # -*-coding: utf-8 -*-
 
-grpby_cols = ['Temperature','Sex', 'Status','Genotype','FlyID',
-              'FlyCountInChamber']
+grpby_cols = ['Temperature', 'Sex', 'Status', 'Genotype', 'FlyID',
+              'FlyCountInChamber', 'FoodChoice']
