@@ -23,14 +23,16 @@ class espresso(object):
         Path to a folder with at least one FeedLog, along with its corresponding
         MetaData.
 
-    expt_duration_seconds: integer, default None
-        If you lack a FeedStats file, enter the experiment duration here,
-        in seconds.
+    expt_duration_minutes: integer
+        Enter the (longest) experiment duration here in minutes. This should
+        accurately reflect the actual duration. You will be able to fliter for
+        time windows in specific plots later.
     """
 
 
 
-    def __init__(self, folder, expt_duration_seconds=None):
+    def __init__(self, folder, expt_duration_minutes=None):
+
         import os
 
         import numpy as np
@@ -39,7 +41,7 @@ class espresso(object):
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
-        self.version = '0.3.4'
+        self.version = '0.3.5'
 
         allflies= []
         allfeeds= []
@@ -61,28 +63,32 @@ class espresso(object):
         # and feedstat CSV
         for feedlog in feedlogs_in_folder:
             expected_metadata = feedlog.replace('FeedLog','MetaData')
-            expected_feedstats = feedlog.replace('FeedLog','FeedStats')
+            # expected_feedstats = feedlog.replace('FeedLog','FeedStats')
             if expected_metadata not in files:
-                raise NameError('A MetaData file for '+feedlog+' cannot be found.\n'+\
-                                'MetaData files should start with "MetaData_" and '+\
-                                'have the same datetime info as the corresponding FeedLog. Please check.')
-            if expected_feedstats not in files:
-                if expt_duration_seconds is None:
-                    raise ValueError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
-                                'FeedStats files should start with "FeedStats_" and '+\
-                                'have the same datetime info as the corresponding FeedLog.'
-                                ' Alternatively, you can enter `expt_duration_seconds`.')
-                else:
-                    self.expt_duration_seconds = expt_duration_seconds
-            else:
-                # Read in all the FeedStats CSV. Identify which FeedStat has the longest
-                # recorded experiment duration, and assign that as the overall duration.
-                feedstats_in_folder = [f.replace('FeedLog','FeedStats')
-                                       for f in feedlogs_in_folder]
-                for fs in feedstats_in_folder:
-                    fs_path = os.path.join(folder, fs)
-                    expt_durations.append(munge.get_expt_duration(fs_path))
-                self.expt_duration_seconds = np.max(expt_durations) * 60
+                err1 = 'A MetaData file for {} cannot be found.'.format(feedlog)
+                err2 = '\nMetaData files should start with "MetaData_" and '
+                err3 = '\nhave the same datetime info as the corresponding '
+                err4 = 'FeedLog. Please check.'
+                raise NameError(err1 + err2 + err3 + err4)
+            # if expected_feedstats not in files:
+            #     if expt_duration_seconds is None:
+            #         raise ValueError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
+            #                     'FeedStats files should start with "FeedStats_" and '+\
+            #                     'have the same datetime info as the corresponding FeedLog.'
+            #                     ' Alternatively, you can enter `expt_duration_seconds`.')
+            #     else:
+            #         self.expt_duration_minutes = expt_duration_seconds
+            # else:
+            #     # Read in all the FeedStats CSV. Identify which FeedStat has the longest
+            #     # recorded experiment duration, and assign that as the overall duration.
+            #     feedstats_in_folder = [f.replace('FeedLog','FeedStats')
+            #                            for f in feedlogs_in_folder]
+            #     for fs in feedstats_in_folder:
+            #         fs_path = os.path.join(folder, fs)
+            #         expt_durations.append(munge.get_expt_duration(fs_path))
+            #     self.expt_duration_seconds = np.max(expt_durations) * 60
+
+        self.expt_duration_minutes = expt_duration_minutes
 
         for j, feedlog in enumerate(feedlogs_in_folder):
             datetime_exptname = '_'.join(feedlog.strip('.csv').split('_')[1:3])
@@ -113,7 +119,7 @@ class espresso(object):
             # that will ensure feedlogs for each FlyID fully capture the entire
             # experiment duration.
             feedlog_csv = munge.add_padrows(metadata_csv, feedlog_csv,
-                                             self.expt_duration_seconds)
+                                             self.expt_duration_minutes*60)
             # Add columns in nanoliters.
             feedlog_csv = munge.compute_nanoliter_cols(feedlog_csv)
             # Add columns for RelativeTime_s and FeedDuration_s.
@@ -146,30 +152,13 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
-        # Assign Status based on genotype.
-        allflies['Status'] = pd.Categorical(allflies.Genotype.apply(munge.assign_status_from_genotype),
-                                            categories=['Sibling','Offspring'],
-                                            ordered=True)
+        munge.make_categorical_columns(allflies)
 
-        # Turn Genotype into an Ordered Categorical
-        genotypes_ordered = allflies.sort_values('Status').Genotype.unique()
-        allflies.loc[:, 'Genotype'] = pd.Categorical(allflies.Genotype,
-                                                categories=genotypes_ordered,
-                                                ordered=True)
-
-        # Change relevant columns to categorical.
-        for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
-            try:
-                c = allflies[col]
-                allflies.loc[:, col] = pd.Categorical(c,
-                                            categories=np.sort(c.unique()),
-                                            ordered=True)
-            except KeyError:
-                pass
-        fc = allfeeds.FoodChoice
-        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(fc,
-                                                categories=np.sort(fc.unique()),
-                                                ordered=True)
+        food_choice_col = allfeeds.FoodChoice
+        food_choices = np.sort(food_choice_col.unique())
+        allfeeds.loc[:, "FoodChoice"] = pd.Categorical(food_choice_col,
+                                                       categories=food_choices,
+                                                       ordered=True)
 
         # merge metadata with feedlogs.
         allfeeds = pd.merge(allfeeds, allflies,
@@ -210,12 +199,9 @@ class espresso(object):
         self.sexes = allflies.Sex.unique()
         self.foodtypes = allfeeds.FoodChoice.unique()
         self.chamber_fly_counts = allfeeds.FlyCountInChamber.unique()
-        # self.foodtypes = np.unique(allflies.dropna(axis = 1).filter(regex='Tube'))
 
         # Passes an instance of `self` to plotter.
         self.plot = espresso_plotter.espresso_plotter(self)
-
-
 
 
 
@@ -242,32 +228,33 @@ class espresso(object):
                                                     plural_list[0]) + \
                           "a total of {} flies.\n".format(len(self.flies))
 
-        genotype_summary = "\n{0} genotype{1} {2}.\n".format(len(self.genotypes),
+        genotype_summary = "\n{0} Genotype{1} {2}.\n".format(len(self.genotypes),
                                                           plural_list[1],
                                                           self.genotypes)
 
-        temp_summary = "\n{0} temperature{1} {2}.\n".format(len(self.temperatures),
+        temp_summary = "\n{0} Temperature{1} {2}.\n".format(len(self.temperatures),
                                                           plural_list[2],
                                                           self.temperatures)
 
-        foodtypes_summary = "\n{0} foodtype{1} {2}.\n".format(len(self.foodtypes),
+        foodtypes_summary = "\n{0} FoodChoice{1} {2}.\n".format(len(self.foodtypes),
                                                             plural_list[3],
                                                             self.foodtypes)
 
-        chamber_summary = "\n{0} type{1} of chamber fly count {2}.\n"\
+        chamber_summary = "\n{0} type{1} of FlyCountInChamber {2}.\n"\
                             .format(len(self.chamber_fly_counts),
                                     plural_list[4],
                                     self.chamber_fly_counts)
 
         try:
-            gender_summary = "\n{0} sex type{1} {2}.\n".format(len(self.sexes),
+            gender_summary = "\n{0} Sex type{1} {2}.\n".format(len(self.sexes),
                                                              plural_list[5],
                                                              self.sexes)
         except AttributeError:
             gender_summary = ''
 
         try:
-            expt_duration_summary = "\nTotal experiment duration = {} minutes\n".format(self.expt_duration_seconds / 60)
+            expt_duration_summary = "\nTotal experiment duration = {} minutes\n"\
+                                    .format(self.expt_duration_minutes)
         except AttributeError:
             expt_duration_summary = ''
 
@@ -282,9 +269,10 @@ class espresso(object):
             else:
                 plural_label = ' has'
 
-            label_summary = "\n{0} label{1} been added: {2}".format(len(self.added_labels),
-                                                                plural_label,
-                                                                self.added_labels)
+            label_summary = "\n{0} label{1} been added: {2}".format(
+                                                        len(self.added_labels),
+                                                        plural_label,
+                                                        self.added_labels)
             rep_str = rep_str + label_summary
 
         rep_str = rep_str + '\nESPRESSO v{}'.format(self.version)
@@ -293,23 +281,26 @@ class espresso(object):
 
 
 
-
-
     def __add__(self, other):
+
         from copy import copy as deepcopy
         import numpy as np
         import pandas as pd
         from ._plotter import espresso_plotter as espresso_plotter
+        from ._munger import munger as munge
 
         self_copy = deepcopy(self) # Create a copy of the first espresso object to be summed.
         other_copy = deepcopy(other) # Create a copy of the other espresso object.
 
+        # TODO:
+        # Need to ensure that all categorical columns are re-parsed properly.
 
         # Merge the flies and feeds attributes.
         self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
             how='outer')
         self_copy.feeds = pd.merge(self_copy.feeds, other_copy.feeds,
             how='outer')
+
         # carry over the original_labels attrib.
         self_copy.flies_original_labels = self.flies_original_labels
         self_copy.feeds_original_labels = self.feeds_original_labels
@@ -322,31 +313,37 @@ class espresso(object):
                 elif isinstance(o.added_labels, str):
                     new_labels.append(o.added_labels)
         new_labels = list( set(new_labels) )
-        if len(new_labels)>0:
+        if len(new_labels) > 0:
             self_copy.added_labels = new_labels
 
         self_copy.feedlogs = list(set(self_copy.feedlogs + other_copy.feedlogs))
         self_copy.feedlog_count = len(self_copy.feedlogs)
 
+        munge.make_categorical_columns(self_copy.flies)
         self_copy.genotypes = self_copy.flies.Genotype.unique()
         self_copy.temperatures = self_copy.flies.Temperature.unique()
+        self_copy.sexes = self_copy.flies.Sex.unique()
 
-        self_copy.foodtypes = np.unique(self_copy.flies\
-                                        .dropna(axis = 1)\
-                                        .filter(regex='Tube'))
+        food_choice_col = self_copy.feeds.FoodChoice
+        food_choices = np.sort(food_choice_col.unique())
+        self_copy.feeds.loc[:, "FoodChoice"] = pd.Categorical(food_choice_col,
+                                                       categories=food_choices,
+                                                       ordered=True)
+
+        munge.make_categorical_columns(self_copy.feeds)
+        self_copy.foodtypes = self_copy.feeds.FoodChoice.unique()
+        self_copy.chamber_fly_counts = self_copy.feeds.FlyCountInChamber.unique()
+
         self_copy.plot = espresso_plotter.espresso_plotter(self_copy)
 
         return self_copy
+
 
     def __radd__(self, other):
         if other == 0:
             return self
         else:
             return self.__add__(other)
-
-
-
-
 
 
     def attach_label(self, label_name,
@@ -416,9 +413,6 @@ class espresso(object):
             print("{0} has been added as a new label. The values were created by concatenating the columns {1}.".format(label_name, label_from_cols))
 
 
-
-
-
     def remove_labels(self, labels):
         """
         Removes the label(s) from the `flies` and `feeds` DataFrames of an espresso experiment.
@@ -475,6 +469,7 @@ class espresso(object):
 
         return "All added labels {0} have been dropped.".format(dropped)
 
+
     def save(self, filename):
         '''Saves the current espresso object as a Python pickle.'''
         import pickle as pk
@@ -482,6 +477,8 @@ class espresso(object):
         with open(filename, 'wb') as f:
             # To ensure compatibility with Py2, set protocol = 2
             pk.dump(self, f, protocol = 2)
+
+
 
 def load(filename):
     '''Loads a saved espresso object.'''

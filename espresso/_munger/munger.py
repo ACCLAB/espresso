@@ -98,10 +98,10 @@ def feedlog(path_to_csv):
 
 
 
-def add_padrows(metadata_df, feedlog_df, expt_duration):
+def add_padrows(metadata_df, feedlog_df, expt_duration_seconds):
     """
     Define 2 padrows per fly, per food choice. This will ensure that feedlogs
-    for each FlyID fully capture the entire 6-hour duration.
+    for each FlyID fully capture the entire experiment duration.
 
     Keywords
     --------
@@ -111,21 +111,21 @@ def add_padrows(metadata_df, feedlog_df, expt_duration):
     feedlog_df: pandas DataFrame
         The corresponding (munged) Espresso feedlog.
 
-    expt_duration: int, default 21600
-        The total length of the experiment, in seconds. The default is six
-        hours.
+    expt_duration_seconds: int
+        The total length of the experiment, in seconds.
 
     Returns
     -------
     The modified feedlog. By default, two padrows will be added: a padrow at 0.5
-    seconds, and a padrow at `expt_duration` with 4 min and 49 seconds added.
+    seconds after the start of the experiment, and a padrow 4 min, 49 sec seconds
+    after the experiment was concluded.
     """
 
     from numpy import nan as npnan
     from pandas import DataFrame
 
     f = feedlog_df.copy()
-    end_time = expt_duration + 289 # 289 seconds = # 4 min, 49 sec.
+    end_time = expt_duration_seconds + 289 # 289 seconds = 4 min, 49 sec.
     for flyid in metadata_df.FlyID.unique():
         for choice in f.ChoiceIdx.unique():
             padrows = DataFrame( [
@@ -200,6 +200,8 @@ def average_feed_vol_per_fly(df):
     f['AverageFeedVolumePerFly_µl'] = f['FeedVol_µl'] / fly_count_in_chamber
     return f
 
+
+
 def average_feed_count_per_fly(df):
     """
     Computes AverageFeedCountPerChamber for each feed. This seems redundant,
@@ -213,6 +215,8 @@ def average_feed_count_per_fly(df):
     f['AverageFeedCountPerFly'] = f['Valid'] / fly_count_in_chamber
     return f
 
+
+
 def average_feed_speed_per_fly(df):
     """
     Computes AverageFeedSpeedPerFly_µl/s for each feed.
@@ -223,7 +227,6 @@ def average_feed_speed_per_fly(df):
     fly_count_in_chamber = f['FlyCountInChamber'].astype(float)
     f['AverageFeedSpeedPerFly_µl/s'] = (f['FeedVol_µl'] / (f['FeedDuration_ms']/1000)) / fly_count_in_chamber
     return f
-
 
 
 
@@ -240,6 +243,38 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
 
 
 
+def make_categorical_columns(df):
+    """
+    Turns Genotype, Status, Temperature, Sex, FlyCountInChamber columns
+    into Categorical columns, inplace.
+    """
+
+    import numpy as np
+    import pandas as pd
+
+    # Assign Status based on genotype.
+    assigned_status = df.Genotype.apply(assign_status_from_genotype)
+
+    # Turn Status into an Ordered Categorical.
+    df['Status'] = pd.Categorical(assigned_status,
+                                  categories=['Sibling', 'Offspring'],
+                                  ordered=True)
+
+    # Turn Genotype into an Ordered Categorical
+    genotypes_ordered = df.sort_values(['Status', 'Genotype'])\
+                                .Genotype.unique()
+    df.loc[:, 'Genotype'] = pd.Categorical(df.Genotype,
+                                           categories=genotypes_ordered,
+                                           ordered=True)
+
+    # Change relevant columns to Categorical.
+    for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
+        try:
+            c = df[col]
+            df.loc[:, col] = pd.Categorical(c, categories=np.sort(c.unique()),
+                                                  ordered=True)
+        except KeyError:
+            pass
 
 
 def check_column(col, df):
@@ -368,17 +403,17 @@ def assign_food_choice(flyid, choiceid, mapper):
     return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
 
 
-def get_expt_duration(path_to_feedstats):
-    """
-    Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
-    the last timestamp, and assigns that as the experiment duration.
-    """
-    from numpy import int as npint
-    from numpy import round as npround
-    from pandas import read_csv
-
-    feedstats = read_csv(path_to_feedstats)
-    return npint(npround(feedstats.Minutes.values[-1]))
+# def get_expt_duration(path_to_feedstats):
+#     """
+#     Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
+#     the last timestamp, and assigns that as the experiment duration.
+#     """
+#     from numpy import int as npint
+#     from numpy import round as npround
+#     from pandas import read_csv
+#
+#     feedstats = read_csv(path_to_feedstats)
+#     return npint(npround(feedstats.Minutes.values[-1]))
 
 
 def assign_status_from_genotype(genotype):
