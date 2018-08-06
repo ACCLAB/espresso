@@ -292,9 +292,6 @@ class espresso(object):
         self_copy = deepcopy(self) # Create a copy of the first espresso object to be summed.
         other_copy = deepcopy(other) # Create a copy of the other espresso object.
 
-        # TODO:
-        # Need to ensure that all categorical columns are re-parsed properly.
-
         # Merge the flies and feeds attributes.
         self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
             how='outer')
