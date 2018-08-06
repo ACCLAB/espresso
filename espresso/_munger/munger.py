@@ -98,10 +98,10 @@ def feedlog(path_to_csv):
 
 
 
-def add_padrows(metadata_df, feedlog_df, expt_duration):
+def add_padrows(metadata_df, feedlog_df, expt_duration_seconds):
     """
     Define 2 padrows per fly, per food choice. This will ensure that feedlogs
-    for each FlyID fully capture the entire 6-hour duration.
+    for each FlyID fully capture the entire experiment duration.
 
     Keywords
     --------
