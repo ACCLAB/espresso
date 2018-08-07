@@ -31,7 +31,7 @@ class espresso(object):
 
 
 
-    def __init__(self, folder, expt_duration_minutes=None):
+    def __init__(self, folder, expt_duration_minutes):
 
         import os
 
@@ -60,33 +60,14 @@ class espresso(object):
         expt_durations = list()
 
         # check that each feedlog has a corresponding metadata CSV
-        # and feedstat CSV
         for feedlog in feedlogs_in_folder:
             expected_metadata = feedlog.replace('FeedLog','MetaData')
-            # expected_feedstats = feedlog.replace('FeedLog','FeedStats')
             if expected_metadata not in files:
                 err1 = 'A MetaData file for {} cannot be found.'.format(feedlog)
                 err2 = '\nMetaData files should start with "MetaData_" and '
                 err3 = '\nhave the same datetime info as the corresponding '
                 err4 = 'FeedLog. Please check.'
                 raise NameError(err1 + err2 + err3 + err4)
-            # if expected_feedstats not in files:
-            #     if expt_duration_seconds is None:
-            #         raise ValueError('A FeedStats file for '+feedlog+' cannot be found.\n'+\
-            #                     'FeedStats files should start with "FeedStats_" and '+\
-            #                     'have the same datetime info as the corresponding FeedLog.'
-            #                     ' Alternatively, you can enter `expt_duration_seconds`.')
-            #     else:
-            #         self.expt_duration_minutes = expt_duration_seconds
-            # else:
-            #     # Read in all the FeedStats CSV. Identify which FeedStat has the longest
-            #     # recorded experiment duration, and assign that as the overall duration.
-            #     feedstats_in_folder = [f.replace('FeedLog','FeedStats')
-            #                            for f in feedlogs_in_folder]
-            #     for fs in feedstats_in_folder:
-            #         fs_path = os.path.join(folder, fs)
-            #         expt_durations.append(munge.get_expt_duration(fs_path))
-            #     self.expt_duration_seconds = np.max(expt_durations) * 60
 
         self.expt_duration_minutes = expt_duration_minutes
 
