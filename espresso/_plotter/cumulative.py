@@ -22,7 +22,8 @@ class cumulative_plotter:
 
     def __cumulative_plotter(self, yvar, row, col, time_col,
                              min_time_hour, max_time_hour,
-                             ylim, color_by, palette=None,
+                             ylim, color_by,
+                             height=5, aspect=1.75, palette=None,
                              resample_by='5min', gridlines=True):
 
 
@@ -30,6 +31,9 @@ class cumulative_plotter:
         import seaborn as sns
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
+
+        import warnings
+        warnings.filterwarnings("ignore")
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
@@ -51,28 +55,28 @@ class cumulative_plotter:
         df_win = plotdf[(plotdf.time_s >= min_time_sec) &
                         (plotdf.time_s <= max_time_sec)]
 
-        sns.set(style='ticks')
+        sns.set(style='ticks', font_scale=2)
 
-        g = sns.FacetGrid(b, row=row, col=col,
+        g = sns.FacetGrid(df_win, row=row, col=col,
                           hue=color_by, legend_out=True,
                           palette=palette,
                           xlim=(min_time_sec, max_time_sec),
                           sharex=False, sharey=True,
-                          height=5, aspect=1.5,
-                          gridspec_kws={'hspace':0.5, 'wspace':0.2})
+                          height=height, aspect=aspect,
+                          gridspec_kws={'hspace':0.75, 'wspace':0.5}
+                          )
 
         g.map(sns.lineplot, time_col, yvar, ci=95)
-        g.set_titles("{row_var} = {row_name}; {col_var} = {col_name}",
-                     size=20)
+        g.set_titles("{row_var} = {row_name}\n{col_var} = {col_name}")
         g.add_legend(fontsize=18)
         plt.legend
 
         for j, ax in enumerate(g.axes.flat):
 
             plothelp.format_timecourse_xaxis(ax, min_time_sec, max_time_sec)
-            ax.tick_params(which='major', length=12, pad=12, labelsize=15)
+            ax.tick_params(which='major', length=12, pad=12)
             ax.tick_params(which='minor', length=6)
-            ax.set_ylabel(ax.get_ylabel(), fontsize=18)
+            ax.set_ylabel(ax.get_ylabel())
 
             ax.set_ylim(0, ax.get_ylim()[1])
             ax.yaxis.set_tick_params(labelleft=True)
@@ -84,7 +88,7 @@ class cumulative_plotter:
 
 
         sns.despine(fig=g.fig, offset={'left':5, 'bottom': 5})
-        plt.tight_layout()
+        # plt.tight_layout()
         sns.set() # reset style.
 
         # End and return the FacetGrid.
@@ -95,6 +99,7 @@ class cumulative_plotter:
                     max_time_hour, min_time_hour=0,
                     ylim=None, palette=None,
                     resample_by='5min',
+                    height=5, aspect=1.5,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total volume
@@ -126,8 +131,11 @@ class cumulative_plotter:
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-        fig_size: tuple (width, height), default None
-            The size of the final figure, in inches.
+        height: float, default 5
+            The height of each panel in inches.
+
+        aspect: float, default 1.5
+            The aspect ratio (x/y) of each panel.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
@@ -144,9 +152,9 @@ class cumulative_plotter:
                                         time_col='time_s',
                                         min_time_hour=min_time_hour,
                                         max_time_hour=max_time_hour,
+                                        palette=palette,
                                         resample_by=resample_by,
-                                        ylim=ylim,
-                                        fig_size=fig_size,
+                                        ylim=ylim, height=height, aspect=aspect,
                                         gridlines=gridlines)
         return out
 
@@ -154,6 +162,7 @@ class cumulative_plotter:
                     max_time_hour, min_time_hour=0,
                     ylim=None, palette=None,
                     resample_by='5min',
+                    height=5, aspect=1.5,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total feed count
@@ -185,8 +194,11 @@ class cumulative_plotter:
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-        fig_size: tuple (width, height), default None
-            The size of the final figure, in inches.
+        height: float, default 5
+            The height of each panel in inches.
+
+        aspect: float, default 1.5
+            The aspect ratio (x/y) of each panel.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
@@ -203,8 +215,8 @@ class cumulative_plotter:
                                         time_col='time_s',
                                         min_time_hour=min_time_hour,
                                         max_time_hour=max_time_hour,
+                                        palette=palette,
                                         resample_by=resample_by,
-                                        ylim=ylim,
-                                        fig_size=fig_size,
+                                        ylim=ylim, height=height, aspect=aspect,
                                         gridlines=gridlines)
         return out

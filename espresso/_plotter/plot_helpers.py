@@ -164,7 +164,7 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
                              tick_interval_seconds))
     ax.xaxis.set_minor_locator(tk.MultipleLocator(base=tick_interval_seconds/2))
 
-    ax.set_xlabel('Time (h)',fontsize=17)
+    ax.set_xlabel('Time (h)')
     newlabels = [str(int(t/tick_interval_seconds))
                  for t in ax.xaxis.get_ticklocs(minor=False)]
     ax.set_xticklabels(newlabels)
