@@ -127,7 +127,7 @@ if __name__=="__main__":
         name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.3.6',
+        version='0.4.0',
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
