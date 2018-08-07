@@ -342,9 +342,11 @@ def sum_for_timecourse(df):
 
     cols_of_interest = static.grpby_cols.copy()
     # Below, add any columns that are potentially used for plotting.
-    cols_of_interest = cols_of_interest + ['AverageFeedVolumePerFly_µl',
+    cols_of_interest = cols_of_interest + ['RelativeTime_s',
+                                            'AverageFeedVolumePerFly_µl',
                                             'AverageFeedCountPerFly',
-                                            'AverageFeedSpeedPerFly_µl/s']
+                                            'AverageFeedSpeedPerFly_µl/s'
+                                           ]
 
     temp_sum = temp_sum[cols_of_interest]
 
