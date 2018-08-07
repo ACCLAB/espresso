@@ -19,183 +19,83 @@ class cumulative_plotter:
         self.__feeds = plotter._experiment.feeds.copy()
         self.__expt_end_time = plotter._experiment.expt_duration_minutes
 
-    def __cumulative_plotter(self,
-                             yvar,
-                             col,
-                             row,
-                             color_by,
-                             resample_by='5min',
-                             fig_size=None,
-                             gridlines=True,
-                             ax=None):
-        import numpy as np
-        import pandas as pd
+
+    def __cumulative_plotter(self, yvar, row, col, time_col,
+                             min_time_hour, max_time_hour,
+                             ylim, color_by, palette=None,
+                             resample_by='5min', gridlines=True):
+
+
         import matplotlib.pyplot as plt
         import seaborn as sns
-        from . import plot_helpers as plt_helper
+        from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
 
-
+        # Resample (aka bin by time).
         resamp_feeds = munge.groupby_resamp_sum(self.__feeds, resample_by)
+
+        # Perform cumulative summation.
         plotdf = munge.cumsum_for_cumulative(resamp_feeds)
 
-        # Change relevant columns to categorical.
-        try:
-            plotdf.loc[:, 'Status'] = pd.Categorical(plotdf.loc[:, 'Status'],
-                                                categories=['Sibling','Offspring'],
-                                                ordered=True)
-        except KeyError:
-            pass
 
-        # Change relevant columns to categorical.
-        for column in ['Genotype','Temperature',
-                       'Sex','FoodChoice']:
-            try:
-                cats = np.sort(plotdf[column].unique())
-                plotdf.loc[:, column] = pd.Categorical(plotdf[column],
-                                                       categories=cats,
-                                                       ordered=True)
-            except KeyError:
-                pass
+        # Parse keywords.
+        if palette is None:
+            palette = 'tab10'
 
-        # print("Coloring cumulative plot by {0}".format(color_by))
-        if row is not None:
-            # print("Plotting rows by {0}".format(row))
-            row_count = int(len(plotdf[row].cat.categories))
-        else:
-            row_count = 1
-        if col is not None:
-            # print("Plotting columns by {0}".format(col))
-            col_count = int(len(plotdf[col].cat.categories))
-        else:
-            col_count = 1
+        min_time_sec = min_time_hour * 3600
+        max_time_sec = max_time_hour * 3600
 
-        # Compute means
-        group_by_cols = [a for a in [col, row, color_by,'time_s']
-                        if a is not None]
-        plotdf_groupby = plotdf.groupby(group_by_cols)
-        plotdf_mean = plotdf_groupby.mean().unstack()[yvar].T
+        df_win = plotdf[(plotdf.time_s >= min_time_sec) &
+                        (plotdf.time_s <= max_time_sec)]
 
-        # Compute CIs
-        plotdf_halfci = plotdf_groupby.sem().unstack()[yvar].T * 1.96
-        lower_ci = plotdf_mean - plotdf_halfci
-        upper_ci = plotdf_mean + plotdf_halfci
-        # Make sure no CI drops below zero.
-        lower_ci[lower_ci < 0] = 0
+        sns.set(style='ticks')
 
-        # groupby_grps = plotdf[group_by].cat.categories.tolist()
-        # num_plots = int(len(groupby_grps))
+        g = sns.FacetGrid(b, row=row, col=col,
+                          hue=color_by, legend_out=True,
+                          palette=palette,
+                          xlim=(min_time_sec, max_time_sec),
+                          sharex=False, sharey=True,
+                          height=5, aspect=1.5,
+                          gridspec_kws={'hspace':0.5, 'wspace':0.2})
 
-        # Initialise figure.
-        sns.set(style='ticks',context='poster',font_scale=1.25)
-        if fig_size is None:
-            x_inches = 10 * col_count
-            y_inches = 7 * row_count
-        else:
-            if isinstance(fig_size, tuple) or isinstance(fig_size, list):
-                x_inches = fig_size[0]
-                y_inches = fig_size[1]
-            else:
-                raise TypeError('Please make sure figsize is a tuple of the '
-                'form (w,h) in inches.')
+        g.map(sns.lineplot, time_col, yvar, ci=95)
+        g.set_titles("{row_var} = {row_name}; {col_var} = {col_name}",
+                     size=20)
+        g.add_legend(fontsize=18)
+        plt.legend
 
-        if ax is None:
-            fig, axx = plt.subplots(nrows=row_count, ncols=col_count,
-                                    figsize=(x_inches, y_inches),
-                                    gridspec_kw={'wspace':0.3,
-                                                 'hspace':0.3})
-        else:
-            axx = ax
+        for j, ax in enumerate(g.axes.flat):
 
-        if row is not None and col is not None:
-             for r, row_ in enumerate(plotdf[row].cat.categories):
-                for c, col_ in enumerate(plotdf[col].cat.categories):
-                    plot_ax = axx[r, c] # the axes to plot on.
-                    # Plot the means as cumulative lines.
-                    plotdf_mean[(col_, row_)].plot(ax=plot_ax, lw=1)
-                    # Now, plot the CIs individually.
-                    for yvar_type in lower_ci[(col_, row_)].columns:
-                        plot_ax.fill_between(plotdf_mean.index,
-                                             lower_ci[(col_, row_, yvar_type)],
-                                             upper_ci[(col_, row_, yvar_type)],
-                                             alpha=0.25)
-                    plot_ax.set_title("{}; {}".format(row_, col_))
-        else:
-            # We only have one dimension here.
-            plot_dim = [d for d in [row, col] if d is not None][0]
-            # check how many panels in the single row/column.
-            panels = plotdf[plot_dim].unique().tolist()
-            more_than_one_panel = len(panels) > 1
-            for j, dim_ in enumerate(panels):
-                # Get the axes to plot on.
-                if more_than_one_panel:
-                    plot_ax = axx[j]
-                else:
-                    plot_ax = axx
-                # Plot the means as cumulative lines.
-                plotdf_mean[(dim_)].plot(ax=plot_ax, lw=1)
-                # Now, plot the CIs individually.
-                for yvar_type in lower_ci[(dim_)].columns:
-                    plot_ax.fill_between(plotdf_mean.index,
-                                         lower_ci[(dim_, yvar_type)],
-                                         upper_ci[(dim_, yvar_type)],
-                                         alpha=0.25)
-                plot_ax.set_title(dim_)
+            plothelp.format_timecourse_xaxis(ax, min_time_sec, max_time_sec)
+            ax.tick_params(which='major', length=12, pad=12, labelsize=15)
+            ax.tick_params(which='minor', length=6)
+            ax.set_ylabel(ax.get_ylabel(), fontsize=18)
 
-        # Normalize all the y-axis limits.
-        if row_count + col_count > 2:
-            ax_arr = axx.flatten()
-            plt_helper.normalize_ylims(ax_arr,
-                                       include_zero=True)
-        else:
-            ax_arr = [axx]
+            ax.set_ylim(0, ax.get_ylim()[1])
+            ax.yaxis.set_tick_params(labelleft=True)
 
-        for plot_ax in ax_arr:
-            # Format x-axis.
-            plt_helper.format_timecourse_xaxis(plot_ax,
-                                               self.__expt_end_time)
-            # Set label for y-axis.
-            plot_ax.set_ylabel(yvar)
-            # Plot vertical grid lines if desired.
             if gridlines:
-                plot_ax.xaxis.grid(True, which='major',
-                                   linestyle='dotted', #linewidth=1,
-                                   alpha=0.5)
+                ax.xaxis.grid(True, which='major',
+                              linestyle='dotted',
+                              alpha=0.75)
 
-            # Despine and offset each axis.
-            sns.despine(ax=plot_ax, trim=True, offset=3)
-        if color_by is not None:
-            legend_title = ' '
-        else:
-            legend_title = color_by
 
-        if row_count + col_count > 2:
-            for ax in ax_arr[:-1]:
-                ax.legend().set_visible(False)
+        sns.despine(fig=g.fig, offset={'left':5, 'bottom': 5})
+        plt.tight_layout()
+        sns.set() # reset style.
 
-            ax_arr[-1].legend(loc='upper left',
-                                title=legend_title,
-                                bbox_to_anchor=(-0.05, -0.15))
-        else:
-            ax_arr[0].legend(loc='upper left',
-                             title=legend_title,
-                             bbox_to_anchor=(1, 1))
+        # End and return the FacetGrid.
+        return g
 
-        # End and return the figure.
-        if ax is None:
-            return axx
 
-    def consumption(self,
-                    col,
-                    row,
-                    color_by,
+    def consumption(self, row, col, color_by,
+                    max_time_hour, min_time_hour=0,
+                    ylim=None, palette=None,
                     resample_by='5min',
-                    fig_size=None,
-                    gridlines=True,
-                    ax=None):
+                    gridlines=True):
         """
         Produces a cumulative line plot depicting the average total volume
         consumed per fly for the entire assay. The plot will be tiled
@@ -213,6 +113,14 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
+        max_time_hour, min_time_hour: float, default <required>, 0
+            Enter the time window (in hours) you want to plot here.
+
+        ylim: tuple, default None
+            Enter the desired ylims here.
+
+        palette: matplotlib palette
+
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
@@ -224,32 +132,29 @@ class cumulative_plotter:
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
 
-        ax: array of matplotlib Axes objects, default None
-            Given an array of Axes, each category(as dictacted by group_by)
-            will be plotted respectively.
-
         Returns
         -------
-        matplotlib AxesSubplot(s)
+        seaborn FacetGrid object
         """
+
         out = self.__cumulative_plotter(yvar='Cumulative Volume (nl)',
                                         col=col,
                                         row=row,
                                         color_by=color_by,
+                                        time_col='time_s',
+                                        min_time_hour=min_time_hour,
+                                        max_time_hour=max_time_hour,
                                         resample_by=resample_by,
+                                        ylim=ylim,
                                         fig_size=fig_size,
-                                        gridlines=gridlines,
-                                        ax=ax)
+                                        gridlines=gridlines)
         return out
 
-    def feed_count(self,
-                   col,
-                   row,
-                   color_by,
-                   resample_by='5min',
-                   fig_size=None,
-                   gridlines=True,
-                   ax=None):
+    def feed_count(self, row, col, color_by,
+                    max_time_hour, min_time_hour=0,
+                    ylim=None, palette=None,
+                    resample_by='5min',
+                    gridlines=True):
         """
         Produces a cumulative line plot depicting the average total feed count
         consumed per fly for the entire assay. The plot will be tiled
@@ -267,6 +172,14 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
+        max_time_hour, min_time_hour: float, default <required>, 0
+            Enter the time window (in hours) you want to plot here.
+
+        ylim: tuple, default None
+            Enter the desired ylims here.
+
+        palette: matplotlib palette
+
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
@@ -278,20 +191,20 @@ class cumulative_plotter:
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
 
-        ax: array of matplotlib Axes objects, default None
-            Given an array of Axes, each category(as dictacted by group_by)
-            will be plotted respectively.
-
         Returns
         -------
-        matplotlib AxesSubplot(s)
+        seaborn FacetGrid object
         """
+
         out = self.__cumulative_plotter(yvar='Cumulative Feed Count',
                                         col=col,
                                         row=row,
                                         color_by=color_by,
+                                        time_col='time_s',
+                                        min_time_hour=min_time_hour,
+                                        max_time_hour=max_time_hour,
                                         resample_by=resample_by,
+                                        ylim=ylim,
                                         fig_size=fig_size,
-                                        gridlines=gridlines,
-                                        ax=ax)
+                                        gridlines=gridlines)
         return out

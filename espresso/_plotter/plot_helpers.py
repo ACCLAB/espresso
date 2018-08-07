@@ -150,20 +150,25 @@ def _make_sequential_palette(df, group_by):
 
 
 
-def format_timecourse_xaxis(ax, max_x):
+def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
+                            tick_interval_seconds=3600):
     """
     Convenience function to format a timecourse plot's x-axis.
     """
     import matplotlib.ticker as tk
 
-    ax.set_xlim(0, max_x)
-    ax.xaxis.set_ticks(range(0, max_x + 3600, 3600))
-    ax.xaxis.set_minor_locator(tk.MultipleLocator(base=1800))
-    ax.set_xlabel('Time (h)',fontsize = 17)
-    newlabels = [str(int(t/3600)) for t in ax.xaxis.get_ticklocs(minor=False)]
+    ax.set_xlim(min_x_seconds, max_x_seconds)
+
+    ax.xaxis.set_ticks(range(int(min_x_seconds),
+                             int(max_x_seconds + tick_interval_seconds/2),
+                             tick_interval_seconds))
+    ax.xaxis.set_minor_locator(tk.MultipleLocator(base=tick_interval_seconds/2))
+
+    ax.set_xlabel('Time (h)',fontsize=17)
+    newlabels = [str(int(t/tick_interval_seconds))
+                 for t in ax.xaxis.get_ticklocs(minor=False)]
     ax.set_xticklabels(newlabels)
-    ax.tick_params(axis='x', which='major', length=10)
-    ax.tick_params(axis='x', which='minor', length=6)
+
 
 
 
