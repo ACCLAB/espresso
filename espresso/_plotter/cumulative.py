@@ -21,9 +21,9 @@ class cumulative_plotter:
 
 
     def __cumulative_plotter(self, yvar, row, col, time_col,
-                             min_time_hour, max_time_hour,
+                             start_hour, end_hour,
                              ylim, color_by, font_scale=1.5,
-                             height=5, aspect=1.75, palette=None,
+                             height=10, width=10, palette=None,
                              resample_by='5min', gridlines=True):
 
 
@@ -51,23 +51,23 @@ class cumulative_plotter:
             palette = 'tab10'
 
         # Convert hour input to seconds.
-        min_time_sec = min_time_hour * 3600
-        max_time_sec = max_time_hour * 3600
+        min_time_sec = start_hour * 3600
+        max_time_sec = end_hour * 3600
 
         # Filter the cumsum dataframe for the desired time window.
         df_win = plotdf[(plotdf.time_s >= min_time_sec) &
                         (plotdf.time_s <= max_time_sec)]
 
         # initialise FacetGrid.
-        sns.set(style='ticks', font_scale=font_scale)
+        sns.set(style='ticks', context='poster')
 
         g = sns.FacetGrid(df_win, row=row, col=col,
                           hue=color_by, legend_out=True,
                           palette=palette,
                           xlim=(min_time_sec, max_time_sec),
                           sharex=False, sharey=True,
-                          height=height, aspect=aspect,
-                          gridspec_kws={'hspace':0.75, 'wspace':0.5}
+                          height=height, aspect=width/height,
+                          gridspec_kws={'hspace':0.3, 'wspace':0.3}
                           )
 
         g.map(sns.lineplot, time_col, yvar, ci=95)
@@ -106,10 +106,10 @@ class cumulative_plotter:
 
 
     def consumption(self, row, col, color_by,
-                    max_time_hour, min_time_hour=0,
+                    end_hour, start_hour=0,
                     ylim=None, palette=None,
                     resample_by='5min',
-                    font_scale=1.5, height=5, aspect=1.5,
+                    height=10, width=10,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total volume
@@ -129,7 +129,7 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        max_time_hour, min_time_hour: float, default <required>, 0
+        end_hour, start_hour: float, default <required>, 0
             Enter the time window (in hours) you want to plot here.
 
         ylim: tuple, default None
@@ -145,11 +145,8 @@ class cumulative_plotter:
         font_scale: float, default 1.5
             The fontsize will be multiplied by this amount.
 
-        height: float, default 5
-            The height of each panel in inches.
-
-        aspect: float, default 1.5
-            The aspect ratio (x/y) of each panel.
+        height, width: float, default 10, 10
+            The height and width of each panel in inches.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
@@ -164,21 +161,19 @@ class cumulative_plotter:
                                         row=row,
                                         color_by=color_by,
                                         time_col='time_s',
-                                        min_time_hour=min_time_hour,
-                                        max_time_hour=max_time_hour,
+                                        start_hour=start_hour,
+                                        end_hour=end_hour,
                                         palette=palette,
                                         resample_by=resample_by,
-                                        font_scale=font_scale,
-                                        ylim=ylim, height=height, aspect=aspect,
+                                        ylim=ylim, height=height, width=width,
                                         gridlines=gridlines)
         return out
 
+
     def feed_count(self, row, col, color_by,
-                    max_time_hour, min_time_hour=0,
+                    end_hour, start_hour=0,
                     ylim=None, palette=None,
-                    resample_by='5min',
-                    font_scale=1.5,
-                    height=5, aspect=1.5,
+                    resample_by='5min', height=10, width=10,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total feed count
@@ -197,7 +192,7 @@ class cumulative_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
-        max_time_hour, min_time_hour: float, default <required>, 0
+        end_hour, start_hour: float, default <required>, 0
             Enter the time window (in hours) you want to plot here.
 
         ylim: tuple, default None
@@ -213,13 +208,10 @@ class cumulative_plotter:
         font_scale: float, default 1.5
             The fontsize will be multiplied by this amount.
 
-        height: float, default 5
-            The height of each panel in inches.
+        height, width: float, default 10, 10
+            The height and width of each panel in inches.
 
-        aspect: float, default 1.5
-            The aspect ratio (x/y) of each panel.
-
-        gridlines boolean, default True
+        gridlines: boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
 
         Returns
@@ -232,11 +224,10 @@ class cumulative_plotter:
                                         row=row,
                                         color_by=color_by,
                                         time_col='time_s',
-                                        min_time_hour=min_time_hour,
-                                        max_time_hour=max_time_hour,
+                                        start_hour=start_hour,
+                                        end_hour=end_hour,
                                         palette=palette,
                                         resample_by=resample_by,
-                                        font_scale=font_scale,
-                                        ylim=ylim, height=height, aspect=aspect,
+                                        ylim=ylim, height=height, width=width,
                                         gridlines=gridlines)
         return out
