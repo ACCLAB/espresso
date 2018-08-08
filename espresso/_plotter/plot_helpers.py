@@ -195,6 +195,65 @@ def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
     return plot_df
 
 
+def parse_palette(palette, plot_groups, produce_colormap=False):
+
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap, to_rgb
+    import seaborn as sns
+
+    if palette is None:
+        palette = 'tab10'
+
+    if isinstance(palette, str):
+        if palette not in plt.colormaps():
+            err1 = 'The specified `palette` {}'.format(palette)
+            err2 = ' is not a matplotlib palette. Please check.'
+            raise ValueError(err1 + err2)
+        if produce_colormap:
+            palette = ListedColormap(sns.color_palette(
+                                        palette=palette,
+                                        n_colors=len(plot_groups)),
+                                    N=len(plot_groups))
+        else:
+            palette = dict(zip(plot_groups,
+                               sns.color_palette(palette=palette,
+                                                 n_colors=len(plot_groups))
+                              )
+                           )
+
+    elif isinstance(palette, list):
+        if len(plot_groups) != len(palette):
+            errstring = ('The number of colors ' +
+                         'in the palette {} '.format(palette) +
+                         ' does not match the' +
+                         'number of facets `{}`. '.format(plot_groups) +
+                         ' Please check')
+            raise ValueError(errstring)
+        if produce_colormap:
+            color_list = [to_rgb(a.strip()) for a in palette]
+            palette = ListedColormap(color_list, N=len(plot_groups))
+        else:
+            palette = dict(zip(plot_groups,
+                               palette[0: len(plot_groups)]
+                              )
+                           )
+
+    elif isinstance(palette, dict):
+        # check that all the keys in palette are found in the color column.
+        col_grps = {k for k in plot_groups}
+        pal_grps = {k for k in palette.keys()}
+        not_in_pal = pal_grps.difference(col_grps)
+
+        if len(not_in_pal) > 0:
+            errstring = ('The custom palette keys {} '.format(not_in_pal) +
+                   'are not found in `{}`. Please check.'.format(plot_groups))
+            raise ValueError(errstring)
+
+        if produce_colormap:
+            palette = ListedColormap(palette.values(), N=len(plot_groups))
+
+    return palette
+
 
 def generic_contrast_plotter(plot_df, yvar,
                                color_by,
