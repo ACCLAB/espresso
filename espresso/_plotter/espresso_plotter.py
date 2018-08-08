@@ -311,8 +311,7 @@ class espresso_plotter():
             for a in axx.flatten():
                 # Plot vertical grid lines if desired.
                 if gridlines:
-                    a.xaxis.grid(which='major',
-                                        linewidth=0.25, **grid_kwargs)
+                    a.xaxis.grid(which='major', linewidth=0.25, **grid_kwargs)
                 plt_help.format_timecourse_xaxis(a, self.__expt_end_time ) ## CHANGE ##
                 a.yaxis.set_visible(False)
                 sns.despine(ax=a, **despine_kwargs)
@@ -340,8 +339,9 @@ class espresso_plotter():
 
     def percent_feeding(self, group_by, compare_by,
                         start_hour, end_hour,
+                        height=10, width=10,
                         tight_layout=False, gridlines=True,
-                        plot_along="row", palette=None):
+                        plot_along="column", palette=None):
         """
         Produces a lineplot depicting the percent of flies feeding for each condition.
         A 95% confidence interval for each proportion of flies feeding is also given.
@@ -360,7 +360,10 @@ class espresso_plotter():
             The time window (in hours) during which to compute and display the
             percent flies feeding.
 
-        plot_along: "row" or "column", default "row"
+        height, width: float, default 10, 10
+                The height and width of each panel in inches.
+
+        plot_along: "row" or "column", default "column"
             Tiles the subplots for each "group_by" group along the row or column.
 
         tight_layout: boolean, default False
@@ -386,7 +389,7 @@ class espresso_plotter():
         from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
 
-        from .plot_helpers import compute_percent_feeding
+        from .plot_helpers import compute_percent_feeding, parse_palette
         import seaborn as sns
 
         # make a copy of the metadata and the feedlog.
@@ -414,57 +417,19 @@ class espresso_plotter():
         subplot_title_preface = percent_feeding_summary.index.levels[0].name
 
         # Set style.
-        sns.set(style='ticks', context='talk', font_scale=1.1)
+        sns.set(style='ticks', context="poster")
 
-        if palette is None:
-            palette = 'tab10'
-
-        if isinstance(palette, str):
-            if palette not in mpl.pyplot.colormaps():
-                err1 = 'The specified `palette` {}'.format(palette)
-                err2 = ' is not a matplotlib palette. Please check.'
-                raise ValueError(err1 + err2)
-
-            palette = dict(zip(subplots,
-                               sns.color_palette(palette='tab10',
-                                                 n_colors=len(subplots))
-                              )
-                           )
-
-        elif isinstance(palette, list):
-            if len(subplots) != len(palette):
-                errstring = ('The number of colors ' +
-                             'in the palette {} '.format(palette) +
-                             ' does not match the' +
-                             'number of facets `{}`. '.format(subplots) +
-                             ' Please check')
-                raise IndexError(errstring)
-
-            palette = dict(zip(subplots,
-                               palette[0: len(plot_facets)]
-                              )
-                           )
-
-        elif isinstance(palette, dict):
-            # check that all the keys in palette are found in the color column.
-            col_grps = {k for k in subplots}
-            pal_grps = {k for k in palette.keys()}
-            not_in_pal = pal_grps.difference(col_grps)
-
-            if len(not_in_pal) > 0:
-                errstring = ('The custom palette keys {} '.format(not_in_pal) +
-                       'are not found in `{}`. Please check.'.format(subplots))
-                raise IndexError(errstring)
+        palette = parse_palette(palette, subplots)
 
         # Initialise figure.
         if plot_along == 'column':
             f, ax = plt.subplots(ncols=len(subplots),
-                                 figsize=(4 * len(subplots), 5),
-                                 gridspec_kw={'wspace':0},
+                                 figsize=(width * len(subplots), height),
+                                 gridspec_kw={'wspace': 0},
                                  )
         elif plot_along == 'row':
             f, ax = plt.subplots(nrows=len(subplots),
-                                 figsize=(4, 5 * len(subplots)))
+                                 figsize=(width, height * len(subplots)))
                                  # gridspec_kw={'hspace':0.25},
                                  # sharex=True)
 
@@ -569,31 +534,43 @@ class espresso_plotter():
                          'borderaxespad': 1,
                          'loc': 'center',
                          'edgecolor': 'white'}
+
         if rotate_ticks is True:
-            yanchor = -0.75
+            yanchor = -0.85
         else:
-            yanchor = -0.5
+            yanchor = -0.3
 
         if plot_along == 'column':
             nc = len(subplots)
             if (nc % 2) != 0:
                 # If we have an odd number of columns,
                 # find the middle axes, and xposition the legend in its middle.
-                xanchor = 0.5
+                if rotate_ticks:
+                    xanchor = 0.6
+                else:
+                    xanchor = 0.5
                 legend_ax = int((nc + 1) / 2 - 1)
             else:
                 # If we have an even number of columns,
                 # find the left of middle axes,
                 # and xposition the legend at its lower right corner.
-                xanchor = 1
+                if rotate_ticks:
+                    xanchor = 1.1
+                else:
+                    xanchor = 1
                 legend_ax = int(nc / 2 - 1)
+
             axx[legend_ax].legend(handles=legend_elements, ncol=nc,
                                   bbox_to_anchor=(xanchor, yanchor),
                                   **legend_kwargs)
 
         elif plot_along == 'row':
+            if rotate_ticks:
+                xanchor = 0.6
+            else:
+                xanchor = 0.5
             axx[-1].legend(handles=legend_elements, ncol=1,
-                          bbox_to_anchor=(0.5, yanchor), **legend_kwargs)
+                          bbox_to_anchor=(xanchor, yanchor), **legend_kwargs)
 
         if tight_layout:
             plt.tight_layout()
