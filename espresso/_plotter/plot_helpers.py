@@ -80,7 +80,7 @@ def sci_nota(num, decimal_digits=2, precision=None, exponent=None):
 
 
 
-def compute_percent_feeding(all_feeds, all_flies, facets, start=0, end=60):
+def compute_percent_feeding(all_feeds, all_flies, facets, start_hour, end_hour):
     """
     Used to compute the percent of flies feeding from
     a processed dataset of feedlogs.
@@ -102,26 +102,31 @@ def compute_percent_feeding(all_feeds, all_flies, facets, start=0, end=60):
     except ValueError: # flies_group_by is []
         fly_counts = len(all_flies)
 
-    filter_feeds = ((all_feeds.RelativeTime_s > start*60) &
-                   (all_feeds.RelativeTime_s < end*60) &
+    filter_feeds = ((all_feeds.RelativeTime_s > start_hour * 3600) &
+                   (all_feeds.RelativeTime_s < end_hour * 3600) &
                    (all_feeds.Valid))
     feeds_timewin = all_feeds[filter_feeds]
+
     # To count total flies that fed, I adapted the methods here:
     # https://stackoverflow.com/questions/8364674/python-numpy-how-to-count-the-number-of-true-elements-in-a-bool-array
     feed_boolean_by_fly = ~np.isnan(feeds_timewin\
                                     .groupby(feed_boolean_grpby)\
                                     .sum()['FeedVol_µl'])
+
     fly_feed_counts = feed_boolean_by_fly\
                         .apply(np.count_nonzero)\
                         .groupby(grpby).sum()
+
     # Proportion code taken from here:
     # https://onlinecourses.science.psu.edu/stat100/node/56
     percent_feeding = (fly_feed_counts / fly_counts) * 100
     half95ci = np.sqrt((percent_feeding * (100 - percent_feeding)) / fly_counts)
+
     percent_feeding_summary = pd.DataFrame([percent_feeding,
                                           percent_feeding-half95ci,
                                           percent_feeding+half95ci]).T
     percent_feeding_summary.columns = ['percent_feeding','ci_lower','ci_upper']
+
     return percent_feeding_summary
 
 

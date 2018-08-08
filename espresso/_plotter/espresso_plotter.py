@@ -32,6 +32,8 @@ class espresso_plotter():
             TBA
     """
 
+
+
     def __init__(self,espresso): # pass along an espresso instance.
 
         # Add submodules below. The respective .py scripts
@@ -43,11 +45,13 @@ class espresso_plotter():
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
         self.__expt_end_time = espresso.expt_duration_minutes
-        
+
         # call obj.plot.xxx to access these methods.
         self.contrast = contrast.contrast_plotter(self)
         self.timecourse = timecourse.timecourse_plotter(self)
         self.cumulative = cumulative.cumulative_plotter(self)
+
+
 
     def __plot_rasters(self, current_facet_feeds, current_facet_flies,
                        maxflycount, color_by, palette,
@@ -112,6 +116,7 @@ class espresso_plotter():
                                verticalalignment='center',
                                horizontalalignment='right',
                                fontsize=8)
+
 
 
     def rasters(self,
@@ -332,34 +337,55 @@ class espresso_plotter():
             return axx
 
 
+
     def percent_feeding(self, group_by, compare_by,
-                        start_minute=0,
-                        end_minute=360):
+                        start_hour, end_hour,
+                        tight_layout=False, gridlines=True,
+                        plot_along="row", palette=None):
         """
         Produces a lineplot depicting the percent of flies feeding for each condition.
         A 95% confidence interval for each proportion of flies feeding is also given.
 
         Keywords
         --------
-        group_by: string,
+        group_by: string
             The column or label indicating the variable used to group the
             subplots.
 
-        compare_by: string,
+        compare_by: string
             The percent feeding will be compared between the categories in this
             column or label.
 
-        start_minute, end_minute: integer, default 0 and 360
-            The time window (in minutes) during which to compute and display the
+        start_hour, end_hour: float
+            The time window (in hours) during which to compute and display the
             percent flies feeding.
+
+        plot_along: "row" or "column", default "row"
+            Tiles the subplots for each "group_by" group along the row or column.
+
+        tight_layout: boolean, default False
+            Might improve layout if set to True.
+
+        gridlines: boolean, default True
+            If plotting along column, draws gridlines at the major ticks on y-axes.
+
+        palette: named matplotlib palette, default None.
+            See https://matplotlib.org/examples/color/colormaps_reference.html
+            If None, defaults to `tab10`.
 
         Returns
         -------
         A matplotlib Axes instance, and a pandas DataFrame with the statistics.
         """
+
         import numpy as np
+
         import matplotlib as mpl
         import matplotlib.pyplot as plt
+        # for custom legend?
+        from matplotlib.patches import Patch
+        from matplotlib.lines import Line2D
+
         from .plot_helpers import compute_percent_feeding
         import seaborn as sns
 
@@ -374,67 +400,205 @@ class espresso_plotter():
             if z not in all_flies.columns:
                 raise KeyError('{} is not a column in CountLog. Please check'.format(z))
 
+        if plot_along not in ["row", "column"]:
+            err1 = "You specified plot_along={}".format(plot_along)
+            err2 = " It should only be 'row' or 'column'."
+            raise ValueError(err1 + err2)
+
         percent_feeding_summary = compute_percent_feeding(all_feeds, all_flies,
                                                           facets,
-                                                          start=start_minute,
-                                                          end=end_minute)
+                                                          start_hour=start_hour,
+                                                          end_hour=end_hour)
 
-        # Set style.
-        sns.set(style='ticks',context='talk',font_scale=1.1)
         subplots = percent_feeding_summary.index.levels[0].categories
         subplot_title_preface = percent_feeding_summary.index.levels[0].name
 
+        # Set style.
+        sns.set(style='ticks', context='talk', font_scale=1.1)
+
+        if palette is None:
+            palette = 'tab10'
+
+        if isinstance(palette, str):
+            if palette not in mpl.pyplot.colormaps():
+                err1 = 'The specified `palette` {}'.format(palette)
+                err2 = ' is not a matplotlib palette. Please check.'
+                raise ValueError(err1 + err2)
+
+            palette = dict(zip(subplots,
+                               sns.color_palette(palette='tab10',
+                                                 n_colors=len(subplots))
+                              )
+                           )
+
+        elif isinstance(palette, list):
+            if len(subplots) != len(palette):
+                errstring = ('The number of colors ' +
+                             'in the palette {} '.format(palette) +
+                             ' does not match the' +
+                             'number of facets `{}`. '.format(subplots) +
+                             ' Please check')
+                raise IndexError(errstring)
+
+            palette = dict(zip(subplots,
+                               palette[0: len(plot_facets)]
+                              )
+                           )
+
+        elif isinstance(palette, dict):
+            # check that all the keys in palette are found in the color column.
+            col_grps = {k for k in subplots}
+            pal_grps = {k for k in palette.keys()}
+            not_in_pal = pal_grps.difference(col_grps)
+
+            if len(not_in_pal) > 0:
+                errstring = ('The custom palette keys {} '.format(not_in_pal) +
+                       'are not found in `{}`. Please check.'.format(subplots))
+                raise IndexError(errstring)
+
         # Initialise figure.
-        f, ax = plt.subplots(ncols=len(subplots),
-                             figsize=(8,5),
-                             sharey=True)
+        if plot_along == 'column':
+            f, ax = plt.subplots(ncols=len(subplots),
+                                 figsize=(4 * len(subplots), 5),
+                                 gridspec_kw={'wspace':0},
+                                 )
+        elif plot_along == 'row':
+            f, ax = plt.subplots(nrows=len(subplots),
+                                 figsize=(4, 5 * len(subplots)))
+                                 # gridspec_kw={'hspace':0.25},
+                                 # sharex=True)
 
         if isinstance(ax, np.ndarray):
             axx = ax
         elif isinstance(ax, mpl.axes.Axes):
             axx = [ax]
 
+        legend_elements = []
+
+        compareby_groups = percent_feeding_summary.index.levels[1].categories
+        if np.max([len(str(a)) for a in compareby_groups]) > 8:
+            rotate_ticks = True
+        else:
+            rotate_ticks = False
+
+
         for j, group_by in enumerate(subplots):
             plot_ax = axx[j]
+            plot_color = palette[group_by]
+            legend_elements.append(Line2D([0], [0], color=plot_color,
+                                          lw=4, label=group_by)
+                                  ),
+
 
             plot_df = percent_feeding_summary.loc[group_by]
             cilow = plot_df.ci_lower.tolist()
             cihigh = plot_df.ci_upper.tolist()
             ydata = plot_df.percent_feeding.tolist()
 
-            plot_ax.set_ylim(0,100)
+            plot_ax.set_ylim(0, 100)
             # Plot 95CI first.
             if len(plot_df) > 1:
-                plot_ax.fill_between(range(0,len(plot_df)),
-                                     cilow,cihigh,
-                                     alpha=0.25,
-                                     color='grey')
+                plot_ax.fill_between(range(0,len(plot_df)), cilow, cihigh,
+                                     alpha=0.25, color=plot_color)
             else:
-                plot_ax.axvline(x=0,
-                                ymin=cilow[0]/100,
-                                ymax=cihigh[0]/100,
-                                color='grey')
+                plot_ax.axvline(x=0, ymin=cilow[0]/100, ymax=cihigh[0]/100,
+                                alpha=0.5, color=plot_color)
             # Then plot the line.
-            plot_df.percent_feeding.plot.line(ax=plot_ax, color='k', lw=1.2)
+            plot_df.percent_feeding.plot.line(ax=plot_ax, lw=1.2,
+                                              color=plot_color,
+                                              alpha=0.25)
 
-            for j, s in enumerate(ydata):
-                plot_ax.plot(j, s, 'o', clip_on=False, color='k')
+            for k, s in enumerate(ydata):
+                plot_ax.plot(k, s, 'o', clip_on=False, color=plot_color)
 
             # Aesthetic tweaks.
             plot_ax.xaxis.set_ticks([i for i in range(0,len(plot_df))])
             plot_ax.xaxis.set_ticklabels(plot_df.index.tolist())
 
             xmax = plot_ax.xaxis.get_ticklocs()[-1]
-            plot_ax.set_xlim(-0.2, xmax+0.2) # Add x-padding.
+            plot_ax.set_xlim(-0.2, xmax + 0.2) # Add x-padding.
 
-            sns.despine(ax=plot_ax, trim=True, offset={'left':1})
+            plot_ax.set_xlabel('')
 
-            for tick in plot_ax.get_xticklabels():
-                tick.set_rotation(45)
-                tick.set_horizontalalignment('right')
+            line_kwargs = {'color': 'k', 'linewidth': 1,
+                          'linestyle':'dotted', 'alpha':0.75}
+            if plot_along == 'column':
+                if j == 0:
+                    plot_ax.set_ylabel('Percent Feeding (%)')
+                else:
+                    plot_ax.set_ylabel('')
+                    plot_ax.get_yaxis().set_visible(False)
 
-            plot_ax.set_title('{0}: {1}'.format(subplot_title_preface, group_by))
-            plot_ax.set_ylabel('Percent Feeding (%)')
-        f.suptitle('Percent flies feeding from {} min to {} min'.format(start_minute,
-                                                                 end_minute))
+                if gridlines is True:
+                    if j == 0:
+                        plot_ax.yaxis.grid(True, which='major', **line_kwargs)
+                    else:
+                        for tt in plot_ax.get_yticks():
+                            plot_ax.axhline(y=tt, **line_kwargs)
+
+                sns.despine(ax=plot_ax, trim=True, left=(j > 0),
+                            offset={'left':1})
+
+            elif plot_along == 'row':
+                plot_ax.set_ylabel('Percent Feeding (%)')
+                if gridlines is True:
+                    plot_ax.yaxis.grid(True, which='major', **line_kwargs)
+                sns.despine(ax=plot_ax, trim=True, offset={'left':1})
+
+        if plot_along == 'row':
+            for a in axx[:-1]:
+                a.set_xticklabels('')
+
+        if rotate_ticks is True:
+            if plot_along == 'column':
+                axes_to_rotate_xticks = axx
+            elif plot_along == 'row':
+                axes_to_rotate_xticks = [axx[-1]]
+
+            for ax in axes_to_rotate_xticks:
+                for tick in ax.get_xticklabels():
+                    tick.set_rotation(45)
+                    tick.set_horizontalalignment('right')
+
+        title = 'Percent flies feeding\nt = {}hr to t = {}hr'.format(start_hour,
+                                                                     end_hour)
+        f.suptitle(title, y=1.04)
+
+        # Add custom legend and title.
+        legend_kwargs = {'frameon': False,
+                         'borderaxespad': 1,
+                         'loc': 'center',
+                         'edgecolor': 'white'}
+        if rotate_ticks is True:
+            yanchor = -0.75
+        else:
+            yanchor = -0.5
+
+        if plot_along == 'column':
+            nc = len(subplots)
+            if (nc % 2) != 0:
+                # If we have an odd number of columns,
+                # find the middle axes, and xposition the legend in its middle.
+                xanchor = 0.5
+                legend_ax = int((nc + 1) / 2 - 1)
+            else:
+                # If we have an even number of columns,
+                # find the left of middle axes,
+                # and xposition the legend at its lower right corner.
+                xanchor = 1
+                legend_ax = int(nc / 2 - 1)
+            axx[legend_ax].legend(handles=legend_elements, ncol=nc,
+                                  bbox_to_anchor=(xanchor, yanchor),
+                                  **legend_kwargs)
+
+        elif plot_along == 'row':
+            axx[-1].legend(handles=legend_elements, ncol=1,
+                          bbox_to_anchor=(0.5, yanchor), **legend_kwargs)
+
+        if tight_layout:
+            plt.tight_layout()
+
+        # Reset aesthetics.
+        sns.set()
+
         return f, percent_feeding_summary
