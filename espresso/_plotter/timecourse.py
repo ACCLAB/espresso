@@ -22,27 +22,24 @@ class timecourse_plotter():
         self.__expt_end_time = plotter._experiment.expt_duration_minutes
 
 
-    def __timecourse_plotter(self,
-                             yvar,
-                             col,
-                             row,
-                             color_by,
-                             resample_by='5min',
-                             fig_size=None,
-                             gridlines=True,
-                             ax=None):
+
+    def __timecourse_plotter(self, yvar, col, row, color_by, start_hour, end_hour,
+                             resample_by='5min', fig_size=None, palette=None,
+                             height=10, width=10,
+                             gridlines=True, ax=None):
 
         import numpy as np
         import pandas as pd
         import matplotlib.pyplot as plt
         import seaborn as sns
-        from . import plot_helpers as plt_helper
+        from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
         feeds = self.__feeds.copy()
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, feeds)
+
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
         yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
@@ -51,9 +48,10 @@ class timecourse_plotter():
 
         ylab = yvar_ylabel_dict[yvar]
 
-        resamp_feeds = munge.groupby_resamp_sum(feeds, '5min')
+        resamp_feeds = munge.groupby_resamp_sum(feeds, resample_by)
         resamp_feeds_sum = munge.sum_for_timecourse(resamp_feeds)
         plotdf = munge.pivot_for_timecourse(resamp_feeds_sum, row, col, color_by)
+
 
         # print("Coloring time course by {0}".format(color_by))
         if row is not None:
@@ -67,31 +65,34 @@ class timecourse_plotter():
         else:
             col_count = 1
 
+        if palette is None:
+            palette = 'tab10'
 
-        # DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
-        yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
-                           'AverageFeedCountPerFly':'Average Feed Count Per Fly',
-                           'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
+        if color_by is None:
+            color_groups = ['__placeholder__']
+        else:
+            color_groups = plotdf.index.levels[-2].tolist()
+        col_map = plothelp.parse_palette(palette, color_groups,
+                                         produce_colormap=True)
 
 
         # Initialise figure.
         sns.set(style='ticks',context='poster')
-        if fig_size is None:
-            x_inches = 10 * col_count
-            y_inches = 7 * row_count
-        else:
-            if isinstance(fig_size, tuple) or isinstance(fig_size, list):
-                x_inches = fig_size[0]
-                y_inches = fig_size[1]
-            else:
-                raise TypeError('Please make sure figsize is a tuple of the '
-                'form (w,h) in inches.')
+        x_inches = width * col_count
+        y_inches = height * row_count
+        # else:
+        #     if isinstance(fig_size, tuple) or isinstance(fig_size, list):
+        #         x_inches = fig_size[0]
+        #         y_inches = fig_size[1]
+        #     else:
+        #         raise TypeError('Please make sure figsize is a tuple of the '
+        #         'form (w,h) in inches.')
 
         if ax is None:
             fig,axx = plt.subplots(nrows=row_count, ncols=col_count,
                                    figsize=(x_inches,y_inches),
                                    gridspec_kw={'wspace':0.3,
-                                               'hspace':0.3})
+                                                'hspace':0.3})
         else:
             axx = ax
 
@@ -108,7 +109,8 @@ class timecourse_plotter():
                     current_plot_df = current_plot_df.unstack().T
 
                     # Create the plot.
-                    current_plot_df.plot.area(ax=plot_ax, stacked=True)
+                    current_plot_df.plot.area(ax=plot_ax, colormap=col_map,
+                                              stacked=True)
                     plot_ax.set_title("{}; {}".format(row_, col_))
 
         else:
@@ -121,16 +123,19 @@ class timecourse_plotter():
                 current_plot_df = plotdf.loc[dim_, yvar]
                 current_plot_df = current_plot_df.unstack().T
 
-                current_plot_df.plot.area(ax=plot_ax, stacked=True)
+                current_plot_df.plot.area(ax=plot_ax, colormap=col_map,
+                                          stacked=True)
                 plot_ax.set_title(dim_)
 
         # Normalize all the y-axis limits.
         if row_count + col_count > 1:
-            plt_helper.normalize_ylims(axx.flatten(),
+            plothelp.normalize_ylims(axx.flatten(),
                                      include_zero=True)
             for plot_ax in axx.flatten():
                 # Format x-axis.
-                plt_helper.format_timecourse_xaxis(plot_ax, 21600)
+                plothelp.format_timecourse_xaxis(plot_ax,
+                                                   start_hour * 3600,
+                                                   end_hour * 3600)
                 # Set label for y-axis.
                 plot_ax.set_ylabel(ylab)
                 # Plot vertical grid lines if desired.
@@ -138,19 +143,22 @@ class timecourse_plotter():
                     plot_ax.xaxis.grid(True, which='major',
                                        linestyle='dotted', #linewidth=1,
                                        alpha=0.5)
-                # Despine and offset each axis.
-                sns.despine(ax=plot_ax, trim=True, offset=3)
 
         for ax in axx.flatten()[:-1]:
             ax.legend().set_visible(False)
 
         if color_by is not None:
-            legend_title = ' '
-        else:
             legend_title = color_by
+        else:
+            legend_title = ''
         axx.flatten()[-1].legend(loc='upper left',
+                                 frameon=False,
                                  title=legend_title,
                                  bbox_to_anchor=(-0.05, -0.15))
+
+        # Despine and offset each axis.
+        for ax in axx.flatten():
+            sns.despine(ax=ax, trim=True, offset=5)
 
         # End and return the figure.
         if ax is None:
@@ -159,14 +167,9 @@ class timecourse_plotter():
 
 
 
-    def feed_volume(self,
-                    col,
-                    row,
-                    color_by,
-                    resample_by='5min',
-                    fig_size=None,
-                    gridlines=True,
-                    ax=None):
+    def feed_volume(self, col, row, color_by, start_hour, end_hour,
+                    palette=None, gridlines=True, resample_by='5min',
+                    height=10, width=10, ax=None):
         """
         Produces a timecourse area plot depicting the average feed volume per
         fly for the entire assay. The plot will be tiled horizontally
@@ -189,8 +192,8 @@ class timecourse_plotter():
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-        fig_size: tuple (width, height), default None
-            The size of the final figure, in inches.
+        height, width: float, default 10, 10
+                The height and width of each panel in inches.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour..
@@ -203,13 +206,14 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl' ,
-                                        row=row,
-                                        col=col,
+        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
+                                        row=row, col=col,
+                                        start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
-                                        fig_size=fig_size,
+                                        height=height, width=width,
                                         gridlines=gridlines,
+                                        palette=palette,
                                         ax=ax)
 
         return out
@@ -217,14 +221,9 @@ class timecourse_plotter():
 
 
 
-    def feed_count(self,
-                    col,
-                    row,
-                    color_by,
-                    resample_by='5min',
-                    fig_size=None,
-                    gridlines=True,
-                    ax=None):
+    def feed_count(self, col, row, color_by, start_hour, end_hour,
+                   palette=None, gridlines=True, resample_by='5min',
+                   height=10, width=10, ax=None):
         """
         Produces a timecourse area plot depicting the average feed count per fly
         for the entire assay. The plot will be tiled horizontally
@@ -247,8 +246,8 @@ class timecourse_plotter():
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-        fig_size: tuple (width, height), default None
-            The size of the final figure, in inches.
+        height, width: float, default 10, 10
+                The height and width of each panel in inches.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour..
@@ -262,26 +261,22 @@ class timecourse_plotter():
         matplotlib AxesSubplot(s)
         """
         out = self.__timecourse_plotter('AverageFeedCountPerFly',
-                                        row=row,
-                                        col=col,
+                                        row=row, col=col,
+                                        start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
-                                        fig_size=fig_size,
+                                        height=height, width=width,
                                         gridlines=gridlines,
+                                        palette=palette,
                                         ax=ax)
         return out
 
 
 
 
-    def feed_speed(self,
-                    col,
-                    row,
-                    color_by,
-                    resample_by='5min',
-                    fig_size=None,
-                    gridlines=True,
-                    ax=None):
+    def feed_speed(self, col, row, color_by, start_hour, end_hour,
+                   palette=None, gridlines=True, resample_by='5min',
+                   height=10, width=10, ax=None):
         """
         Produces a timecourse area plot depicting the average feed speed per fly
         in µl/s for the entire assay. The plot will be tiled horizontally
@@ -304,8 +299,8 @@ class timecourse_plotter():
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-        fig_size: tuple (width, height), default None
-            The size of the final figure, in inches.
+        height, width: float, default 10, 10
+                The height and width of each panel in inches.
 
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour..
@@ -321,9 +316,11 @@ class timecourse_plotter():
         out = self.__timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
                                         row=row,
                                         col=col,
+                                        start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
-                                        fig_size=fig_size,
+                                        height=height, width=width,
                                         gridlines=gridlines,
+                                        palette=palette,
                                         ax=ax)
         return out
