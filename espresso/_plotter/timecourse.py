@@ -21,16 +21,6 @@ class timecourse_plotter():
         self.__feeds = plotter._experiment.feeds.copy()
         self.__expt_end_time = plotter._experiment.expt_duration_minutes
 
-    def __pivot_for_plot(self, resampdf, row, col, color_by):
-        import pandas as pd
-
-        group_by_cols = [a for a in [row, col, color_by, 'time_s']
-                        if a is not None]
-        out = pd.DataFrame(resampdf.groupby(group_by_cols).sum())
-        out.drop('FlyCountInChamber', axis=1, inplace=True)
-
-        return out
-
 
     def __timecourse_plotter(self,
                              yvar,
@@ -63,7 +53,7 @@ class timecourse_plotter():
 
         resamp_feeds = munge.groupby_resamp_sum(feeds, '5min')
         resamp_feeds_sum = munge.sum_for_timecourse(resamp_feeds)
-        plotdf = self.__pivot_for_plot(resamp_feeds_sum, row, col, color_by)
+        plotdf = munge.pivot_for_timecourse(resamp_feeds_sum, row, col, color_by)
 
         # print("Coloring time course by {0}".format(color_by))
         if row is not None:

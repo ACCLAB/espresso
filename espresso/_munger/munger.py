@@ -596,3 +596,14 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def pivot_for_timecourse(resampdf, row, col, color_by):
+    import pandas as pd
+
+    group_by_cols = [a for a in [row, col, color_by, 'time_s']
+                    if a is not None]
+    out = pd.DataFrame(resampdf.groupby(group_by_cols).sum())
+    out.drop('FlyCountInChamber', axis=1, inplace=True)
+
+    return out
