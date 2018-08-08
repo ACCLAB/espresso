@@ -22,7 +22,7 @@ class cumulative_plotter:
 
     def __cumulative_plotter(self, yvar, row, col, time_col,
                              min_time_hour, max_time_hour,
-                             ylim, color_by,
+                             ylim, color_by, font_scale=1.5,
                              height=5, aspect=1.75, palette=None,
                              resample_by='5min', gridlines=True):
 
@@ -99,7 +99,7 @@ class cumulative_plotter:
                     max_time_hour, min_time_hour=0,
                     ylim=None, palette=None,
                     resample_by='5min',
-                    height=5, aspect=1.5,
+                    font_scale=1.5, height=5, aspect=1.5,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total volume
@@ -131,6 +131,9 @@ class cumulative_plotter:
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
+        font_scale: float, default 1.5
+            The fontsize will be multiplied by this amount.
+
         height: float, default 5
             The height of each panel in inches.
 
@@ -154,6 +157,7 @@ class cumulative_plotter:
                                         max_time_hour=max_time_hour,
                                         palette=palette,
                                         resample_by=resample_by,
+                                        font_scale=font_scale,
                                         ylim=ylim, height=height, aspect=aspect,
                                         gridlines=gridlines)
         return out
@@ -162,6 +166,7 @@ class cumulative_plotter:
                     max_time_hour, min_time_hour=0,
                     ylim=None, palette=None,
                     resample_by='5min',
+                    font_scale=1.5,
                     height=5, aspect=1.5,
                     gridlines=True):
         """
@@ -194,6 +199,9 @@ class cumulative_plotter:
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
+        font_scale: float, default 1.5
+            The fontsize will be multiplied by this amount.
+
         height: float, default 5
             The height of each panel in inches.
 
@@ -217,6 +225,7 @@ class cumulative_plotter:
                                         max_time_hour=max_time_hour,
                                         palette=palette,
                                         resample_by=resample_by,
+                                        font_scale=font_scale,
                                         ylim=ylim, height=height, aspect=aspect,
                                         gridlines=gridlines)
         return out
