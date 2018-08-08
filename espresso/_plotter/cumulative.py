@@ -32,6 +32,7 @@ class cumulative_plotter:
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
+        # Not sure at all why scipy throws up warnings?
         import warnings
         warnings.filterwarnings("ignore")
 
@@ -49,13 +50,16 @@ class cumulative_plotter:
         if palette is None:
             palette = 'tab10'
 
+        # Convert hour input to seconds.
         min_time_sec = min_time_hour * 3600
         max_time_sec = max_time_hour * 3600
 
+        # Filter the cumsum dataframe for the desired time window.
         df_win = plotdf[(plotdf.time_s >= min_time_sec) &
                         (plotdf.time_s <= max_time_sec)]
 
-        sns.set(style='ticks', font_scale=2)
+        # initialise FacetGrid.
+        sns.set(style='ticks', font_scale=font_scale)
 
         g = sns.FacetGrid(df_win, row=row, col=col,
                           hue=color_by, legend_out=True,
@@ -67,10 +71,17 @@ class cumulative_plotter:
                           )
 
         g.map(sns.lineplot, time_col, yvar, ci=95)
-        g.set_titles("{row_var} = {row_name}\n{col_var} = {col_name}")
-        g.add_legend(fontsize=18)
-        plt.legend
 
+        if row is None:
+            g.set_titles("{col_var} = {col_name}")
+        elif col is None:
+            g.set_titles("{row_var} = {row_name}")
+        elif row is not None and col is not None:
+            g.set_titles("{row_var} = {row_name}\n{col_var} = {col_name}")
+
+        g.add_legend()
+
+        # Aesthetic tweaks.
         for j, ax in enumerate(g.axes.flat):
 
             plothelp.format_timecourse_xaxis(ax, min_time_sec, max_time_sec)
@@ -88,7 +99,6 @@ class cumulative_plotter:
 
 
         sns.despine(fig=g.fig, offset={'left':5, 'bottom': 5})
-        # plt.tight_layout()
         sns.set() # reset style.
 
         # End and return the FacetGrid.
@@ -112,7 +122,8 @@ class cumulative_plotter:
         --------
         col, row: string
             Accepts a categorical column in the espresso object. Each group in
-            this column will be plotted on along the desired axis.
+            this column will be plotted on along the desired axis. If None,
+            the plots will be arranged in the other orthogonal dimension.
 
         color_by: string
             Accepts a categorical column in the espresso object. Each group in
