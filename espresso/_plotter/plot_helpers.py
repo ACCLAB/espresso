@@ -40,20 +40,11 @@ def meanci(mean, cilow, cihigh, idx, ax,
     """Custom function to normalize plot the mean and CI as a dot and a \
     vertical line, respectively."""
     # Plot the summary measure.
-    ax.plot(idx, mean,
-             marker=marker,
-             markerfacecolor=color,
-             markersize=size,
-             alpha=alpha
-            )
+    ax.plot(idx, mean, marker=marker, markerfacecolor=color, markersize=size,
+            alpha=alpha )
     # Plot the CI.
-    ax.plot([idx, idx],
-             [cilow, cihigh],
-             color=color,
-             alpha=alpha,
-             linestyle=ls,
-            linewidth=lw
-            )
+    ax.plot([idx, idx], [cilow, cihigh], color=color, alpha=alpha,
+            linestyle=ls, linewidth=lw )
 
 
 

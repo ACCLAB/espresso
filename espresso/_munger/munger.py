@@ -286,7 +286,8 @@ def check_column(col, df):
               " Please enter a column name from `feeds` with quotation marks."
         raise TypeError(errstr)
     if col not in df.columns: # make sure col is a column in df.
-        raise KeyError("{} is not a column in the feedlog. Please check.".format(col))
+        err = "{} is not a column in the feedlog. Please check.".format(col)
+        raise KeyError(err)
     pass
 
 
@@ -298,13 +299,23 @@ def check_group_by_color_by(col, row, color_by, df):
     If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
     not_none = [c for c in [col, row, color_by] if c is not None]
+    
     for contrast in not_none:
         check_column(contrast, df)
 
     if col == color_by or row == color_by:
-        raise ValueError('{} is the same as {} or {}.'.format(color_by, row, col))
+        if color_by is not None:
+            err = '{} is the same as {} or {}.'.format(color_by, row, col)
+            raise ValueError(err)
+
     if col == row:
-        raise ValueError('Row variable {} is the same as column variable {}.'.format(row, col))
+        if col is not None:
+            err = 'Row variable {} is the same as column variable {}.'.format(row, col)
+            raise ValueError(err)
+
+        else:
+            err = 'Both {} and {} are None.'.format(row, col)
+            raise ValueError(err)
 
 
 
