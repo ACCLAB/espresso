@@ -262,6 +262,8 @@ def generic_contrast_plotter(plot_df, yvar,
     import numpy as np
     import dabest
     from .._munger import munger as munge
+    import warnings
+    warnings.filterwarnings("ignore", module='mpl_toolkits')
 
     # Handle contrastplot keyword arguments.
     default_kwargs = dict(fig_size=(12,9),
