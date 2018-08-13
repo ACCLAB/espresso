@@ -283,11 +283,11 @@ class contrast_plotter:
         A matplotlib Figure, and a pandas DataFrame with the statistics.
         """
         from . import plot_helpers as pth
-        plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
-                                               group_by, compare_by, color_by)
+        from .._munger import munger as munge
+
+        plot_df = munge.latency_munger(self.__feeds, group_by, compare_by, color_by)
 
         yvar = 'Latency to\nFirst Feed (min)'
-        return pth.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
-                                     contrastplot_kwargs=contrastplot_kwargs)
+        return pth.generic_contrast_plotter(plot_df, yvar, color_by, fig_size=fig_size,
+                                            palette_type=palette_type,
+                                            contrastplot_kwargs=contrastplot_kwargs)
