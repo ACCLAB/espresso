@@ -156,6 +156,7 @@ def _make_sequential_palette(df, group_by):
 
 
 def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
+                            tick_length=15, tick_pad=9,
                             tick_interval_seconds=3600):
     """
     Convenience function to format a timecourse plot's x-axis.
@@ -173,6 +174,8 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
     newlabels = [str(int(t/tick_interval_seconds))
                  for t in ax.xaxis.get_ticklocs(minor=False)]
     ax.set_xticklabels(newlabels)
+
+    ax.tick_params(length=tick_length, pad=tick_pad)
 
 
 
