@@ -74,10 +74,16 @@ class espresso_plotter():
         _flies_in_order = _feeding_flies + _non_feeding_flies
 
         for k, fly in enumerate(_flies_in_order):
-            rasterplot_kwargs = dict(
-                    ymin = (1/maxflycount) * (maxflycount-k-1),
-                    ymax = (1/maxflycount) * (maxflycount-k),
-                    alpha = 0.8)
+            rasterplot_kwargs = dict(alpha = 0.75, linewidth = 0,
+                                     ymin = (1/maxflycount) * (maxflycount-k-1),
+                                     ymax = (1/maxflycount) * (maxflycount-k))
+
+
+            if color_by is None:
+                rasterplot_kwargs['facecolor'] = 'grey'
+                rasterplot_kwargs['edgecolor'] = 'grey'
+
+
             try:
                 _current_facet_fly = _current_facet_fly_index.loc[fly]
                 if isinstance(_current_facet_fly, pd.Series):
@@ -85,8 +91,11 @@ class espresso_plotter():
                     rasterplot_kwargs['xmax'] = _current_facet_fly.RelativeTime_s + \
                                                 _current_facet_fly.FeedDuration_s
                     if color_by is not None:
-                        rasterplot_kwargs['color'] = palette[_current_facet_fly[color_by]]
+                        color = palette[_current_facet_fly[color_by]]
+                        rasterplot_kwargs['facecolor'] = color
+                        rasterplot_kwargs['edgecolor'] = color
                     plot_ax.axvspan(**rasterplot_kwargs)
+
 
                 elif isinstance(_current_facet_fly, pd.DataFrame):
                     start = _current_facet_fly.RelativeTime_s.tolist()
@@ -97,7 +106,9 @@ class espresso_plotter():
                         rasterplot_kwargs['xmax'] = feed_start + duration[j]
                         if color_by is not None:
                             current_color_cat = _current_facet_fly[color_by].iloc[j]
-                            rasterplot_kwargs['color'] = palette[current_color_cat]
+                            color = palette[current_color_cat]
+                            rasterplot_kwargs['facecolor'] = color
+                            rasterplot_kwargs['edgecolor'] = color
                         plot_ax.axvspan(**rasterplot_kwargs)
 
             except KeyError:
@@ -117,7 +128,7 @@ class espresso_plotter():
 
 
 
-    def rasters(self, start_hour, end_hour, col=None, row=None, color_by=None,
+    def rasters(self, start_hour, end_hour, color_by=None, col=None, row=None,
                 height=10, width=10, add_flyid_labels=True, palette=None,
                 ax=None, gridlines=True):
         """
@@ -129,13 +140,13 @@ class espresso_plotter():
             The time window (in hours) during which to compute and display the
             percent flies feeding.
 
-        col, row: string, default None
-            Accepts a categorical column in the espresso object. Each group in
-            this column will be plotted on along the desired axis.
-
         color_by: string, default None
             The categorical column in the espresso object used to color
             individual feeds.
+
+        col, row: string, default None
+            Accepts a categorical column in the espresso object. Each group in
+            this column will be plotted on along the desired axis.
 
         add_flyid_labels: boolean, default True
             If True, the FlyIDs for each fly will be displayed on the left of each raster row.
@@ -231,21 +242,26 @@ class espresso_plotter():
         else:
             axx = ax
 
-        # Create the palette.
-        color_groups = allfeeds[color_by].cat.categories
-        if palette is None:
-            palette = 'tab10'
-        color_pal = plothelp.parse_palette(palette, color_groups)
+        # Handle the palette.
+        if color_by is not None:
+            color_groups = allfeeds[color_by].cat.categories
+            if palette is None:
+                palette = 'tab10'
+            color_pal = plothelp.parse_palette(palette, color_groups)
 
-        # Add custom legend and title.
-        legend_kwargs = {'frameon': False,
-                         'borderaxespad': 1,
-                         'loc': 'upper left',
-                         'edgecolor': 'white'}
-        raster_legend_handles = []
-        for key in color_pal.keys():
-            patch = mpatches.Patch(color=color_pal[key], label=key)
-            raster_legend_handles.append(patch)
+            # Add custom legend and title.
+            legend_kwargs = {'frameon': False,
+                             'borderaxespad': 1,
+                             'loc': 'upper left',
+                             'edgecolor': 'white'}
+            raster_legend_handles = []
+            for key in color_pal.keys():
+                patch = mpatches.Patch(color=color_pal[key], label=key)
+                raster_legend_handles.append(patch)
+
+        else:
+            color_pal = None
+
 
         if row is not None and col is not None:
             INDEX = faceted_feeds.index
