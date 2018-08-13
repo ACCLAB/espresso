@@ -59,7 +59,7 @@ class espresso_plotter():
         """
         Helper function that actually plots the rasters.
         """
-        from . import plot_helpers as plt_help
+        from . import plot_helpers as plothelp
         import pandas as pd
 
         # Identify legitimate feeds; sort by time of first feed.
@@ -109,29 +109,25 @@ class espresso_plotter():
                 else:
                     label_color = 'black'
                 label = fly.split('_')[-1]
-                plot_ax.text(-85,
-                              (1/maxflycount)*(maxflycount-k-1) + (1/maxflycount)*.5,
-                               label,
-                               color=label_color,
-                               verticalalignment='center',
-                               horizontalalignment='right',
-                               fontsize=8)
+                ypos = (1/maxflycount)*(maxflycount-k-1) + (1/maxflycount)*.5
+                plot_ax.text(-85, ypos, label, color=label_color,
+                             verticalalignment='center',
+                             horizontalalignment='right',
+                             fontsize=8)
 
 
 
-    def rasters(self,
-                col=None,
-                row=None,
-                color_by=None,
-                add_flyid_labels=True,
-                fig_size=None,
-                ax=None,
-                gridlines=True):
+    def rasters(self, start_hour, end_hour, col=None, row=None, color_by=None,
+                height=10, width=10, add_flyid_labels=True, palette=None,
+                ax=None, gridlines=True):
         """
         Produces a raster plot of feed events.
 
         Keywords
         --------
+        start_hour, end_hour: float
+            The time window (in hours) during which to compute and display the
+            percent flies feeding.
 
         col, row: string, default None
             Accepts a categorical column in the espresso object. Each group in
@@ -142,8 +138,10 @@ class espresso_plotter():
             individual feeds.
 
         add_flyid_labels: boolean, default True
-            If True, the FlyIDs for each fly will be displayed on the left of
-            each raster row.
+            If True, the FlyIDs for each fly will be displayed on the left of each raster row.
+
+        height, width: float, default 10, 10
+            The height and width of each panel in inches.
 
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
@@ -165,7 +163,7 @@ class espresso_plotter():
         import pandas as pd
         import seaborn as sns
 
-        from . import plot_helpers as plt_help
+        from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
         # make a copy of the metadata and the feedlog.
@@ -222,42 +220,39 @@ class espresso_plotter():
             maxflycount = len(allflies)
 
         # Initialise the figure.
-        sns.set(style='ticks',context='poster',font_scale=1.25)
-        if fig_size is None:
-            x_inches = 9 * col_count
-            y_inches = 7 * row_count
-        else:
-            if isinstance(fig_size, tuple) or isinstance(fig_size, list):
-                x_inches = fig_size[0]
-                y_inches = fig_size[1]
-            else:
-                raise TypeError('Please make sure figsize is a tuple of the '
-                'form (w,h) in inches.')
-
+        sns.set(style='ticks',context='poster')
+        x_inches = width * col_count
+        y_inches = height * row_count
         if ax is None:
             fig, axx = plt.subplots(nrows=row_count, ncols=col_count,
                                     figsize=(x_inches, y_inches),
-                                    gridspec_kw={'wspace':0.2,
-                                                 'hspace':0.4})
+                                    gridspec_kw={'wspace':0.25,
+                                                 'hspace':0.25})
         else:
             axx = ax
 
-        # Create the palette if so desired.
-        if color_by is not None:
-            colors = plt_help._make_categorial_palette(allfeeds, color_by)
-            palette = dict(zip(allfeeds[color_by].cat.categories, colors))
-            # Create custom handles for the foodchoice.
-            # See http://matplotlib.org/users/legend_guide.html#using-proxy-artist
-            raster_legend_handles = []
-            for key in palette.keys():
-                patch = mpatches.Patch(color=palette[key], label=key)
-                raster_legend_handles.append(patch)
-        else:
-            palette = None
+        # Create the palette.
+        color_groups = allfeeds[color_by].cat.categories
+        if palette is None:
+            palette = 'tab10'
+        color_pal = plothelp.parse_palette(palette, color_groups)
+
+        # Add custom legend and title.
+        legend_kwargs = {'frameon': False,
+                         'borderaxespad': 1,
+                         'loc': 'upper left',
+                         'edgecolor': 'white'}
+        raster_legend_handles = []
+        for key in color_pal.keys():
+            patch = mpatches.Patch(color=color_pal[key], label=key)
+            raster_legend_handles.append(patch)
 
         if row is not None and col is not None:
-            for r, row_ in enumerate(faceted_feeds.index.get_level_values(row).unique()):
-                for c, col_ in enumerate(faceted_feeds.index.get_level_values(col).unique()):
+            INDEX = faceted_feeds.index
+            ROWS = INDEX.get_level_values(row).unique()
+            COLUMNS = INDEX.get_level_values(col).unique()
+            for r, row_ in enumerate(ROWS):
+                for c, col_ in enumerate(COLUMNS):
                     print("Plotting {} {}".format(row_, col_))
                     plot_ax = axx[r, c] # the axes to plot on.
                     # Select the data of interest to plot.
@@ -265,16 +260,21 @@ class espresso_plotter():
                         current_facet_feeds = faceted_feeds.loc[col_].loc[row_]
                         current_facet_flies = faceted_flies.loc[col_].loc[row_]
                     except TypeError:
-                        # Sometimes there might be an error if one uses an integer to index
-                        # a Categorical index... so index step-by-step instead.
+                        # Sometimes there might be an error if one uses an
+                        # integer to index a Categorical index...
+                        # so index step-by-step instead.
                         _temp_facet_feeds = faceted_feeds.loc[col_]
-                        current_facet_feeds = _temp_facet_feeds[_temp_facet_feeds.index == row_]
+                        FEED_INDEX = _temp_facet_feeds.index
+                        current_facet_feeds = _temp_facet_feeds[FEED_INDEX == row_]
+
                         _temp_facet_flies = faceted_flies.loc[col_]
-                        current_facet_flies = _temp_facet_flies[_temp_facet_flies.index == row_]
+                        FLIES_INDEX = _temp_facet_flies.index
+                        current_facet_flies = _temp_facet_flies[FLIES_INDEX == row_]
+
                     # Get valid feeds.
                     current_facet_feeds = current_facet_feeds[current_facet_feeds.Valid]
                     self.__plot_rasters(current_facet_feeds, current_facet_flies,
-                                        maxflycount, color_by, palette,
+                                        maxflycount, color_by, color_pal,
                                         plot_ax, add_flyid_labels)
                     plot_ax.set_title("{}; {}".format(col_, row_))
 
@@ -297,7 +297,7 @@ class espresso_plotter():
                                                     (faceted_feeds.Valid)]
                 current_facet_flies = faceted_flies[faceted_flies.index == dim_]
                 self.__plot_rasters(current_facet_feeds, current_facet_flies,
-                                    maxflycount, color_by, palette,
+                                    maxflycount, color_by, color_pal,
                                     plot_ax, add_flyid_labels)
                 plot_ax.set_title(dim_)
 
@@ -305,31 +305,31 @@ class espresso_plotter():
         # Plot gridlines.
         # Position the raster color legend, and despine accordingly.
         # Note the we remove the left spine (set to True).
-        grid_kwargs = dict(linestyle=':', alpha=0.5)
-        despine_kwargs = dict(left=True,trim=True,offset=5)
+        grid_kwargs = dict(alpha=0.75, which='major', linewidth=1)
+        despine_kwargs = dict(left=True, trim=False, offset=5)
         if len(axx) > 1:
             for a in axx.flatten():
                 # Plot vertical grid lines if desired.
                 if gridlines:
-                    a.xaxis.grid(which='major', linewidth=0.25, **grid_kwargs)
-                plt_help.format_timecourse_xaxis(a, self.__expt_end_time ) ## CHANGE ##
+                    a.xaxis.grid(**grid_kwargs)
+                plothelp.format_timecourse_xaxis(a, min_x_seconds=start_hour*3600,
+                                                 max_x_seconds=end_hour*3600)
                 a.yaxis.set_visible(False)
                 sns.despine(ax=a, **despine_kwargs)
             rasterlegend_ax = axx.flatten()[-1]
 
         else:
             if gridlines:
-                axx.xaxis.grid(which='major',
-                            linewidth=0.25, **grid_kwargs)
-            plt_help.format_timecourse_xaxis(axx, self.__expt_end_time ) ## CHANGE ##
+                axx.xaxis.grid(**grid_kwargs)
+            plothelp.format_timecourse_xaxis(axx, min_x_seconds=start_hour*3600,
+                                             max_x_seconds=end_hour*3600)
             axx.yaxis.set_visible(False)
             sns.despine(ax=axx, **despine_kwargs)
             rasterlegend_ax = axx
 
         if color_by is not None:
-            rasterlegend_ax.legend(loc='upper left',
-                                   bbox_to_anchor=(0,-0.15),
-                                   handles=raster_legend_handles)
+            rasterlegend_ax.legend(bbox_to_anchor=(0,-0.15), ncol=1,
+                                   handles=raster_legend_handles, **legend_kwargs)
 
         # End and return the figure.
         if ax is None:
@@ -361,7 +361,7 @@ class espresso_plotter():
             percent flies feeding.
 
         height, width: float, default 10, 10
-                The height and width of each panel in inches.
+            The height and width of each panel in inches.
 
         plot_along: "row" or "column", default "column"
             Tiles the subplots for each "group_by" group along the row or column.
