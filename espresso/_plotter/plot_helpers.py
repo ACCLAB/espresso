@@ -253,11 +253,9 @@ def parse_palette(palette, plot_groups, produce_colormap=False):
     return palette
 
 
-def generic_contrast_plotter(plot_df, yvar,
-                               color_by,
-                               fig_size=None,
-                               palette_type='categorical',
-                               contrastplot_kwargs=None):
+def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
+                             palette_type='categorical',
+                             contrastplot_kwargs=None):
 
     import numpy as np
     import dabest
