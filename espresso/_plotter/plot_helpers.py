@@ -170,7 +170,6 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
 
 
 
-
 def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
     """Convenience function to munge the feeds for contrast plotting."""
 
@@ -179,14 +178,19 @@ def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
 
     plot_df = munge.volume_duration_munger(feeds, group_by, compare_by, color_by)
 
-    for col in [*group_by, compare_by]:
+    if isinstance(group_by, str):
+        to_make_cat = [group_by, compare_by]
+    elif isinstance(group_by, (tuple, list)):
+        to_make_cat = [*group_by, compare_by]
+
+    for col in to_make_cat:
         cat_from_feeds = feeds[col].cat.categories
         plot_df.loc[:, col] = pd.Categorical(plot_df[col],
                                             categories=cat_from_feeds,
                                             ordered=True)
-    plot_df.sort_values([*group_by, compare_by], axis=0,
-                        ascending=True, inplace=True)
+    plot_df.sort_values(to_make_cat, axis=0, ascending=True, inplace=True)
     return plot_df
+
 
 
 def parse_palette(palette, plot_groups, produce_colormap=False):

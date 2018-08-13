@@ -299,7 +299,7 @@ def check_group_by_color_by(col, row, color_by, df):
     If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
     not_none = [c for c in [col, row, color_by] if c is not None]
-    
+
     for contrast in not_none:
         check_column(contrast, df)
 
@@ -514,11 +514,16 @@ def volume_duration_munger(df, group_by, compare_by, color_by):
     from . import __static as static
 
     grpby_cols = static.grpby_cols.copy()
-    grpby_cols_all = unique([*grpby_cols, *group_by,
-                            compare_by, color_by]).tolist()
 
-    for c in [*group_by, compare_by, color_by]:
+    if isinstance(group_by, str):
+        to_check = [compare_by, color_by, group_by]
+    elif isinstance(group_by, (tuple, list)):
+        to_check = [compare_by, color_by, *group_by]
+    for c in to_check:
         check_column(c, df)
+
+    gby = [*to_check, *grpby_cols]
+    grpby_cols_all = unique(gby).tolist()
 
     if len(df[compare_by].unique()) < 2:
         err = '{} has less than 2 categories'.format(compare_by) + \
@@ -553,22 +558,31 @@ def volume_duration_munger(df, group_by, compare_by, color_by):
     return plot_df
 
 
+def latency_munger(feeds, group_by, compare_by, color_by):
 
-def latency_munger(self, df,
-                   group_by, compare_by, color_by):
     from numpy import unique
     from pandas import DataFrame
     from . import __static as static
+
     grpby_cols = static.grpby_cols.copy()
-    grpby_cols_all = unique(grpby_cols +
-                               [group_by, compare_by, color_by]).tolist()
+    # grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by])\
+    #                  .tolist()
+    df = feeds.copy()
 
-    df = self.__feeds.copy()
+    if isinstance(group_by, str):
+        to_check = [compare_by, color_by, group_by]
+    elif isinstance(group_by, (tuple, list)):
+        to_check = [compare_by, color_by, *group_by]
+    for c in to_check:
+        check_column(c, df)
 
-    for c in [compare_by,color_by]:
-        check_column(c,df)
+    gby = [*to_check, *grpby_cols]
+    grpby_cols_all = unique(gby).tolist()
 
-    if len( df[compare_by].unique() )<2:
+    for c in [compare_by, color_by]:
+        check_column(c, df)
+
+    if len(df[compare_by].unique())<2:
         err = '{} has less than 2 categories'.format(compare_by) + \
               'and cannot be used for `compare_by`.'
         raise ValueError(err)
