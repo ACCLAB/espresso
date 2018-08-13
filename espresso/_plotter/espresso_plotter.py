@@ -536,7 +536,7 @@ class espresso_plotter():
                          'edgecolor': 'white'}
 
         if rotate_ticks is True:
-            yanchor = -0.85
+            yanchor = -0.87
         else:
             yanchor = -0.3
 
@@ -551,13 +551,14 @@ class espresso_plotter():
                     xanchor = 0.5
                 legend_ax = int((nc + 1) / 2 - 1)
             else:
-                # If we have an even number of columns,
-                # find the left of middle axes,
-                # and xposition the legend at its lower right corner.
-                if rotate_ticks:
-                    xanchor = 1.1
-                else:
-                    xanchor = 1
+                xanchor = 1
+                # # If we have an even number of columns,
+                # # find the left of middle axes,
+                # # and xposition the legend at its lower right corner.
+                # if rotate_ticks:
+                #     xanchor = 1.1
+                # else:
+                #     xanchor = 1
                 legend_ax = int(nc / 2 - 1)
 
             axx[legend_ax].legend(handles=legend_elements, ncol=nc,
