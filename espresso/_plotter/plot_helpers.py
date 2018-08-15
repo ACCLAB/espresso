@@ -318,9 +318,7 @@ def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
     warnings.filterwarnings("ignore", module='mpl_toolkits')
 
     # Handle contrastplot keyword arguments.
-    default_kwargs = dict(fig_size=(12,9),
-                          float_contrast=False,
-                          font_scale=1.4)
+    default_kwargs = dict(fig_size=(12,9), float_contrast=False, font_scale=1.)
     if contrastplot_kwargs is None:
         contrastplot_kwargs = default_kwargs
     else:
@@ -343,14 +341,11 @@ def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
 
     # Make sure the ylims don't stretch below zero but still capture all
     # the datapoints.
-    ymax = np.max(plot_df[yvar])*1.1
+    ymax = np.max(plot_df[yvar]) * 1.1
 
-    f,b = dabest.plot(plot_df,
-                      x='plot_groups_with_contrast',
-                      y=yvar,
-                      idx=idx,
-                      color_col=color_by,
+    f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
+                      y=yvar, idx=idx, color_col=color_by,
                       custom_palette=custom_pal,
-                      swarm_ylim=(-ymax/70, ymax),
+                      swarm_ylim=(-ymax/10, ymax),
                       **contrastplot_kwargs)
     return f, b

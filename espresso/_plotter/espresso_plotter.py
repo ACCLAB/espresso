@@ -34,7 +34,7 @@ class espresso_plotter():
 
 
 
-    def __init__(self,espresso): # pass along an espresso instance.
+    def __init__(self, espresso): # pass along an espresso instance.
 
         # Add submodules below. The respective .py scripts
         # should be in the same folder as espresso_plotter.py.
@@ -44,7 +44,6 @@ class espresso_plotter():
 
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
-        self.__expt_end_time = espresso.expt_duration_minutes
 
         # call obj.plot.xxx to access these methods.
         self.contrast = contrast.contrast_plotter(self)
