@@ -266,9 +266,50 @@ def check_time_window(start_hour, end_hour, expt_duration_hours):
         raise ValueError("Both `start_hour and `end_hour` must be positive.")
 
     return start_hour, end_hour
+
+
+
+def get_unit_multiplier(unit, convert_from='nano'):
+    """Convenience function to extract prefix from unit of volume."""
+    from numpy import ceil, floor
+
+    exponent_dict = {'centi': -2,  'milli': -3, 'micro': -6, 'nano': -9,
+                    'pico': -12}
+
+    convert_to = unit.strip().split('lit')[0]
+
+    if convert_to not in exponent_dict.keys():
+        units = [a + "liter" for a in exponent_dict.keys()]
+        err1 = "{} is not a valid unit. ".format(unit)
+        err2 = "Acceptable units are {}".format(units)
+        raise ValueError(err1 + err2)
+
+    exponent = exponent_dict[convert_from] - exponent_dict[convert_to]
+
+    return 10 ** exponent
+
+
+
+def get_new_prefix(unit):
+
+    prefix_dict = {'centi': 'c',  'milli': 'm', 'micro': 'μ', 'nano': 'n',
+                  'pico': 'p'}
+
+    prefix = unit.strip().split('lit')[0]
+
+    if prefix not in prefix_dict.keys():
+        units = [a + "liter" for a in prefix_dict.keys()]
+        err1 = "{} is not a valid unit. ".format(unit)
+        err2 = "Acceptable units are {}".format(units)
+        raise ValueError(err1 + err2)
+
+    return prefix_dict[prefix]
+
+
+
 def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
                              palette_type='categorical',
-                             contrastplot_kwargs=None):
+                             title=None, contrastplot_kwargs=None):
 
     import numpy as np
     import dabest
