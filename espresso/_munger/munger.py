@@ -507,8 +507,10 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 
 
-def volume_duration_munger(df, group_by, compare_by, color_by):
+def volume_duration_munger(df, group_by, compare_by, color_by,
+                           start_hour, end_hour):
     """Convenience Function for volume-duration munging."""
+
     from numpy import unique
     from pandas import DataFrame
     from . import __static as static
@@ -537,7 +539,12 @@ def volume_duration_munger(df, group_by, compare_by, color_by):
                                          'AverageFeedVolumePerFly_µl',
                                          'FeedDuration_ms']
 
-    plot_df = DataFrame(df[cols_of_interest]\
+    # Select feeds in time window
+    after_start = df.RelativeTime_s > start_hour * 3600
+    before_end = df.RelativeTime_s < end_hour * 3600
+    df_in_time_window = df[after_start & before_end]
+
+    plot_df = DataFrame(df_in_time_window[cols_of_interest]\
                         .groupby(grpby_cols_all)\
                         .sum().to_records()
                        ).dropna() # for some reason, groupby produces NaN rows..
@@ -558,7 +565,7 @@ def volume_duration_munger(df, group_by, compare_by, color_by):
     return plot_df
 
 
-def latency_munger(feeds, group_by, compare_by, color_by):
+def latency_munger(feeds, group_by, compare_by, color_by, start_hour, end_hour):
 
     from numpy import unique
     from pandas import DataFrame
@@ -589,10 +596,15 @@ def latency_munger(feeds, group_by, compare_by, color_by):
 
     to_drop_na_cols = grpby_cols_all + ['RelativeTime_s']
 
-    plot_df = DataFrame(df.dropna()[to_drop_na_cols]\
-                             .groupby(grpby_cols_all).min().to_records()
-                           ) .dropna()
-                           # for some reason, groupby produces NaN rows...
+    # Select feeds in time window
+    after_start = df.RelativeTime_s > start_hour * 3600
+    before_end = df.RelativeTime_s < end_hour * 3600
+    df_in_time_window = df[after_start & before_end]
+
+    plot_df = DataFrame(df_in_time_window.dropna()[to_drop_na_cols]\
+                                         .groupby(grpby_cols_all)\
+                                         .min().to_records())\
+                        .dropna() # for some reason, groupby produces NaN rows..
 
     plot_df.reset_index(drop=True, inplace=True)
     plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60

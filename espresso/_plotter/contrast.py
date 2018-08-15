@@ -22,14 +22,14 @@ class contrast_plotter:
 
 
 
-    def __init__(self,plotter):
-        self.__feeds=plotter._experiment.feeds.copy()
+    def __init__(self, plotter):
+        self.__feeds = plotter._experiment.feeds.copy()
+        self.__expt_end_hour = plotter._experiment.expt_duration_minutes / 60
 
 
 
-    def feed_count_per_fly(self,
-                           group_by,
-                           compare_by,
+    def feed_count_per_fly(self, group_by, compare_by,
+                           start_hour=0, end_hour=None,
                            color_by='Genotype',
                            fig_size=None,
                            ax=None,
@@ -54,6 +54,9 @@ class contrast_plotter:
             Accepts a categorical column in the espresso object. This column
             will be used
             as the factor for generating and visualizing contrasts.
+        start_hour, end_hour: float, defaults 0 and None
+            The time window of the experiment to plot. If end_hour is None,
+            all feeds until the end of the experiment will be included.
 
         color_by: string, default 'Genotype'
             Accepts a categorical column in the espresso object. Each group in
@@ -73,6 +76,12 @@ class contrast_plotter:
         from . import plot_helpers as pth
         plot_df = pth.prep_feeds_for_contrast_plot(self.__feeds,
                                                group_by, compare_by, color_by)
+        start, end = plothelp.check_time_window(start_hour, end_hour,
+                                               self.__expt_end_hour)
+
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
+                                                   compare_by, color_by,
+                                                   start, end)
 
         yvar = 'Total Feed Count\nPer Fly'
 
@@ -129,6 +138,11 @@ class contrast_plotter:
 
         yvar = 'Total Feed Volume\nPer Fly (µl)'
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
+        start, end = plothelp.check_time_window(start_hour, end_hour,
+                                             self.__expt_end_hour)
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
+                                                  compare_by, color_by,
+                                                  start, end)
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
@@ -184,6 +198,13 @@ class contrast_plotter:
 
         yvar = 'Total Time\nFeeding Per Fly (min)'
         return pth.generic_contrast_plotter(plot_df, yvar, color_by,
+        start, end = plothelp.check_time_window(start_hour, end_hour,
+                                             self.__expt_end_hour)
+
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
+                                                  compare_by, color_by,
+                                                  start, end)
+
                                      fig_size=fig_size,
                                      palette_type=palette_type,
                                      contrastplot_kwargs=contrastplot_kwargs)
@@ -285,7 +306,11 @@ class contrast_plotter:
         from . import plot_helpers as pth
         from .._munger import munger as munge
 
-        plot_df = munge.latency_munger(self.__feeds, group_by, compare_by, color_by)
+        start, end = plothelp.check_time_window(start_hour, end_hour,
+                                             self.__expt_end_hour)
+
+        plot_df = munge.latency_munger(self.__feeds, group_by, compare_by,
+                                       color_by, start, end)
 
         yvar = 'Latency to\nFirst Feed (min)'
         return pth.generic_contrast_plotter(plot_df, yvar, color_by, fig_size=fig_size,

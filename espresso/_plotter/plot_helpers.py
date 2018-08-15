@@ -170,13 +170,15 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
 
 
 
-def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by):
+def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
+                                start_hour, end_hour):
     """Convenience function to munge the feeds for contrast plotting."""
 
     import pandas as pd
     from .._munger import munger as munge
 
-    plot_df = munge.volume_duration_munger(feeds, group_by, compare_by, color_by)
+    plot_df = munge.volume_duration_munger(feeds, group_by, compare_by,
+                                           color_by, start_hour, end_hour)
 
     if isinstance(group_by, str):
         to_make_cat = [group_by, compare_by]
@@ -253,6 +255,17 @@ def parse_palette(palette, plot_groups, produce_colormap=False):
     return palette
 
 
+
+def check_time_window(start_hour, end_hour, expt_duration_hours):
+    import numpy as np
+
+    if end_hour is None:
+        end_hour = expt_duration_hours
+
+    elif np.any(np.array([start_hour, end_hour]) < 0):
+        raise ValueError("Both `start_hour and `end_hour` must be positive.")
+
+    return start_hour, end_hour
 def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
                              palette_type='categorical',
                              contrastplot_kwargs=None):
