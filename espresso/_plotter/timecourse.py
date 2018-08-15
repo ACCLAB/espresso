@@ -76,7 +76,7 @@ class timecourse_plotter():
             color_groups = ['__placeholder__']
         else:
             color_groups = plotdf.index.levels[-2].tolist()
-        col_map = plothelp.parse_palette(palette, color_groups,
+        col_map = plothelp.create_palette(palette, color_groups,
                                          produce_colormap=True)
 
 

@@ -28,12 +28,9 @@ class contrast_plotter:
 
 
 
-    def feed_count_per_fly(self, group_by, compare_by,
-                           start_hour=0, end_hour=None,
-                           color_by='Genotype',
-                           fig_size=None,
-                           ax=None,
-                           palette_type='categorical',
+    def feed_count_per_fly(self, group_by, compare_by, start_hour=0,
+                           end_hour=None, color_by='Genotype',
+                           fig_size=None, ax=None, palette=None,
                            contrastplot_kwargs=None):
 
         """
@@ -85,10 +82,8 @@ class contrast_plotter:
                                                    start, end)
 
         yvar = 'Total Feed Count\nPer Fly'
-
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
+                                     fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -103,7 +98,7 @@ class contrast_plotter:
                                color_by='Genotype',
                                fig_size=None,
                                ax=None,
-                               palette_type='categorical',
+                               palette=None,
                                contrastplot_kwargs=None):
 
         """
@@ -130,7 +125,11 @@ class contrast_plotter:
             this column
             will be colored seperately.
 
-        palette_type: string, 'categorical' or 'sequential'.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -150,8 +149,7 @@ class contrast_plotter:
 
         yvar = 'Total Time\nFeeding Per Fly (min)'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
+                                     fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -164,7 +162,7 @@ class contrast_plotter:
     def feed_volume_per_fly(self, group_by, compare_by,
                            start_hour=0, end_hour=None,
                            color_by='Genotype', fig_size=None, ax=None,
-                           palette_type='categorical', volume_unit='nanoliter',
+                           palette=None, volume_unit='nanoliter',
                            contrastplot_kwargs=None):
 
         """
@@ -228,8 +226,7 @@ class contrast_plotter:
             plot_df.loc[:, yvar] = plot_df[plot_col] * multiplier
 
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
+                                     fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -243,7 +240,7 @@ class contrast_plotter:
                            start_hour=0, end_hour=None,
                            color_by='Genotype', fig_size=None,
                            ax=None, volume_unit='nanoliter',
-                           palette_type='categorical',
+                           palette=None,
                            contrastplot_kwargs=None):
 
         """
@@ -308,8 +305,7 @@ class contrast_plotter:
 
 
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
+                                     fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -321,11 +317,9 @@ class contrast_plotter:
 
     def latency_to_feed_per_fly(self, group_by, compare_by,
                                start_hour=0, end_hour=None,
-                               color_by='Genotype',
-                                fig_size=None,
-                                ax=None,
-                                palette_type='categorical',
-                                contrastplot_kwargs=None):
+                               color_by='Genotype', fig_size=None,
+                               ax=None, palette=None,
+                               contrastplot_kwargs=None):
 
         """
         Produces a contrast plot depicting the mean differences in the latency
@@ -373,8 +367,7 @@ class contrast_plotter:
 
         yvar = 'Latency to\nFirst Feed (min)'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size,
-                                     palette_type=palette_type,
+                                     fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
 
         title = '{} hr to {} hr'.format(start, end)

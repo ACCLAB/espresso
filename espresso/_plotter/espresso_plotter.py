@@ -256,7 +256,7 @@ class espresso_plotter():
             color_groups = allfeeds[color_by].cat.categories
             if palette is None:
                 palette = 'tab10'
-            color_pal = plothelp.parse_palette(palette, color_groups)
+            color_pal = plothelp.create_palette(palette, color_groups)
 
             # Add custom legend and title.
             legend_kwargs = {'frameon': False,
@@ -416,7 +416,7 @@ class espresso_plotter():
         from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
 
-        from .plot_helpers import compute_percent_feeding, parse_palette
+        from .plot_helpers import compute_percent_feeding, create_palette
         import seaborn as sns
 
         # make a copy of the metadata and the feedlog.
@@ -446,7 +446,7 @@ class espresso_plotter():
         # Set style.
         sns.set(style='ticks', context="poster")
 
-        palette = parse_palette(palette, subplots)
+        palette = create_palette(palette, subplots)
 
         # Initialise figure.
         if plot_along == 'column':

@@ -122,27 +122,27 @@ def compute_percent_feeding(all_feeds, all_flies, facets, start_hour, end_hour):
 
 
 
-def _make_categorial_palette(df, group_by, pal='tab10'):
-    """
-    Create a categorical color palette.
-    Pass a pandas DataFrame and the column to group by.
-    """
-    import seaborn as sns
-
-    _cat_palette = sns.color_palette(pal, n_colors=len(df[group_by].unique()))
-    return _cat_palette
-
-
-
-def _make_sequential_palette(df, group_by):
-    """
-    Create a sequential color palette.
-    Pass a pandas DataFrame and the column to group by.
-    """
-    import seaborn as sns
-
-    _seq_palette = sns.cubehelix_palette(n_colors=len(df[group_by].unique()))
-    return _seq_palette
+# def _make_categorial_palette(df, group_by, pal='tab10'):
+#     """
+#     Create a categorical color palette.
+#     Pass a pandas DataFrame and the column to group by.
+#     """
+#     import seaborn as sns
+#
+#     _cat_palette = sns.color_palette(pal, n_colors=len(df[group_by].unique()))
+#     return _cat_palette
+#
+#
+#
+# def _make_sequential_palette(df, group_by):
+#     """
+#     Create a sequential color palette.
+#     Pass a pandas DataFrame and the column to group by.
+#     """
+#     import seaborn as sns
+#
+#     _seq_palette = sns.cubehelix_palette(n_colors=len(df[group_by].unique()))
+#     return _seq_palette
 
 
 
@@ -195,7 +195,7 @@ def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
 
 
 
-def parse_palette(palette, plot_groups, produce_colormap=False):
+def create_palette(palette, plot_groups, produce_colormap=False):
 
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap, to_rgb
@@ -308,8 +308,7 @@ def get_new_prefix(unit):
 
 
 def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
-                             palette_type='categorical',
-                             title=None, contrastplot_kwargs=None):
+                             palette=None, title=None, contrastplot_kwargs=None):
 
     import numpy as np
     import dabest
@@ -318,21 +317,17 @@ def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
     warnings.filterwarnings("ignore", module='mpl_toolkits')
 
     # Handle contrastplot keyword arguments.
-    default_kwargs = dict(fig_size=(12,9), float_contrast=False, font_scale=1.)
+    default_kwargs = dict(float_contrast=False, font_scale=1.)
     if contrastplot_kwargs is None:
         contrastplot_kwargs = default_kwargs
     else:
         contrastplot_kwargs = munge.merge_two_dicts(default_kwargs,
             contrastplot_kwargs)
 
-    # Select palette.
-    if palette_type == 'categorical':
-        color_palette = _make_categorial_palette(plot_df, color_by)
-    elif palette_type == 'sequential':
-        color_palette = _make_sequential_palette(plot_df, color_by)
-
-    custom_pal = dict(zip(plot_df[color_by].unique(),
-                          color_palette))
+    if palette is None:
+        palette = 'tab10'
+    plot_groups = plot_df[color_by].unique()
+    custom_pal = create_palette(palette, plot_groups)
 
     # Properly arrange idx for grouping.
     unique_ids = plot_df.plot_groups_with_contrast.unique()
