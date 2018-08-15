@@ -219,7 +219,7 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
+        out = self.__timecourse_plotter('AverageFeedCountPerFly',
                                         row=row, col=col,
                                         start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
@@ -281,7 +281,7 @@ class timecourse_plotter():
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedCountPerFly',
+        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
                                         row=row, col=col,
                                         start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
@@ -290,8 +290,8 @@ class timecourse_plotter():
                                         gridlines=gridlines,
                                         palette=palette,
                                         ax=ax)
-        return out
 
+        return out
 
 
 
