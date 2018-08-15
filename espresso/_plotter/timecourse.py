@@ -7,13 +7,17 @@
 timecourse plot functions for espresso objects.
 """
 
-# import sys as _sys
-# _sys.path.append("..") # so we can import espresso from the directory above.
 
 
 class timecourse_plotter():
     """
-    timecourse plotting class for espresso object.
+    contrast plotting class for espresso object.
+
+    Available methods
+    -----------------
+    feed_count
+    feed_volume
+    feed_speed
     """
 
 
@@ -166,18 +170,17 @@ class timecourse_plotter():
 
 
 
-
-    def feed_volume(self, col, row, color_by, start_hour, end_hour,
-                    palette=None, gridlines=True, resample_by='5min',
-                    height=10, width=10, ax=None):
+    def feed_count(self, col, row, color_by, start_hour, end_hour,
+                   palette=None, gridlines=True, resample_by='5min',
+                   height=10, width=10, ax=None):
         """
-        Produces a timecourse area plot depicting the average feed volume per
-        fly for the entire assay. The plot will be tiled horizontally
+        Produces a timecourse area plot depicting the average feed count per fly
+        for the entire assay. The plot will be tiled horizontally
         according to the `col`, horizontally according to the category `row`,
         and will be colored according to the category `color_by`.
-        Feed volumes will be binned by the duration in `resample_by`.
+        Feed counts will be binned by the duration in `resample_by`.
 
-        keywords
+        Keywords
         --------
         col, row: string
             Accepts a categorical column in the espresso object. Each group in
@@ -187,6 +190,19 @@ class timecourse_plotter():
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
+        start_hour, end_hour: float, defaults 0 and None
+            The time window of the experiment to plot. If end_hour is None,
+            all feeds until the end of the experiment will be included.
+
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
+
+        gridlines: boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
+
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
@@ -194,9 +210,6 @@ class timecourse_plotter():
 
         height, width: float, default 10, 10
                 The height and width of each panel in inches.
-
-        gridlines boolean, default True
-            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)
@@ -215,23 +228,21 @@ class timecourse_plotter():
                                         gridlines=gridlines,
                                         palette=palette,
                                         ax=ax)
-
         return out
 
 
 
-
-    def feed_count(self, col, row, color_by, start_hour, end_hour,
-                   palette=None, gridlines=True, resample_by='5min',
-                   height=10, width=10, ax=None):
+    def feed_volume(self, col, row, color_by, start_hour, end_hour,
+                    palette=None, gridlines=True, resample_by='5min',
+                    height=10, width=10, ax=None):
         """
-        Produces a timecourse area plot depicting the average feed count per fly
-        for the entire assay. The plot will be tiled horizontally
+        Produces a timecourse area plot depicting the average feed volume per
+        fly for the entire assay. The plot will be tiled horizontally
         according to the `col`, horizontally according to the category `row`,
         and will be colored according to the category `color_by`.
-        Feed counts will be binned by the duration in `resample_by`.
+        Feed volumes will be binned by the duration in `resample_by`.
 
-        keywords
+        Keywords
         --------
         col, row: string
             Accepts a categorical column in the espresso object. Each group in
@@ -241,6 +252,19 @@ class timecourse_plotter():
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
 
+        start_hour, end_hour: float, defaults 0 and None
+            The time window of the experiment to plot. If end_hour is None,
+            all feeds until the end of the experiment will be included.
+
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
+
+        gridlines: boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
+
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
@@ -248,9 +272,6 @@ class timecourse_plotter():
 
         height, width: float, default 10, 10
                 The height and width of each panel in inches.
-
-        gridlines boolean, default True
-            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)
@@ -284,15 +305,28 @@ class timecourse_plotter():
         and will be colored according to the category `color_by`.
         Feed speeds will be binned by the duration in `resample_by`.
 
-        keywords
+        Keywords
         --------
-        col, row: string, default None
+        col, row: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        color_by: string, default None
+        color_by: string
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately, and stacked as an area plot.
+
+        start_hour, end_hour: float, defaults 0 and None
+            The time window of the experiment to plot. If end_hour is None,
+            all feeds until the end of the experiment will be included.
+
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
+
+        gridlines: boolean, default True
+            Whether or not vertical gridlines are displayed at each hour..
 
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
@@ -301,9 +335,6 @@ class timecourse_plotter():
 
         height, width: float, default 10, 10
                 The height and width of each panel in inches.
-
-        gridlines boolean, default True
-            Whether or not vertical gridlines are displayed at each hour..
 
         ax: array of matplotlib Axes objects, default None
             Given an array of Axes, each category (as dictacted by group_by)

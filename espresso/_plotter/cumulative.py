@@ -135,7 +135,11 @@ class cumulative_plotter:
         ylim: tuple, default None
             Enter the desired ylims here.
 
-        palette: matplotlib palette
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         resample_by: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,

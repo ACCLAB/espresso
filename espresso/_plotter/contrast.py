@@ -61,7 +61,11 @@ class contrast_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately.
 
-        palette_type: string, 'categorical' or 'sequential'.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -189,7 +193,11 @@ class contrast_plotter:
             'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
             'picoliter' (10^-12 liters).
 
-        palette_type: string, 'categorical' or 'sequential'.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -264,7 +272,11 @@ class contrast_plotter:
             'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
             'picoliter' (10^-12 liters).
 
-        palette_type: string, 'categorical' or 'sequential'.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -336,7 +348,11 @@ class contrast_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately.
 
-        palette_type: string, 'categorical' or 'sequential'.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.

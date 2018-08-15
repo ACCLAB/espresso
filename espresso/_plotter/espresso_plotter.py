@@ -21,15 +21,19 @@ class espresso_plotter():
 
     To produce contrast plots, use the `contrast` method.
     e.g `my_espresso_experiment.plot.contrast`
-
-        Plots available:
-            feed_count_per_fly
+    Plots available:
+        feed_count_per_fly
+        feed_duration_per_fly
+        feed_volume_per_fly
+        feed_speed_per_fly
+        latency_to_feed_per_fly
 
     To produce timecourse plots, use the `timecourse` method.
     e.g `my_espresso_experiment.plot.timecourse`
-
-        Plots available:
-            TBA
+    Plots available:
+        feed_count
+        feed_volume
+        feed_speed
     """
 
 
@@ -155,6 +159,12 @@ class espresso_plotter():
 
         fig_size: tuple (width, height), default None
             The size of the final figure, in inches.
+
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         ax: matplotlib Axes, default None
             Plot on specified matplotlib Axes.
@@ -387,9 +397,11 @@ class espresso_plotter():
         gridlines: boolean, default True
             If plotting along column, draws gridlines at the major ticks on y-axes.
 
-        palette: named matplotlib palette, default None.
-            See https://matplotlib.org/examples/color/colormaps_reference.html
-            If None, defaults to `tab10`.
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
 
         Returns
         -------
