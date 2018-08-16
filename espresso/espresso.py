@@ -43,6 +43,7 @@ class espresso(object):
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
+
         self.version = '0.4.0'
 
         allflies= []
@@ -244,8 +245,7 @@ class espresso(object):
             expt_duration_summary = ''
 
         rep_str = feedlog_summary + genotype_summary + temp_summary + \
-                  foodtypes_summary + gender_summary + chamber_summary + \
-                  expt_duration_summary
+                  foodtypes_summary + gender_summary + chamber_summary
 
 
         if hasattr(self, "added_labels"):
@@ -260,10 +260,14 @@ class espresso(object):
                                                         self.added_labels)
             rep_str = rep_str + label_summary
 
-        rep_str = rep_str + '\nESPRESSO v{}'.format(self.version)
+            for label in self.added_labels:
+                rep_str = rep_str + "\n\t{}: {}\n".format(label,
+                                                    self.flies[label].unique())
 
+
+        rep_str = (rep_str + expt_duration_summary +
+                    '\nESPRESSO v{}'.format(self.version))
         return rep_str
-
 
 
     def __add__(self, other):
@@ -294,14 +298,16 @@ class espresso(object):
                     new_labels = new_labels + o.added_labels
                 elif isinstance(o.added_labels, str):
                     new_labels.append(o.added_labels)
-        new_labels = list( set(new_labels) )
+        new_labels = list(set(new_labels))
         if len(new_labels) > 0:
-            self_copy.added_labels = new_labels
+            added_labels = new_labels
+        else:
+            added_labels = None
 
         self_copy.feedlogs = list(set(self_copy.feedlogs + other_copy.feedlogs))
         self_copy.feedlog_count = len(self_copy.feedlogs)
 
-        munge.make_categorical_columns(self_copy.flies)
+        munge.make_categorical_columns(self_copy.flies, added_labels)
         self_copy.genotypes = self_copy.flies.Genotype.unique()
         self_copy.temperatures = self_copy.flies.Temperature.unique()
         self_copy.sexes = self_copy.flies.Sex.unique()
@@ -312,7 +318,7 @@ class espresso(object):
                                                        categories=food_choices,
                                                        ordered=True)
 
-        munge.make_categorical_columns(self_copy.feeds)
+        munge.make_categorical_columns(self_copy.feeds, added_labels)
         self_copy.foodtypes = self_copy.feeds.FoodChoice.unique()
         self_copy.chamber_fly_counts = self_copy.feeds.FlyCountInChamber.unique()
 
@@ -328,10 +334,8 @@ class espresso(object):
             return self.__add__(other)
 
 
-    def attach_label(self, label_name,
-                    label_value = None,
-                    label_from_cols = None,
-                    sep=','):
+    def attach_label(self, label_name, label_value=None,
+                     label_from_cols=None, sep=','):
         """
         Attach_label a custom label to the metadata and feedlog of an espresso experiment.
         The espresso object is modified in place.
@@ -355,6 +359,7 @@ class espresso(object):
             The seperator used to denote the joined columns if `label_from_cols` is passed.
         """
         import numpy as np
+        import pandas as pd
 
         # Sanity check for keywords passed.
         label_name = str(label_name)
@@ -368,20 +373,26 @@ class espresso(object):
 
         if label_value is not None:
             for obj in [self.flies, self.feeds]:
-                obj[label_name] = np.repeat(str(label_value), len(obj))
+                newcol = pd.Series(np.repeat(str(label_value), len(obj)))
                 # turn into Categorical.
-                obj.loc[:,label_name] = obj[label_name].astype('category',ordered = True)
+                obj[label_name] = pd.Categorical(newcol, ordered=True,
+                                                 categories=newcol.unique())
 
         else:
             for col in label_from_cols:
                 col = str(col)
                 if col not in self.flies.columns:
                     raise KeyError( "{0} is not found in the metadata. Please check.".format(col) )
+
             for obj in [self.flies, self.feeds]:
                 # See https://stackoverflow.com/questions/33098383/merge-multiple-column-values-into-one-column-in-python-pandas
-                obj[label_name] = obj[label_from_cols].apply(lambda x: sep.join(x.dropna().astype(str)),axis = 1)
+                newcol = obj[label_from_cols].apply(
+                                         lambda x: sep.join(
+                                                    x.dropna().astype(str)
+                                                    ), axis = 1)
                 # turn into Categorical.
-                obj.loc[:,label_name] = obj[label_name].astype('category',ordered = True)
+                obj[label_name] = pd.Categorical(newcol, ordered=True,
+                                                 categories=newcol.unique())
 
         labels=[label_name] # convert to single-member list.
         if hasattr(self, 'added_labels'):

@@ -245,10 +245,12 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
 
 
 
-def make_categorical_columns(df):
+def make_categorical_columns(df, added_labels=None):
     """
     Turns Genotype, Status, Temperature, Sex, FlyCountInChamber columns
     into Categorical columns, inplace.
+
+    If there are added labels, this is also done.
     """
 
     import numpy as np
@@ -270,7 +272,12 @@ def make_categorical_columns(df):
                                            ordered=True)
 
     # Change relevant columns to Categorical.
-    for col in ['Temperature', 'Sex', 'FlyCountInChamber']:
+    if added_labels is None:
+        cols = ['Temperature', 'Sex', 'FlyCountInChamber']
+    else:
+        cols = ['Temperature', 'Sex', 'FlyCountInChamber', *added_labels]
+        
+    for col in cols:
         try:
             c = df[col]
             df.loc[:, col] = pd.Categorical(c, categories=np.sort(c.unique()),
