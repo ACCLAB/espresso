@@ -198,7 +198,11 @@ def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
 
 
 def create_palette(palette, plot_groups, produce_colormap=False):
-
+    """
+    Create matplotlib-friendly palettes for plotting easily!
+    matplotlib palettes:
+    https://matplotlib.org/examples/color/colormaps_reference.html
+    """
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap, to_rgb
     import seaborn as sns

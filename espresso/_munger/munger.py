@@ -18,19 +18,21 @@ def metadata(path_to_csv):
     from numpy import repeat as nprepeat
     from pandas import read_csv
 
-    ## Read in metadata.
+    # Read in metadata.
     metadata_csv = read_csv(path_to_csv)
-    ## Check that the metadata has a nonzero number of rows.
+    # Remove all columns that have all values missing.
+    metadata_csv.dropna(axis=1, how='all', inplace=True)
+    # Check that the metadata has a nonzero number of rows.
     if len(metadata_csv) == 0:
         raise ValueError(metadata+' has 0 rows. Please check!!!')
 
-    ## Add ``#Flies` column if it is not in the metadata.
-    ## Assume that there is 1 fly per chamber if the metadata did not
-    ## have a `#Flies` column.
+    # Add ``#Flies` column if it is not in the metadata.
+    # Assume that there is 1 fly per chamber if the metadata did not
+    # have a `#Flies` column.
     if '#Flies' not in metadata_csv.columns:
         metadata_csv['#Flies'] = nprepeat(1, len(metadata_csv))
 
-    ## Rename columns.
+    # Rename columns.
     food_cols = metadata_csv.filter(regex='Food').columns
     rename_dict = {c: c.replace("Food ", "Tube") for c in food_cols}
 
@@ -41,8 +43,8 @@ def metadata(path_to_csv):
     metadata_csv.rename(columns=rename_dict, inplace=True)
 
 
-    ## Try to deal with inconsistencies in how metadata is recorded.
-    ## Do keep this section updated whenever new inconsistencies are spotted.
+    # Try to deal with inconsistencies in how metadata is recorded.
+    # Do keep this section updated whenever new inconsistencies are spotted.
     tube_cols = [c.replace("Food ", "Tube") for c in food_cols]
     for c in tube_cols:
         try:
@@ -441,9 +443,7 @@ def assign_food_choice(flyid, choiceid, mapper):
 
 
 def assign_status_from_genotype(genotype):
-    """
-    Convenience function to map genotype to status.
-    """
+    """ Convenience function to map genotype to status."""
     if genotype.lower().startswith('w1118'):
         status = 'Sibling'
     else:
