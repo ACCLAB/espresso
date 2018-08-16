@@ -21,8 +21,8 @@ class cumulative_plotter:
 
 
     def __cumulative_plotter(self, yvar, row, col, time_col,
-                             start_hour, end_hour,
-                             ylim, color_by, font_scale=1.5,
+                             start_hour, end_hour,  ylim, color_by,
+                             volume_unit=None, font_scale=1.5,
                              height=10, width=10, palette=None,
                              resample_by='5min', gridlines=True):
 
@@ -38,13 +38,22 @@ class cumulative_plotter:
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
-
         # Resample (aka bin by time).
         resamp_feeds = munge.groupby_resamp_sum(self.__feeds, resample_by)
-
         # Perform cumulative summation.
         plotdf = munge.cumsum_for_cumulative(resamp_feeds)
 
+        if volume_unit is not None:
+            if volume_unit.strip().split('lit')[0] == 'micro':
+                y = yvar
+            else:
+                multiplier = plothelp.get_unit_multiplier(volume_unit,
+                                                          convert_from='micro')
+                new_unit = plothelp.get_new_prefix(volume_unit)
+                y = 'Cumulative Volume ({}l)'.format(new_unit)
+                plotdf[y] = plotdf[yvar] * multiplier
+        else:
+            y = yvar
 
         # Parse keywords.
         if palette is None:
@@ -70,7 +79,7 @@ class cumulative_plotter:
                           gridspec_kws={'hspace':0.3, 'wspace':0.3}
                           )
 
-        g.map(sns.lineplot, time_col, yvar, ci=95)
+        g.map(sns.lineplot, time_col, y, ci=95)
 
         if row is None:
             g.set_titles("{col_var} = {col_name}")
@@ -108,7 +117,7 @@ class cumulative_plotter:
     def consumption(self, row, col, color_by,
                     end_hour, start_hour=0,
                     ylim=None, palette=None,
-                    resample_by='5min',
+                    resample_by='5min', volume_unit='nanoliter',
                     height=10, width=10,
                     gridlines=True):
         """
@@ -146,6 +155,11 @@ class cumulative_plotter:
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
+        volume_unit: string, default 'nanoliter'
+            Accepts 'centiliter' (10^-2 liters), 'milliliter (10^-3 liters)',
+            'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
+            'picoliter' (10^-12 liters).
+
         font_scale: float, default 1.5
             The fontsize will be multiplied by this amount.
 
@@ -159,12 +173,14 @@ class cumulative_plotter:
         -------
         seaborn FacetGrid object
         """
+        from . import plot_helpers as plothelp
 
-        out = self.__cumulative_plotter(yvar='Cumulative Volume (nl)',
+        out = self.__cumulative_plotter(yvar='Cumulative Volume (µl)',
                                         col=col,
                                         row=row,
                                         color_by=color_by,
                                         time_col='time_s',
+                                        volume_unit=volume_unit,
                                         start_hour=start_hour,
                                         end_hour=end_hour,
                                         palette=palette,
@@ -228,6 +244,7 @@ class cumulative_plotter:
                                         row=row,
                                         color_by=color_by,
                                         time_col='time_s',
+                                        volume_unit=None,
                                         start_hour=start_hour,
                                         end_hour=end_hour,
                                         palette=palette,
