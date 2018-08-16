@@ -171,14 +171,14 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
 
 
 def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
-                                start_hour, end_hour):
+                                start_hour, end_hour, type):
     """Convenience function to munge the feeds for contrast plotting."""
 
     import pandas as pd
     from .._munger import munger as munge
 
-    plot_df = munge.volume_duration_munger(feeds, group_by, compare_by,
-                                           color_by, start_hour, end_hour)
+    plot_df = munge.contrast_plot_munger(feeds, group_by, compare_by,
+                                         color_by, start_hour, end_hour, type)
 
     if isinstance(group_by, str):
         to_make_cat = [group_by, compare_by]
@@ -190,7 +190,9 @@ def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
         plot_df.loc[:, col] = pd.Categorical(plot_df[col],
                                             categories=cat_from_feeds,
                                             ordered=True)
+
     plot_df.sort_values(to_make_cat, axis=0, ascending=True, inplace=True)
+
     return plot_df
 
 

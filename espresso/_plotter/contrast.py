@@ -79,7 +79,8 @@ class contrast_plotter:
 
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                    compare_by, color_by,
-                                                   start, end)
+                                                   start, end,
+                                                   type='volume_duration')
 
         yvar = 'Total Feed Count\nPer Fly'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
@@ -145,7 +146,8 @@ class contrast_plotter:
                                              self.__expt_end_hour)
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                   compare_by, color_by,
-                                                  start, end)
+                                                  start, end,
+                                                  type='volume_duration')
 
         yvar = 'Total Time\nFeeding Per Fly (min)'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
@@ -212,7 +214,8 @@ class contrast_plotter:
 
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                   compare_by, color_by,
-                                                  start, end)
+                                                  start, end,
+                                                  type='volume_duration')
 
         plot_col = 'Total Feed Volume\nPer Fly (µl)'
 
@@ -290,7 +293,8 @@ class contrast_plotter:
 
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                   compare_by, color_by,
-                                                  start, end)
+                                                  start, end,
+                                                  type='volume_duration')
 
         plot_col = 'Feed Speed\nPer Fly (nl/s)'
 
@@ -318,7 +322,7 @@ class contrast_plotter:
     def latency_to_feed_per_fly(self, group_by, compare_by,
                                start_hour=0, end_hour=None,
                                color_by='Genotype', fig_size=None,
-                               ax=None, palette=None,
+                               ax=None, time_unit='minute', palette=None,
                                contrastplot_kwargs=None):
 
         """
@@ -342,6 +346,9 @@ class contrast_plotter:
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately.
 
+        time_unit: string, default 'minute'
+            Accepts 'second', 'minute', 'hour'.
+
         palette: matplotlib palette OR a list of named matplotlib colors.
             Full list of matplotlib palettes
             https://matplotlib.org/examples/color/colormaps_reference.html
@@ -362,8 +369,10 @@ class contrast_plotter:
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
 
-        plot_df = munge.latency_munger(self.__feeds, group_by, compare_by,
-                                       color_by, start, end)
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
+                                                  compare_by, color_by,
+                                                  start, end,
+                                                  type='latency')
 
         yvar = 'Latency to\nFirst Feed (min)'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,

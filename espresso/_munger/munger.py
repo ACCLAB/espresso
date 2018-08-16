@@ -489,7 +489,7 @@ def cat_categorical_columns(df, group_by, compare_by):
     if isinstance(group_by, str):
         df_out['plot_groups'] = df_out[group_by]
         gby = [group_by, ]
-    elif isinstance(group_by, list):
+    elif isinstance(group_by, (list, tuple)):
         # create new categorical column.
         df_out['plot_groups'] = join_cols(df_out, group_by)
         gby = ['plot_groups',]
@@ -507,110 +507,93 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 
 
-def volume_duration_munger(df, group_by, compare_by, color_by,
-                           start_hour, end_hour):
-    """Convenience Function for volume-duration munging."""
+def contrast_plot_munger(feeds, group_by, compare_by, color_by,
+                         start_hour, end_hour, type):
+    """Convenience Function for munging before contrast plotting."""
+
 
     from numpy import unique
     from pandas import DataFrame
     from . import __static as static
 
-    grpby_cols = static.grpby_cols.copy()
-
-    if isinstance(group_by, str):
-        to_check = [compare_by, color_by, group_by]
-    elif isinstance(group_by, (tuple, list)):
-        to_check = [compare_by, color_by, *group_by]
-    for c in to_check:
-        check_column(c, df)
-
-    gby = [*to_check, *grpby_cols]
-    grpby_cols_all = unique(gby).tolist()
-
-    if len(df[compare_by].unique()) < 2:
-        err = '{} has less than 2 categories'.format(compare_by) + \
-              'and cannot be used for `compare_by`.'
-        raise ValueError(err)
-
-    for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
-        df[col].fillna(value=0, inplace=True)
-
-    cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
-                                         'AverageFeedVolumePerFly_µl',
-                                         'FeedDuration_ms']
-
-    # Select feeds in time window
-    after_start = df.RelativeTime_s > start_hour * 3600
-    before_end = df.RelativeTime_s < end_hour * 3600
-    df_in_time_window = df[after_start & before_end]
-
-    plot_df = DataFrame(df_in_time_window[cols_of_interest]\
-                        .groupby(grpby_cols_all)\
-                        .sum().to_records()
-                       ).dropna() # for some reason, groupby produces NaN rows..
-
-    plot_df.reset_index(drop=True, inplace=True)
-    plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
-
-    av = plot_df['AverageFeedVolumePerFly_µl']
-    t = plot_df['FeedDuration_ms']
-    plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
-
-    plot_df.rename(columns={'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
-                           'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
-                           'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'},
-                   inplace=True)
-    plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
-
-    return plot_df
-
-
-def latency_munger(feeds, group_by, compare_by, color_by, start_hour, end_hour):
-
-    from numpy import unique
-    from pandas import DataFrame
-    from . import __static as static
 
     grpby_cols = static.grpby_cols.copy()
-    # grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by])\
-    #                  .tolist()
     df = feeds.copy()
 
     if isinstance(group_by, str):
+        if group_by == compare_by:
+            raise ValueError("`group_by` and `compare_by` cannot be identical.")
         to_check = [compare_by, color_by, group_by]
+
     elif isinstance(group_by, (tuple, list)):
+        if compare_by in group_by:
+            raise ValueError("`compare_by` cannot be one of the factors" +
+                             " in `group_by.`")
         to_check = [compare_by, color_by, *group_by]
+
     for c in to_check:
-        check_column(c, df)
-
-    gby = [*to_check, *grpby_cols]
-    grpby_cols_all = unique(gby).tolist()
-
-    for c in [compare_by, color_by]:
         check_column(c, df)
 
     if len(df[compare_by].unique())<2:
         err = '{} has less than 2 categories'.format(compare_by) + \
-              'and cannot be used for `compare_by`.'
+              ' and cannot be used for `compare_by`.'
         raise ValueError(err)
 
-    to_drop_na_cols = grpby_cols_all + ['RelativeTime_s']
+
+    gby = [*to_check, *grpby_cols]
+    grpby_cols_all = unique(gby).tolist()
+
 
     # Select feeds in time window
     after_start = df.RelativeTime_s > start_hour * 3600
     before_end = df.RelativeTime_s < end_hour * 3600
-    df_in_time_window = df[after_start & before_end]
+    df_in_window = df[after_start & before_end].copy()
 
-    plot_df = DataFrame(df_in_time_window.dropna()[to_drop_na_cols]\
-                                         .groupby(grpby_cols_all)\
-                                         .min().to_records())\
-                        .dropna() # for some reason, groupby produces NaN rows..
 
+    if type == 'volume_duration':
+        for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
+            df_in_window[col].fillna(value=0, inplace=True)
+
+        cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
+                                             'AverageFeedVolumePerFly_µl',
+                                             'FeedDuration_ms']
+
+        df_grouped = df_in_window[cols_of_interest]\
+                        .groupby(grpby_cols_all).sum()
+
+    elif type == 'latency':
+        cols_of_interest = grpby_cols_all + ['RelativeTime_s']
+
+        df_grouped = df_in_window.dropna()[cols_of_interest]\
+                                 .groupby(grpby_cols_all).min()
+
+
+    # for some reason, groupby produces NaN rows..
+    plot_df = DataFrame(df_grouped.to_records()).dropna()
     plot_df.reset_index(drop=True, inplace=True)
-    plot_df['RelativeTime_min']=plot_df['RelativeTime_s']/60
-    plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)'},
-                   inplace=True)
+
+
+    if type == 'volume_duration':
+        plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
+        av = plot_df['AverageFeedVolumePerFly_µl']
+        t = plot_df['FeedDuration_ms']
+        plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
+
+        rename_cols = {'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
+                       'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+                       'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'}
+        plot_df.rename(columns=rename_cols, inplace=True)
+
+    elif type == 'latency':
+        plot_df['RelativeTime_min'] = plot_df['RelativeTime_s'] / 60
+
+        rename_cols = {'RelativeTime_min':'Latency to\nFirst Feed (min)',
+                       'RelativeTime_s':'Latency to\nFirst Feed (sec)'}
+        plot_df.rename(columns=rename_cols, inplace=True)
+
+
     plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
+
 
     return plot_df
 
@@ -645,3 +628,55 @@ def pivot_for_timecourse(resampdf, row, col, color_by):
     out.drop('FlyCountInChamber', axis=1, inplace=True)
 
     return out
+
+
+
+# def latency_munger(feeds, group_by, compare_by, color_by, start_hour, end_hour):
+#     """Convenience Function to get latency of first feeds."""
+#     from numpy import unique
+#     from pandas import DataFrame
+#     from . import __static as static
+#
+#     grpby_cols = static.grpby_cols.copy()
+#     # grpby_cols_all = unique(grpby_cols + [group_by, compare_by, color_by])\
+#     #                  .tolist()
+#     df = feeds.copy()
+#
+#     if isinstance(group_by, str):
+#         to_check = [compare_by, color_by, group_by]
+#     elif isinstance(group_by, (tuple, list)):
+#         to_check = [compare_by, color_by, *group_by]
+#     for c in to_check:
+#         check_column(c, df)
+#
+#     gby = [*to_check, *grpby_cols]
+#     grpby_cols_all = unique(gby).tolist()
+#
+#     for c in [compare_by, color_by]:
+#         check_column(c, df)
+#
+#     if len(df[compare_by].unique())<2:
+#         err = '{} has less than 2 categories'.format(compare_by) + \
+#               'and cannot be used for `compare_by`.'
+#         raise ValueError(err)
+#
+#     to_drop_na_cols = grpby_cols_all + ['RelativeTime_s']
+#
+#     # Select feeds in time window
+#     after_start = df.RelativeTime_s > start_hour * 3600
+#     before_end = df.RelativeTime_s < end_hour * 3600
+#     df_in_time_window = df[after_start & before_end]
+#
+#     plot_df = DataFrame(df_in_time_window.dropna()[to_drop_na_cols]\
+#                                          .groupby(grpby_cols_all)\
+#                                          .min().to_records())\
+#                         .dropna() # for some reason, groupby produces NaN rows..
+#
+#     plot_df.reset_index(drop=True, inplace=True)
+#     plot_df['RelativeTime_min'] = plot_df['RelativeTime_s'] / 60
+#     plot_df.rename(columns={'RelativeTime_min':'Latency to\nFirst Feed (min)',
+#                             'RelativeTime_s':'Latency to\nFirst Feed (sec)'},
+#                    inplace=True)
+#     plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
+#
+#     return plot_df
