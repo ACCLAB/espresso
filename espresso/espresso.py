@@ -32,6 +32,8 @@ class espresso(object):
 
 
     def __init__(self, folder, expt_duration_minutes):
+        import warnings
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
 
         import os
 

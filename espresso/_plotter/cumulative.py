@@ -32,9 +32,9 @@ class cumulative_plotter:
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
-        # Not sure at all why scipy throws up warnings?
         import warnings
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore", category=FutureWarning) # from scipy
+        warnings.filterwarnings("ignore", category=UserWarning) # from matplotlib
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
