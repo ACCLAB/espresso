@@ -422,24 +422,13 @@ def cumsum_for_cumulative(df):
 
 
 def assign_food_choice(flyid, choiceid, mapper):
-    """
-    Convenience function used to assign the food choice.
-    """
+    """ Convenience function used to assign the food choice. """
+    from numpy import nan
+    try:
+        return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
 
-    return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
-
-
-# def get_expt_duration(path_to_feedstats):
-#     """
-#     Convenience function that reads in CRITTA's `FeedStats` csv, extracts out
-#     the last timestamp, and assigns that as the experiment duration.
-#     """
-#     from numpy import int as npint
-#     from numpy import round as npround
-#     from pandas import read_csv
-#
-#     feedstats = read_csv(path_to_feedstats)
-#     return npint(npround(feedstats.Minutes.values[-1]))
+    except KeyError:
+        return nan
 
 
 def assign_status_from_genotype(genotype):

@@ -120,14 +120,16 @@ class espresso(object):
         food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
         food_choice_cols.append('FlyID')
 
-        food_choice_dict = allflies[food_choice_cols]
-        food_choice_dict.set_index('FlyID', inplace=True)
+        food_choice_df = allflies[food_choice_cols]
+        food_choice_df.set_index('FlyID', inplace=True)
 
         allfeeds['FoodChoice'] = allfeeds.apply(lambda x:
                                     munge.assign_food_choice(x['FlyID'],
                                                          x['ChoiceIdx']+1,
-                                                         food_choice_dict),
+                                                         food_choice_df),
                                                axis=1)
+        # Drop row if unable to assign feed choice to the row.
+        allfeeds.dropna(axis=0, how='any', inplace=True)
 
         # rename columns and types as is appropriate.
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
