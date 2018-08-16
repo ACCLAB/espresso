@@ -575,20 +575,29 @@ def contrast_plot_munger(feeds, group_by, compare_by, color_by,
 
     if type == 'volume_duration':
         plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
+        plot_df['FeedDuration_second'] = plot_df['FeedDuration_min'] * 60
+
         av = plot_df['AverageFeedVolumePerFly_µl']
         t = plot_df['FeedDuration_ms']
         plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
 
-        rename_cols = {'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
-                       'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
-                       'FeedDuration_min':'Total Time\nFeeding Per Fly (min)'}
+        rename_cols = {
+                'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
+                'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+
+                'FeedDuration_min':'Total Time\nFeeding\nPer Fly (min)',
+                'FeedDuration_second':'Total Time\nFeeding\nPer Fly (sec)',
+                      }
+
         plot_df.rename(columns=rename_cols, inplace=True)
 
     elif type == 'latency':
         plot_df['RelativeTime_min'] = plot_df['RelativeTime_s'] / 60
+        plot_df['RelativeTime_hour'] = plot_df['RelativeTime_min'] / 60
 
         rename_cols = {'RelativeTime_min':'Latency to\nFirst Feed (min)',
-                       'RelativeTime_s':'Latency to\nFirst Feed (sec)'}
+                       'RelativeTime_sec':'Latency to\nFirst Feed (sec)',
+                       'RelativeTime_hour':'Latency to\nFirst Feed (hr)'}
         plot_df.rename(columns=rename_cols, inplace=True)
 
 

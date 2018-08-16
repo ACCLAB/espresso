@@ -290,23 +290,17 @@ class contrast_plotter:
 
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
-
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                   compare_by, color_by,
                                                   start, end,
                                                   type='volume_duration')
 
-        plot_col = 'Feed Speed\nPer Fly (nl/s)'
-
-        if volume_unit.strip().split('lit')[0] == 'nano':
-            yvar = plot_col
-        else:
-            multiplier = plothelp.get_unit_multiplier(volume_unit,
-                                                      convert_from='nano')
-            new_unit = plothelp.get_new_prefix(volume_unit)
-            yvar = 'Feed Speed\nPer Fly ({}l/s)'.format(new_unit)
-            plot_df.loc[:, yvar] = plot_df[plot_col] * multiplier
-
+        time_dict = {'second': 'sec', 'minute': 'min'}
+        if time_unit not in time_dict.keys():
+            raise ValueError("{} is not an accepted unit of time {}"\
+                            .format(time_unit, [a for a in time_dict.keys()])
+                            )
+        yvar = 'Total Time\nFeeding\nPer Fly ({})'.format(time_dict[time_unit])
 
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size, palette=palette,
@@ -374,7 +368,13 @@ class contrast_plotter:
                                                   start, end,
                                                   type='latency')
 
-        yvar = 'Latency to\nFirst Feed (min)'
+        time_dict = {'second': 'sec', 'minute': 'min', 'hour': 'hr'}
+        if time_unit not in time_dict.keys():
+            raise ValueError("{} is not an accepted unit of time {}"\
+                            .format(time_unit, [a for a in time_dict.keys()])
+                            )
+        yvar = 'Latency to\nFirst Feed ({})'.format(time_dict[time_unit])
+
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
