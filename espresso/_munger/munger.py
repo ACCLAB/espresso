@@ -368,6 +368,17 @@ def sum_for_timecourse(df):
 
 
 
+def pivot_for_timecourse(resampdf, row, col, color_by):
+    import pandas as pd
+
+    group_by_cols = [a for a in [row, col, color_by, 'time_s']
+                    if a is not None]
+    out = pd.DataFrame(resampdf.groupby(group_by_cols).sum())
+    out.drop('FlyCountInChamber', axis=1, inplace=True)
+
+    return out
+
+
 
 def cumsum_for_cumulative(df):
     """
@@ -384,11 +395,11 @@ def cumsum_for_cumulative(df):
                           'AverageFeedCountPerFly':'Cumulative Feed Count'},
                 inplace=True)
 
-    temp['Cumulative Volume (nl)'] = temp['Cumulative Volume (µl)'] * 1000
+    temp['Cumulative Volume (µl)']
 
     # Select only relevant columns.
     relevant_cols = ['RelativeTime_s'] + grpby_cols + \
-                    ['Cumulative Feed Count', 'Cumulative Volume (nl)']
+                    ['Cumulative Feed Count', 'Cumulative Volume (µl)']
     temp_selection = temp[relevant_cols]
 
     # Compute the cumulative sum, by Fly.
@@ -625,18 +636,6 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-
-def pivot_for_timecourse(resampdf, row, col, color_by):
-    import pandas as pd
-
-    group_by_cols = [a for a in [row, col, color_by, 'time_s']
-                    if a is not None]
-    out = pd.DataFrame(resampdf.groupby(group_by_cols).sum())
-    out.drop('FlyCountInChamber', axis=1, inplace=True)
-
-    return out
 
 
 

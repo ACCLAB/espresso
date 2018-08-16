@@ -14,9 +14,11 @@ class contrast_plotter:
     Available methods
     -----------------
     feed_count_per_fly
-    feed_duration_per_fly
+
     feed_volume_per_fly
     feed_speed_per_fly
+
+    feed_duration_per_fly
     latency_to_feed_per_fly
     """
 
@@ -94,73 +96,6 @@ class contrast_plotter:
 
 
 
-    def feed_duration_per_fly(self, group_by, compare_by,
-                               start_hour=0, end_hour=None,
-                               color_by='Genotype',
-                               fig_size=None,
-                               ax=None,
-                               palette=None,
-                               contrastplot_kwargs=None):
-
-        """
-        Produces a contrast plot depicting the mean differences in the feed
-        durations between groups.
-
-        Place any contrast plot keywords in a dictionary and pass in through
-        `contrastplot_kwargs`.
-
-        Keywords
-        --------
-        group_by: string, default None
-            Accepts a categorical column in the espresso object. Each group in
-            this column
-            will receive its own 'hub-and-spoke' plot.
-
-        compare_by: string, default None
-            Accepts a categorical column in the espresso object. This column
-            will be used
-            as the factor for generating and visualizing contrasts.
-
-        color_by: string, default 'Genotype'
-            Accepts a categorical column in the espresso object. Each group in
-            this column
-            will be colored seperately.
-
-        palette: matplotlib palette OR a list of named matplotlib colors.
-            Full list of matplotlib palettes
-            https://matplotlib.org/examples/color/colormaps_reference.html
-            Full list of named matplotlib colors
-            https://matplotlib.org/gallery/color/named_colors.html
-
-        contrastplot_kwargs: dict, default None
-            All contrastplot keywords will be entered here.
-
-        Returns
-        -------
-
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        """
-        from . import plot_helpers as plothelp
-
-        start, end = plothelp.check_time_window(start_hour, end_hour,
-                                             self.__expt_end_hour)
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                  compare_by, color_by,
-                                                  start, end,
-                                                  type='volume_duration')
-
-        yvar = 'Total Time\nFeeding Per Fly (min)'
-        fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
-                                     fig_size=fig_size, palette=palette,
-                                     contrastplot_kwargs=contrastplot_kwargs)
-
-        title = '{} hr to {} hr'.format(start, end)
-        fig.suptitle(title, fontsize=36)
-
-        return fig, stats
-
-
-
     def feed_volume_per_fly(self, group_by, compare_by,
                            start_hour=0, end_hour=None,
                            color_by='Genotype', fig_size=None, ax=None,
@@ -226,7 +161,7 @@ class contrast_plotter:
                                                       convert_from='micro')
             new_unit = plothelp.get_new_prefix(volume_unit)
             yvar = 'Total Feed Volume\nPer Fly ({}l)'.format(new_unit)
-            plot_df.loc[:, yvar] = plot_df[plot_col] * multiplier
+            plot_df[yvar] = plot_df[plot_col] * multiplier
 
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size, palette=palette,
@@ -290,6 +225,85 @@ class contrast_plotter:
 
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
+
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
+                                                  compare_by, color_by,
+                                                  start, end,
+                                                  type='volume_duration')
+
+        plot_col = 'Feed Speed\nPer Fly (nl/s)'
+
+        if volume_unit.strip().split('lit')[0] == 'nano':
+            yvar = plot_col
+        else:
+            multiplier = plothelp.get_unit_multiplier(volume_unit,
+                                                      convert_from='nano')
+            new_unit = plothelp.get_new_prefix(volume_unit)
+            yvar = 'Feed Speed\nPer Fly ({}l/s)'.format(new_unit)
+            plot_df[yvar] = plot_df[plot_col] * multiplier
+
+
+        fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
+                                     fig_size=fig_size, palette=palette,
+                                     contrastplot_kwargs=contrastplot_kwargs)
+
+        title = '{} hr to {} hr'.format(start, end)
+        fig.suptitle(title, fontsize=36)
+
+        return fig, stats
+
+
+
+    def feed_duration_per_fly(self, group_by, compare_by,
+                               start_hour=0, end_hour=None,
+                               color_by='Genotype', fig_size=None,
+                               ax=None, time_unit='minute', palette=None,
+                               contrastplot_kwargs=None):
+
+        """
+        Produces a contrast plot depicting the mean differences in the feed
+        durations between groups.
+
+        Place any contrast plot keywords in a dictionary and pass in through
+        `contrastplot_kwargs`.
+
+        Keywords
+        --------
+        group_by: string, default None
+            Accepts a categorical column in the espresso object. Each group in
+            this column
+            will receive its own 'hub-and-spoke' plot.
+
+        compare_by: string, default None
+            Accepts a categorical column in the espresso object. This column
+            will be used
+            as the factor for generating and visualizing contrasts.
+
+        color_by: string, default 'Genotype'
+            Accepts a categorical column in the espresso object. Each group in
+            this column will be colored seperately.
+
+        time_unit: string, default 'minute'
+            Accepts 'second', or 'minute'.
+
+        palette: matplotlib palette OR a list of named matplotlib colors.
+            Full list of matplotlib palettes
+            https://matplotlib.org/examples/color/colormaps_reference.html
+            Full list of named matplotlib colors
+            https://matplotlib.org/gallery/color/named_colors.html
+
+        contrastplot_kwargs: dict, default None
+            All contrastplot keywords will be entered here.
+
+        Returns
+        -------
+
+        A matplotlib Figure, and a pandas DataFrame with the statistics.
+        """
+        from . import plot_helpers as plothelp
+
+        start, end = plothelp.check_time_window(start_hour, end_hour,
+                                             self.__expt_end_hour)
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
                                                   compare_by, color_by,
                                                   start, end,
@@ -310,6 +324,7 @@ class contrast_plotter:
         fig.suptitle(title, fontsize=36)
 
         return fig, stats
+
 
 
 

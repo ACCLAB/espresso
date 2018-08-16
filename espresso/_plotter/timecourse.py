@@ -27,7 +27,8 @@ class timecourse_plotter():
 
 
 
-    def __timecourse_plotter(self, yvar, col, row, color_by, start_hour, end_hour,
+    def __timecourse_plotter(self, yvar, col, row, color_by, start_hour,
+                             end_hour, volume_unit=None,
                              resample_by='5min', fig_size=None, palette=None,
                              height=10, width=10,
                              gridlines=True, ax=None):
@@ -46,15 +47,33 @@ class timecourse_plotter():
 
 
         ## DICTIONARY FOR MATCHING YVAR TO APPROPRIATE YLABEL.
-        yvar_ylabel_dict = {'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
-                           'AverageFeedCountPerFly':'Average Feed Count Per Fly',
-                           'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'}
+        yvar_ylabel_dict = {
+            'AverageFeedVolumePerFly_µl':'Average Feed Volume Per Fly (µl)',
+            'AverageFeedCountPerFly':'Average Feed Count Per Fly',
+            'AverageFeedSpeedPerFly_µl/s':'Average Feed Speed Per Fly (µl/s)'
+            }
 
         ylab = yvar_ylabel_dict[yvar]
 
         resamp_feeds = munge.groupby_resamp_sum(feeds, resample_by)
         resamp_feeds_sum = munge.sum_for_timecourse(resamp_feeds)
         plotdf = munge.pivot_for_timecourse(resamp_feeds_sum, row, col, color_by)
+
+        if volume_unit is not None:
+            if volume_unit.strip().split('lit')[0] == 'micro':
+                y = yvar
+
+            else:
+                multiplier = plothelp.get_unit_multiplier(volume_unit,
+                                                          convert_from='micro')
+                new_unit = plothelp.get_new_prefix(volume_unit)
+
+                y = yvar.replace('µ', new_unit)
+                ylab = ylab.replace('µ', new_unit)
+                plotdf[y] = plotdf[yvar] * multiplier
+
+        else:
+            y = yvar
 
 
         # print("Coloring time course by {0}".format(color_by))
@@ -84,13 +103,7 @@ class timecourse_plotter():
         sns.set(style='ticks',context='poster')
         x_inches = width * col_count
         y_inches = height * row_count
-        # else:
-        #     if isinstance(fig_size, tuple) or isinstance(fig_size, list):
-        #         x_inches = fig_size[0]
-        #         y_inches = fig_size[1]
-        #     else:
-        #         raise TypeError('Please make sure figsize is a tuple of the '
-        #         'form (w,h) in inches.')
+
 
         if ax is None:
             fig,axx = plt.subplots(nrows=row_count, ncols=col_count,
@@ -106,7 +119,7 @@ class timecourse_plotter():
                     plot_ax = axx[r, c] # the axes to plot on.
 
                     # Reshape the current data to be plotted.
-                    current_plot_df = plotdf.loc[(row_, col_), yvar]
+                    current_plot_df = plotdf.loc[(row_, col_), y]
 
                     # We unstack and transpose to create a 'long' dataset,
                     # where each column is a timecourse dataset to be plotted.
@@ -124,7 +137,7 @@ class timecourse_plotter():
 
                 plot_ax = axx[j]
 
-                current_plot_df = plotdf.loc[dim_, yvar]
+                current_plot_df = plotdf.loc[dim_, y]
                 current_plot_df = current_plot_df.unstack().T
 
                 current_plot_df.plot.area(ax=plot_ax, colormap=col_map,
@@ -221,6 +234,7 @@ class timecourse_plotter():
         """
         out = self.__timecourse_plotter('AverageFeedCountPerFly',
                                         row=row, col=col,
+                                        volume_unit=None,
                                         start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
@@ -233,8 +247,8 @@ class timecourse_plotter():
 
 
     def feed_volume(self, col, row, color_by, start_hour, end_hour,
-                    palette=None, gridlines=True, resample_by='5min',
-                    height=10, width=10, ax=None):
+                    volume_unit='nanoliter', palette=None, gridlines=True,
+                    resample_by='5min', height=10, width=10, ax=None):
         """
         Produces a timecourse area plot depicting the average feed volume per
         fly for the entire assay. The plot will be tiled horizontally
@@ -255,6 +269,11 @@ class timecourse_plotter():
         start_hour, end_hour: float, defaults 0 and None
             The time window of the experiment to plot. If end_hour is None,
             all feeds until the end of the experiment will be included.
+
+        volume_unit: string, default 'nanoliter'
+            Accepts 'centiliter' (10^-2 liters), 'milliliter (10^-3 liters)',
+            'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
+            'picoliter' (10^-12 liters).
 
         palette: matplotlib palette OR a list of named matplotlib colors.
             Full list of matplotlib palettes
@@ -283,6 +302,7 @@ class timecourse_plotter():
         """
         out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
                                         row=row, col=col,
+                                        volume_unit=volume_unit,
                                         start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
@@ -296,8 +316,8 @@ class timecourse_plotter():
 
 
     def feed_speed(self, col, row, color_by, start_hour, end_hour,
-                   palette=None, gridlines=True, resample_by='5min',
-                   height=10, width=10, ax=None):
+                   volume_unit='nanoliter', palette=None, gridlines=True,
+                   resample_by='5min', height=10, width=10, ax=None):
         """
         Produces a timecourse area plot depicting the average feed speed per fly
         in µl/s for the entire assay. The plot will be tiled horizontally
@@ -318,6 +338,11 @@ class timecourse_plotter():
         start_hour, end_hour: float, defaults 0 and None
             The time window of the experiment to plot. If end_hour is None,
             all feeds until the end of the experiment will be included.
+
+        volume_unit: string, default 'nanoliter'
+            Accepts 'centiliter' (10^-2 liters), 'milliliter (10^-3 liters)',
+            'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
+            'picoliter' (10^-12 liters).
 
         palette: matplotlib palette OR a list of named matplotlib colors.
             Full list of matplotlib palettes
@@ -345,8 +370,8 @@ class timecourse_plotter():
         matplotlib AxesSubplot(s)
         """
         out = self.__timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
-                                        row=row,
-                                        col=col,
+                                        row=row, col=col,
+                                        volume_unit=volume_unit,
                                         start_hour=start_hour, end_hour=end_hour,
                                         color_by=color_by,
                                         resample_by=resample_by,
