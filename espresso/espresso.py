@@ -278,8 +278,18 @@ class espresso(object):
         from ._plotter import espresso_plotter as espresso_plotter
         from ._munger import munger as munge
 
-        self_copy = deepcopy(self) # Create a copy of the first espresso object to be summed.
-        other_copy = deepcopy(other) # Create a copy of the other espresso object.
+        # Create a copy of the first espresso object to be summed.
+        self_copy = deepcopy(self)
+        # Create a copy of the other espresso object.
+        other_copy = deepcopy(other)
+
+        # Make sure the `AtLeastOneFeed` column in both .flies is a boolean.
+        for df in [self_copy.flies, self_copy.flies]:
+            df.loc[:, 'AtLeastOneFeed'] = df.AtLeastOneFeed.astype('bool')
+
+        # Make sure the `Valid` column in both .feeds is a boolean too.
+        for df in [self_copy.feeds, self_copy.feeds]:
+            df.loc[:, 'Valid'] = df.Valid.astype('bool')
 
         # Merge the flies and feeds attributes.
         self_copy.flies = pd.merge(self_copy.flies, other_copy.flies,
