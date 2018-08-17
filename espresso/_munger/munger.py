@@ -276,7 +276,7 @@ def make_categorical_columns(df, added_labels=None):
         cols = ['Temperature', 'Sex', 'FlyCountInChamber']
     else:
         cols = ['Temperature', 'Sex', 'FlyCountInChamber', *added_labels]
-        
+
     for col in cols:
         try:
             c = df[col]
@@ -514,13 +514,14 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 
 
-def contrast_plot_munger(feeds, group_by, compare_by, color_by,
-                         start_hour, end_hour, type):
+def contrast_plot_munger(feeds, flies, added_labels,
+                         group_by, compare_by, color_by, start_hour, end_hour,
+                         type):
     """Convenience Function for munging before contrast plotting."""
 
 
     from numpy import unique
-    from pandas import DataFrame
+    from pandas import concat, DataFrame
     from . import __static as static
 
 
@@ -579,6 +580,19 @@ def contrast_plot_munger(feeds, group_by, compare_by, color_by,
     plot_df = DataFrame(df_grouped.to_records()).dropna()
     plot_df.reset_index(drop=True, inplace=True)
 
+    # Create zero rows for inactive flies.
+    inactive_flies = [a for a in flies.FlyID.unique()
+                      if a not in plot_df.FlyID.unique()]
+    cols_from_metadata = ['FlyCountInChamber', 'Genotype','Sex',
+                          'Status','Temperature', *[a for a in added_labels
+                                                    if a in flies.columns]
+                         ]
+    inactive_rows = flies.set_index('FlyID')\
+                         .loc[inactive_flies, cols_from_metadata]\
+                         .reset_index()
+    plot_df = concat([inactive_rows, plot_df], sort=True)
+    plot_df.fillna(0, inplace=True)
+
 
     if type == 'volume_duration':
         plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
@@ -589,8 +603,8 @@ def contrast_plot_munger(feeds, group_by, compare_by, color_by,
         plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
 
         rename_cols = {
-                'AverageFeedCountPerFly':'Total Feed Count\nPer Fly',
-                'AverageFeedVolumePerFly_µl':'Total Feed Volume\nPer Fly (µl)',
+                'AverageFeedCountPerFly':'Total\nFeed Count\nPer Fly',
+                'AverageFeedVolumePerFly_µl':'Total\nFeed Volume\nPer Fly (µl)',
 
                 'FeedDuration_min':'Total Time\nFeeding\nPer Fly (min)',
                 'FeedDuration_second':'Total Time\nFeeding\nPer Fly (sec)',

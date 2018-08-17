@@ -170,15 +170,17 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
 
 
 
-def prep_feeds_for_contrast_plot(feeds, group_by, compare_by, color_by,
+def prep_feeds_for_contrast_plot(feeds, flies, added_labels,
+                                group_by, compare_by, color_by,
                                 start_hour, end_hour, type):
     """Convenience function to munge the feeds for contrast plotting."""
 
     import pandas as pd
     from .._munger import munger as munge
 
-    plot_df = munge.contrast_plot_munger(feeds, group_by, compare_by,
-                                         color_by, start_hour, end_hour, type)
+    plot_df = munge.contrast_plot_munger(feeds, flies, added_labels,
+                                         group_by, compare_by, color_by,
+                                         start_hour, end_hour, type)
 
     if isinstance(group_by, str):
         to_make_cat = [group_by, compare_by]
@@ -347,6 +349,7 @@ def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
     f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
                       y=yvar, idx=idx, color_col=color_by,
                       custom_palette=custom_pal,
+                      fig_size=fig_size,
                       swarm_ylim=(-ymax/10, ymax),
                       **contrastplot_kwargs)
     return f, b

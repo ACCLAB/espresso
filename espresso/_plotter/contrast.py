@@ -26,7 +26,12 @@ class contrast_plotter:
 
     def __init__(self, plotter):
         self.__feeds = plotter._experiment.feeds.copy()
+        self.__flies = plotter._experiment.flies
         self.__expt_end_hour = plotter._experiment.expt_duration_minutes / 60
+        try:
+            self.__added_labels = plotter._experiment.added_labels
+        except AttributeError:
+            self.__added_labels = [None]
 
 
 
@@ -79,12 +84,14 @@ class contrast_plotter:
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                                self.__expt_end_hour)
 
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                   compare_by, color_by,
-                                                   start, end,
-                                                   type='volume_duration')
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
+                                                        self.__flies,
+                                                        self.__added_labels,
+                                                        group_by, compare_by,
+                                                        color_by, start, end,
+                                                        type='volume_duration')
 
-        yvar = 'Total Feed Count\nPer Fly'
+        yvar = 'Total\nFeed Count\nPer Fly'
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
                                      fig_size=fig_size, palette=palette,
                                      contrastplot_kwargs=contrastplot_kwargs)
@@ -147,12 +154,14 @@ class contrast_plotter:
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
 
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                  compare_by, color_by,
-                                                  start, end,
-                                                  type='volume_duration')
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
+                                                        self.__flies,
+                                                        self.__added_labels,
+                                                        group_by, compare_by,
+                                                        color_by, start, end,
+                                                        type='volume_duration')
 
-        plot_col = 'Total Feed Volume\nPer Fly (µl)'
+        plot_col = 'Total\nFeed Volume\nPer Fly (µl)'
 
         if volume_unit.strip().split('lit')[0] == 'micro':
             yvar = plot_col
@@ -160,7 +169,7 @@ class contrast_plotter:
             multiplier = plothelp.get_unit_multiplier(volume_unit,
                                                       convert_from='micro')
             new_unit = plothelp.get_new_prefix(volume_unit)
-            yvar = 'Total Feed Volume\nPer Fly ({}l)'.format(new_unit)
+            yvar = 'Total\nFeed Volume\nPer Fly ({}l)'.format(new_unit)
             plot_df[yvar] = plot_df[plot_col] * multiplier
 
         fig, stats =  plothelp.generic_contrast_plotter(plot_df, yvar, color_by,
@@ -226,10 +235,12 @@ class contrast_plotter:
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
 
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                  compare_by, color_by,
-                                                  start, end,
-                                                  type='volume_duration')
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
+                                                        self.__flies,
+                                                        self.__added_labels,
+                                                        group_by, compare_by,
+                                                        color_by, start, end,
+                                                        type='volume_duration')
 
         plot_col = 'Feed Speed\nPer Fly (nl/s)'
 
@@ -304,10 +315,12 @@ class contrast_plotter:
 
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                  compare_by, color_by,
-                                                  start, end,
-                                                  type='volume_duration')
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
+                                                        self.__flies,
+                                                        self.__added_labels,
+                                                        group_by, compare_by,
+                                                        color_by, start, end,
+                                                        type='volume_duration')
 
         time_dict = {'second': 'sec', 'minute': 'min'}
         if time_unit not in time_dict.keys():
@@ -378,10 +391,12 @@ class contrast_plotter:
         start, end = plothelp.check_time_window(start_hour, end_hour,
                                              self.__expt_end_hour)
 
-        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds, group_by,
-                                                  compare_by, color_by,
-                                                  start, end,
-                                                  type='latency')
+        plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
+                                                        self.__flies,
+                                                        self.__added_labels,
+                                                        group_by, compare_by,
+                                                        color_by, start, end,
+                                                        type='latency')
 
         time_dict = {'second': 'sec', 'minute': 'min', 'hour': 'hr'}
         if time_unit not in time_dict.keys():
