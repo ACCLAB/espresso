@@ -192,11 +192,14 @@ class espresso(object):
 
 
     def __repr__(self):
+
+        statuses = self.flies.Status.unique()
         plural_list = []
 
         for value in [self.feedlog_count, len(self.genotypes),
                       len(self.temperatures), len(self.foodtypes),
-                      len(self.chamber_fly_counts)]:
+                      len(self.chamber_fly_counts), len(self.sexes),
+                      len(statuses)]:
             if value > 1:
                 plural_list.append('s')
             else:
@@ -238,14 +241,19 @@ class espresso(object):
         except AttributeError:
             gender_summary = ''
 
+        status_summary = "\n{0} Status type{1} {2}.\n".format(len(statuses),
+                                                              plural_list[6],
+                                                              statuses)
+
         try:
             expt_duration_summary = "\nTotal experiment duration = {} minutes\n"\
                                     .format(self.expt_duration_minutes)
         except AttributeError:
             expt_duration_summary = ''
 
-        rep_str = feedlog_summary + genotype_summary + temp_summary + \
-                  foodtypes_summary + gender_summary + chamber_summary
+        rep_str = (feedlog_summary + genotype_summary + status_summary +
+                   temp_summary + foodtypes_summary + gender_summary +
+                   chamber_summary)
 
 
         if hasattr(self, "added_labels"):
