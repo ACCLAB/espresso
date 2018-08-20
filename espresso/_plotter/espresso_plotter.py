@@ -28,15 +28,14 @@ class espresso_plotter():
         feed_speed_per_fly
         latency_to_feed_per_fly
 
-    To produce timecourse plots, use the `timecourse` method.
-    e.g `my_espresso_experiment.plot.timecourse`
-    Plots available:
-        feed_count
-        feed_volume
-        feed_speed
     """
 
-
+    # To produce timecourse plots, use the `timecourse` method.
+    # e.g `my_espresso_experiment.plot.timecourse`
+    # Plots available:
+    #     feed_count
+    #     feed_volume
+    #     feed_speed
 
     def __init__(self, espresso): # pass along an espresso instance.
 
@@ -51,8 +50,11 @@ class espresso_plotter():
 
         # call obj.plot.xxx to access these methods.
         self.contrast = contrast.contrast_plotter(self)
-        self.timecourse = timecourse.timecourse_plotter(self)
         self.cumulative = cumulative.cumulative_plotter(self)
+
+        # Timecourse plots are temporarily disabled.
+        # self.timecourse = timecourse.timecourse_plotter(self)
+
 
 
 

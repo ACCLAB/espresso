@@ -23,7 +23,12 @@ class timecourse_plotter():
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
+        self.__flies = plotter._experiment.flies
         self.__expt_end_time = plotter._experiment.expt_duration_minutes
+        # try:
+        #     self.__added_labels = plotter._experiment.added_labels
+        # except AttributeError:
+        #     self.__added_labels = [None]
 
 
 
@@ -35,12 +40,14 @@ class timecourse_plotter():
 
         import numpy as np
         import pandas as pd
+        import matplotlib as mpl
         import matplotlib.pyplot as plt
         import seaborn as sns
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
 
         feeds = self.__feeds.copy()
+        added_labels = self.__added_labels
 
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, feeds)
@@ -57,7 +64,8 @@ class timecourse_plotter():
 
         resamp_feeds = munge.groupby_resamp_sum(feeds, resample_by)
         resamp_feeds_sum = munge.sum_for_timecourse(resamp_feeds)
-        plotdf = munge.pivot_for_timecourse(resamp_feeds_sum, row, col, color_by)
+        plotdf = munge.groupby_sum_for_timecourse(resamp_feeds_sum,
+                                                  crow, col, color_by)
 
         if volume_unit is not None:
             if volume_unit.strip().split('lit')[0] == 'micro':
@@ -76,14 +84,11 @@ class timecourse_plotter():
             y = yvar
 
 
-        # print("Coloring time course by {0}".format(color_by))
         if row is not None:
-            # print("Plotting rows by {0}".format(row))
             row_count = int(len(feeds[row].cat.categories))
         else:
             row_count = 1
         if col is not None:
-            # print("Plotting columns by {0}".format(col))
             col_count = int(len(feeds[col].cat.categories))
         else:
             col_count = 1
@@ -95,54 +100,64 @@ class timecourse_plotter():
             color_groups = ['__placeholder__']
         else:
             color_groups = plotdf.index.levels[-2].tolist()
-        col_map = plothelp.create_palette(palette, color_groups,
-                                         produce_colormap=True)
+
+        if isinstance(palette, mpl.colors.ListedColormap):
+            col_map = palette
+        elif isinstance(palette, str):
+            col_map = plothelp.create_palette(palette, color_groups,
+                                              produce_colormap=True)
+        elif isinstance(palette, dict):
+            col_map = plothelp.create_palette(palette, palette.keys(),
+                                              produce_colormap=True)
 
 
         # Initialise figure.
-        sns.set(style='ticks',context='poster')
+        sns.set(style='ticks', context='poster')
         x_inches = width * col_count
         y_inches = height * row_count
 
 
         if ax is None:
-            fig,axx = plt.subplots(nrows=row_count, ncols=col_count,
+            fig, axx = plt.subplots(nrows=row_count, ncols=col_count,
                                    figsize=(x_inches,y_inches),
                                    gridspec_kw={'wspace':0.3,
                                                 'hspace':0.3})
         else:
             axx = ax
 
-        if row is not None and col is not None:
+        legit_dims = [a for a in [row, col] if a is not None]
+
+        if len(legit_dims) == 2:
             for r, row_ in enumerate(feeds[row].cat.categories):
                 for c, col_ in enumerate(feeds[col].cat.categories):
                     plot_ax = axx[r, c] # the axes to plot on.
 
                     # Reshape the current data to be plotted.
-                    current_plot_df = plotdf.loc[(row_, col_), y]
+                    current_plot_df = plotdf.loc[(row_, col_)]
 
                     # We unstack and transpose to create a 'long' dataset,
                     # where each column is a timecourse dataset to be plotted.
                     current_plot_df = current_plot_df.unstack().T
 
-                    # Create the plot.
-                    current_plot_df.plot.area(ax=plot_ax, colormap=col_map,
-                                              stacked=True)
                     plot_ax.set_title("{}; {}".format(row_, col_))
 
-        else:
+        elif len(legit_dims) == 1:
             # We only have one dimension here.
-            plot_dim = [d for d in [row, col] if d is not None][0]
+            plot_dim = legit_dims[0]
             for j, dim_ in enumerate(feeds[plot_dim].cat.categories):
 
                 plot_ax = axx[j]
+                plot_ax.set_title(dim_)
 
-                current_plot_df = plotdf.loc[dim_, y]
+                current_plot_df = plotdf.loc[dim_]
                 current_plot_df = current_plot_df.unstack().T
 
-                current_plot_df.plot.area(ax=plot_ax, colormap=col_map,
-                                          stacked=True)
-                plot_ax.set_title(dim_)
+        else:
+            current_plot_df = plotdf.unstack().T.loc[y]
+
+
+        # Create the plot.
+        current_plot_df.plot.area(ax=plot_ax, colormap=col_map, stacked=True)
 
         # Normalize all the y-axis limits.
         if row_count + col_count > 1:
