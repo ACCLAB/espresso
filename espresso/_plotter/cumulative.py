@@ -17,7 +17,12 @@ class cumulative_plotter:
 
     def __init__(self, plotter): # pass along an espresso_plotter instance.
         self.__feeds = plotter._experiment.feeds.copy()
+        self.__flies = plotter._experiment.flies
         self.__expt_end_time = plotter._experiment.expt_duration_minutes
+        # try:
+        #     self.__added_labels = plotter._experiment.added_labels
+        # except AttributeError:
+        #     self.__added_labels = [None]
 
 
     def __cumulative_plotter(self, yvar, row, col, time_col,
@@ -26,8 +31,9 @@ class cumulative_plotter:
                              height=10, width=10, palette=None,
                              resample_by='5min', gridlines=True):
 
-
+        import sys
         import matplotlib.pyplot as plt
+        from pandas import merge
         import seaborn as sns
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
@@ -37,11 +43,22 @@ class cumulative_plotter:
         warnings.filterwarnings("ignore", category=UserWarning) # from matplotlib
 
         # Handle the group_by and color_by keywords.
+        sys.stdout.write('Munging.')
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
+
         # Resample (aka bin by time).
+        sys.stdout.write('.')
         resamp_feeds = munge.groupby_resamp_sum(self.__feeds, resample_by)
+
         # Perform cumulative summation.
+        sys.stdout.write('.')
         plotdf = munge.cumsum_for_cumulative(resamp_feeds)
+
+        # merge with metadata.
+        sys.stdout.write('.')
+        plotdf = merge(left=self.__flies, right=plotdf,
+                       left_on='FlyID', right_on='FlyID')
+
 
         if volume_unit is not None:
             if volume_unit.strip().split('lit')[0] == 'micro':
@@ -64,12 +81,14 @@ class cumulative_plotter:
         max_time_sec = end_hour * 3600
 
         # Filter the cumsum dataframe for the desired time window.
+        sys.stdout.write('.')
         df_win = plotdf[(plotdf.time_s >= min_time_sec) &
                         (plotdf.time_s <= max_time_sec)]
 
         # initialise FacetGrid.
         sns.set(style='ticks', context='poster')
 
+        sys.stdout.write('\nPlotting.')
         g = sns.FacetGrid(df_win, row=row, col=col,
                           hue=color_by, legend_out=True,
                           palette=palette,
@@ -79,6 +98,7 @@ class cumulative_plotter:
                           gridspec_kws={'hspace':0.3, 'wspace':0.3}
                           )
 
+        sys.stdout.write('.')
         g.map(sns.lineplot, time_col, y, ci=95)
 
         if row is None:
@@ -91,6 +111,7 @@ class cumulative_plotter:
         g.add_legend()
 
         # Aesthetic tweaks.
+        sys.stdout.write('.')
         for j, ax in enumerate(g.axes.flat):
 
             plothelp.format_timecourse_xaxis(ax, min_time_sec, max_time_sec)
@@ -106,7 +127,7 @@ class cumulative_plotter:
                               linestyle='dotted',
                               alpha=0.75)
 
-
+        sys.stdout.write('.')
         sns.despine(fig=g.fig, offset={'left':5, 'bottom': 5})
         sns.set() # reset style.
 
