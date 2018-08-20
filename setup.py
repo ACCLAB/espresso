@@ -99,7 +99,7 @@ def check_dependencies():
                                         SNS_LATEST_MINOR)
     try:
         import seaborn
-        if need_to_install(pandas, SNS_LATEST_MAJOR, SNS_LATEST_MINOR):
+        if need_to_install(seaborn, SNS_LATEST_MAJOR, SNS_LATEST_MINOR):
             to_install.append(TO_INSTALL)
     except ImportError:
         to_install.append(TO_INSTALL)
@@ -127,7 +127,7 @@ if __name__=="__main__":
         name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.3.6',
+        version='0.4.0',
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
