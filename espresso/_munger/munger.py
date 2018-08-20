@@ -401,7 +401,7 @@ def sum_for_timecourse(resamp_feeds):
 
 
 
-def pivot_for_timecourse(resampdf, row, col, color_by):
+def groupby_sum_for_timecourse(resampdf, row, col, color_by):
     from pandas import DataFrame
     from numpy import unique
 
@@ -409,16 +409,15 @@ def pivot_for_timecourse(resampdf, row, col, color_by):
                            if a is not None]
                            ).tolist()
     out = resampdf.groupby(group_by_cols).sum()
-    # out.drop('FlyCountInChamber', axis=1, inplace=True)
 
-    if row == col:
-        reorder = [a for a in [row, color_by, 'time_s']
-                      if a is not None]
-    else:
-        reorder = [a for a in [row, col, color_by, 'time_s']
-                      if a is not None]
-
-    out.index = out.index.reorder_levels(reorder)
+    # if row == col:
+    #     reorder = [a for a in [row, color_by, 'time_s']
+    #                   if a is not None]
+    # else:
+    #     reorder = [a for a in [row, col, color_by, 'time_s']
+    #                   if a is not None]
+    #
+    # out.index = out.index.reorder_levels(reorder)
 
     return out
 
@@ -443,8 +442,6 @@ def cumsum_for_cumulative(df):
     temp['Cumulative Volume (µl)']
 
     # Select only relevant columns.
-    # relevant_cols = ['RelativeTime_s'] + grpby_cols + \
-    #                 ['Cumulative Feed Count', 'Cumulative Volume (µl)']
     relevant_cols = ['RelativeTime_s', 'FlyID', 'Cumulative Feed Count',
                      'Cumulative Volume (µl)']
     temp_selection = temp[relevant_cols]
@@ -453,10 +450,6 @@ def cumsum_for_cumulative(df):
     grs_cumsum_a = temp_selection.groupby('FlyID').cumsum()
 
     # Combine metadata with cumsum.
-    # grs_cumsum = merge(temp[['RelativeTime_s'] + grpby_cols],
-    #                       grs_cumsum_a,
-    #                       left_index=True,
-    #                       right_index=True)
     grs_cumsum = merge(temp[['RelativeTime_s', 'FlyID']],
                           grs_cumsum_a,
                           left_index=True,
