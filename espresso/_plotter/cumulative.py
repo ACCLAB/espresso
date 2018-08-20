@@ -29,7 +29,7 @@ class cumulative_plotter:
                              start_hour, end_hour,  ylim, color_by,
                              volume_unit=None, font_scale=1.5,
                              height=10, width=10, palette=None,
-                             resample_by='5min', gridlines=True):
+                             timebin='5min', gridlines=True):
 
         import sys
         import matplotlib.pyplot as plt
@@ -48,7 +48,7 @@ class cumulative_plotter:
 
         # Resample (aka bin by time).
         sys.stdout.write('.')
-        resamp_feeds = munge.groupby_resamp_sum(self.__feeds, resample_by)
+        resamp_feeds = munge.groupby_resamp_sum(self.__feeds, timebin)
 
         # Perform cumulative summation.
         sys.stdout.write('.')
@@ -98,7 +98,7 @@ class cumulative_plotter:
                           gridspec_kws={'hspace':0.3, 'wspace':0.3}
                           )
 
-        sys.stdout.write('.')
+        sys.stdout.write('.') # This seems to be the limiting factor.
         g.map(sns.lineplot, time_col, y, ci=95)
 
         if row is None:
@@ -138,7 +138,7 @@ class cumulative_plotter:
     def consumption(self, row, col, color_by,
                     end_hour, start_hour=0,
                     ylim=None, palette=None,
-                    resample_by='5min', volume_unit='nanoliter',
+                    timebin='5min', volume_unit='nanoliter',
                     height=10, width=10,
                     gridlines=True):
         """
@@ -146,7 +146,7 @@ class cumulative_plotter:
         consumed per fly for the entire assay. The plot will be tiled
         horizontally according to the `col`, horizontally according to the
         category `row`, and will be colored according to the category `color_by`.
-        Feed volumes will be binned by the duration in `resample_by`.
+        Feed volumes will be binned by the duration in `timebin`.
 
         keywords
         --------
@@ -171,7 +171,7 @@ class cumulative_plotter:
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
 
-        resample_by: string, default '5min'
+        timebin: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -205,7 +205,7 @@ class cumulative_plotter:
                                         start_hour=start_hour,
                                         end_hour=end_hour,
                                         palette=palette,
-                                        resample_by=resample_by,
+                                        timebin=timebin,
                                         ylim=ylim, height=height, width=width,
                                         gridlines=gridlines)
         return out
@@ -214,14 +214,14 @@ class cumulative_plotter:
     def feed_count(self, row, col, color_by,
                     end_hour, start_hour=0,
                     ylim=None, palette=None,
-                    resample_by='5min', height=10, width=10,
+                    timebin='5min', height=10, width=10,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total feed count
         consumed per fly for the entire assay. The plot will be tiled
         horizontally according to the `col`, horizontally according to the
         category `row`, and will be colored according to the category `color_by`.
-        Feed counts will be binned by the duration in `resample_by`.
+        Feed counts will be binned by the duration in `timebin`.
 
         keywords
         --------
@@ -241,7 +241,7 @@ class cumulative_plotter:
 
         palette: matplotlib palette
 
-        resample_by: string, default '5min'
+        timebin: string, default '5min'
             The time frequency used to bin the timecourse data. For the format,
             please see
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -269,7 +269,7 @@ class cumulative_plotter:
                                         start_hour=start_hour,
                                         end_hour=end_hour,
                                         palette=palette,
-                                        resample_by=resample_by,
+                                        timebin=timebin,
                                         ylim=ylim, height=height, width=width,
                                         gridlines=gridlines)
         return out
