@@ -147,6 +147,7 @@ def add_padrows(metadata, feedlog, expt_duration_minutes):
             padrows = [padrow1, padrow2]
 
             for padrow in padrows:
+                padrow.loc['FoodChoice'] = choice
                 padrow.loc['FlyID'] = flyid
                 padrow.loc['Valid'] = False
                 padrow.loc['ExperimentState'] = 'PAD'
