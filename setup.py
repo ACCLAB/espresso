@@ -108,7 +108,7 @@ def check_dependencies():
     DABEST_LATEST_MAJOR = 0
     DABEST_LATEST_MINOR = 1
     TO_INSTALL = 'dabest=={}.{}'.format(DABEST_LATEST_MAJOR,
-                                           DABEST_LATEST_MINOR)
+                                        DABEST_LATEST_MINOR)
     try:
         import dabest
         if need_to_install(dabest, DABEST_LATEST_MAJOR, DABEST_LATEST_MINOR):
