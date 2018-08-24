@@ -44,7 +44,7 @@ class espresso(object):
         from ._munger import munger as munge
 
 
-        self.version = '0.4.0'
+        self.version = '0.4.1'
 
         allflies = []
         allfeeds = []
@@ -132,6 +132,13 @@ class espresso(object):
 
         # Drop row if unable to assign feed choice to the row.
         allfeeds.dropna(axis=0, how='any', inplace=True)
+
+        # Define 2 padrows per fly, per food choice (in this case, only one),
+        # that will ensure feedlogs for each FlyID fully capture the entire
+        # experiment duration.
+        allfeeds = munge.add_padrows(allflies, allfeeds, expt_duration_minutes)
+
+        # Turn Food Choice into categorical.
         food_choice_col = allfeeds.FoodChoice
         food_choices = np.sort(food_choice_col.dropna().unique())
         allfeeds.loc[:, "FoodChoice"] = pd.Categorical(food_choice_col,
@@ -143,11 +150,6 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
         munge.make_categorical_columns(allflies)
-
-        # Define 2 padrows per fly, per food choice (in this case, only one),
-        # that will ensure feedlogs for each FlyID fully capture the entire
-        # experiment duration.
-        allfeeds = munge.add_padrows(allflies, allfeeds, expt_duration_minutes)
 
         # merge metadata with feedlogs.
         allfeeds = pd.merge(allfeeds, allflies,
