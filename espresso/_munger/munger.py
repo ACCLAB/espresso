@@ -476,7 +476,7 @@ def assign_food_choice(flyid, choiceid, mapper):
 
 def assign_status_from_genotype(genotype):
     """ Convenience function to map genotype to status."""
-    if genotype.lower().startswith('w1118'):
+    if 'w1118' in genotype.lower():
         status = 'Sibling'
     else:
         status = 'Offspring'
