@@ -178,11 +178,12 @@ def prep_feeds_for_contrast_plot(feeds, flies, added_labels,
     import pandas as pd
     from .._munger import munger as munge
 
-    from warnings import Warning
+    import warnings
     if start_hour > 0.:
-        raise Warning("Selecting a time slice not starting from 0 " +
-                      "currently leads to nonfeeders getting dropped. " +
-                      "A patch will be available in v0.4.2.")
+        err = ("Selecting a time slice not starting from 0 " +
+               "currently leads to nonfeeders getting dropped. " +
+               "A patch will be available in v0.4.2.")
+        warnings.warn(err)
 
     plot_df = munge.contrast_plot_munger(feeds, flies, added_labels,
                                          group_by, compare_by, color_by,
