@@ -283,5 +283,5 @@ class cumulative_plotter:
                                         palette=palette,
                                         timebin=timebin,
                                         ylim=ylim, height=height, width=width,
-                                        return_plot_data=return_plot_data
+                                        return_plot_data=return_plot_data,
                                         gridlines=gridlines)
