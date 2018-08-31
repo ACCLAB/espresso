@@ -43,7 +43,6 @@ class espresso_plotter():
         # should be in the same folder as espresso_plotter.py.
         from . import contrast as contrast
         from . import cumulative as cumulative
-        from . import timecourse as timecourse
 
         # Create attribute so the other methods below can access the espresso object.
         self._experiment = espresso
@@ -53,6 +52,7 @@ class espresso_plotter():
         self.cumulative = cumulative.cumulative_plotter(self)
 
         # Timecourse plots are temporarily disabled.
+        # from . import timecourse as timecourse
         # self.timecourse = timecourse.timecourse_plotter(self)
 
 

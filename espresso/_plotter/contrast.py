@@ -38,6 +38,7 @@ class contrast_plotter:
     def feed_count_per_fly(self, group_by, compare_by, start_hour=0,
                            end_hour=None, color_by='Genotype',
                            fig_size=None, ax=None, palette=None,
+                           return_plot_data=False,
                            contrastplot_kwargs=None):
 
         """
@@ -71,6 +72,10 @@ class contrast_plotter:
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
 
+        return_plot_data: boolean, default False
+            If True, the dataframe will be returned after the bootstrap
+            statistics.
+
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
 
@@ -99,7 +104,10 @@ class contrast_plotter:
         title = '{} hr to {} hr'.format(start, end)
         fig.suptitle(title, fontsize=36)
 
-        return fig, stats
+        if return_plot_data:
+            return fig, stats, plot_df
+        else:
+            return fig, stats
 
 
 
@@ -107,6 +115,7 @@ class contrast_plotter:
                            start_hour=0, end_hour=None,
                            color_by='Genotype', fig_size=None, ax=None,
                            palette=None, volume_unit='nanoliter',
+                           return_plot_data=False,
                            contrastplot_kwargs=None):
 
         """
@@ -140,6 +149,10 @@ class contrast_plotter:
             https://matplotlib.org/examples/color/colormaps_reference.html
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
+
+        return_plot_data: boolean, default False
+            If True, the dataframe will be returned after the bootstrap
+            statistics.
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -179,15 +192,17 @@ class contrast_plotter:
         title = '{} hr to {} hr'.format(start, end)
         fig.suptitle(title, fontsize=36)
 
-        return fig, stats
-
+        if return_plot_data:
+            return fig, stats, plot_df
+        else:
+            return fig, stats
 
 
     def feed_speed_per_fly(self, group_by, compare_by,
                            start_hour=0, end_hour=None,
                            color_by='Genotype', fig_size=None,
                            ax=None, volume_unit='nanoliter',
-                           palette=None,
+                           palette=None, return_plot_data=False,
                            contrastplot_kwargs=None):
 
         """
@@ -221,6 +236,10 @@ class contrast_plotter:
             https://matplotlib.org/examples/color/colormaps_reference.html
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
+
+        return_plot_data: boolean, default False
+            If True, the dataframe will be returned after the bootstrap
+            statistics.
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -261,7 +280,10 @@ class contrast_plotter:
         title = '{} hr to {} hr'.format(start, end)
         fig.suptitle(title, fontsize=36)
 
-        return fig, stats
+        if return_plot_data:
+            return fig, stats, plot_df
+        else:
+            return fig, stats
 
 
 
@@ -269,6 +291,7 @@ class contrast_plotter:
                                start_hour=0, end_hour=None,
                                color_by='Genotype', fig_size=None,
                                ax=None, time_unit='minute', palette=None,
+                               return_plot_data=False,
                                contrastplot_kwargs=None):
 
         """
@@ -303,6 +326,10 @@ class contrast_plotter:
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
 
+        return_plot_data: boolean, default False
+            If True, the dataframe will be returned after the bootstrap
+            statistics.
+
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
 
@@ -336,8 +363,10 @@ class contrast_plotter:
         title = '{} hr to {} hr'.format(start, end)
         fig.suptitle(title, fontsize=36)
 
-        return fig, stats
-
+        if return_plot_data:
+            return fig, stats, plot_df
+        else:
+            return fig, stats
 
 
 
@@ -345,6 +374,7 @@ class contrast_plotter:
                                start_hour=0, end_hour=None,
                                color_by='Genotype', fig_size=None,
                                ax=None, time_unit='minute', palette=None,
+                               return_plot_data=False,
                                contrastplot_kwargs=None):
 
         """
@@ -376,6 +406,10 @@ class contrast_plotter:
             https://matplotlib.org/examples/color/colormaps_reference.html
             Full list of named matplotlib colors
             https://matplotlib.org/gallery/color/named_colors.html
+
+        return_plot_data: boolean, default False
+            If True, the dataframe will be returned after the bootstrap
+            statistics.
 
         contrastplot_kwargs: dict, default None
             All contrastplot keywords will be entered here.
@@ -412,4 +446,7 @@ class contrast_plotter:
         title = '{} hr to {} hr'.format(start, end)
         fig.suptitle(title, fontsize=36)
 
-        return fig, stats
+        if return_plot_data:
+            return fig, stats, plot_df
+        else:
+            return fig, stats

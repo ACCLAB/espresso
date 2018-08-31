@@ -35,8 +35,8 @@ class timecourse_plotter():
     def __timecourse_plotter(self, yvar, col, row, color_by, start_hour,
                              end_hour, volume_unit=None,
                              resample_by='5min', fig_size=None, palette=None,
-                             height=10, width=10,
-                             gridlines=True, ax=None):
+                             height=10, width=10, return_plot_data=False,
+                             gridlines=True):
 
         import numpy as np
         import pandas as pd
@@ -117,13 +117,11 @@ class timecourse_plotter():
         y_inches = height * row_count
 
 
-        if ax is None:
-            fig, axx = plt.subplots(nrows=row_count, ncols=col_count,
-                                   figsize=(x_inches,y_inches),
-                                   gridspec_kw={'wspace':0.3,
-                                                'hspace':0.3})
-        else:
-            axx = ax
+        fig, axx = plt.subplots(nrows=row_count, ncols=col_count,
+                               figsize=(x_inches,y_inches),
+                               gridspec_kw={'wspace':0.3,
+                                            'hspace':0.3})
+
 
         legit_dims = [a for a in [row, col] if a is not None]
 
@@ -192,15 +190,17 @@ class timecourse_plotter():
         for ax in axx.flatten():
             sns.despine(ax=ax, trim=True, offset=5)
 
-        # End and return the figure.
-        if ax is None:
+        # End and return the AxesSubplot.
+        if return_plot_data:
+            return axx, plotdf
+        else:
             return axx
 
 
 
     def feed_count(self, col, row, color_by, start_hour, end_hour,
                    palette=None, gridlines=True, resample_by='5min',
-                   height=10, width=10, ax=None):
+                   height=10, width=10, return_plot_data=False):
         """
         Produces a timecourse area plot depicting the average feed count per fly
         for the entire assay. The plot will be tiled horizontally
@@ -239,15 +239,14 @@ class timecourse_plotter():
         height, width: float, default 10, 10
                 The height and width of each panel in inches.
 
-        ax: array of matplotlib Axes objects, default None
-            Given an array of Axes, each category (as dictacted by group_by)
-            will be plotted respectively.
+        return_plot_data: boolean, default False
+            If True, the data used for plotting is returned.
 
         Returns
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedCountPerFly',
+        return self.__timecourse_plotter('AverageFeedCountPerFly',
                                         row=row, col=col,
                                         volume_unit=None,
                                         start_hour=start_hour, end_hour=end_hour,
@@ -256,14 +255,14 @@ class timecourse_plotter():
                                         height=height, width=width,
                                         gridlines=gridlines,
                                         palette=palette,
-                                        ax=ax)
-        return out
+                                        return_plot_data=return_plot_data)
 
 
 
     def feed_volume(self, col, row, color_by, start_hour, end_hour,
                     volume_unit='nanoliter', palette=None, gridlines=True,
-                    resample_by='5min', height=10, width=10, ax=None):
+                    resample_by='5min', height=10, width=10,
+                    return_plot_data=False):
         """
         Produces a timecourse area plot depicting the average feed volume per
         fly for the entire assay. The plot will be tiled horizontally
@@ -307,15 +306,14 @@ class timecourse_plotter():
         height, width: float, default 10, 10
                 The height and width of each panel in inches.
 
-        ax: array of matplotlib Axes objects, default None
-            Given an array of Axes, each category (as dictacted by group_by)
-            will be plotted respectively.
+        return_plot_data: boolean, default False
+            If True, the data used for plotting is returned.
 
         Returns
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
+        return self.__timecourse_plotter('AverageFeedVolumePerFly_µl',
                                         row=row, col=col,
                                         volume_unit=volume_unit,
                                         start_hour=start_hour, end_hour=end_hour,
@@ -324,15 +322,15 @@ class timecourse_plotter():
                                         height=height, width=width,
                                         gridlines=gridlines,
                                         palette=palette,
-                                        ax=ax)
+                                        return_plot_data=return_plot_data)
 
-        return out
 
 
 
     def feed_speed(self, col, row, color_by, start_hour, end_hour,
                    volume_unit='nanoliter', palette=None, gridlines=True,
-                   resample_by='5min', height=10, width=10, ax=None):
+                   resample_by='5min', height=10, width=10,
+                   return_plot_data=False):
         """
         Produces a timecourse area plot depicting the average feed speed per fly
         in µl/s for the entire assay. The plot will be tiled horizontally
@@ -374,17 +372,17 @@ class timecourse_plotter():
             http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
         height, width: float, default 10, 10
-                The height and width of each panel in inches.
+            The height and width of each panel in inches.
 
-        ax: array of matplotlib Axes objects, default None
-            Given an array of Axes, each category (as dictacted by group_by)
-            will be plotted respectively.
+        return_plot_data: boolean, default False
+            If True, the data used for plotting is returned.
+
 
         Returns
         -------
         matplotlib AxesSubplot(s)
         """
-        out = self.__timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
+        return self.__timecourse_plotter('AverageFeedSpeedPerFly_µl/s',
                                         row=row, col=col,
                                         volume_unit=volume_unit,
                                         start_hour=start_hour, end_hour=end_hour,
@@ -393,5 +391,4 @@ class timecourse_plotter():
                                         height=height, width=width,
                                         gridlines=gridlines,
                                         palette=palette,
-                                        ax=ax)
-        return out
+                                        return_plot_data=return_plot_data)

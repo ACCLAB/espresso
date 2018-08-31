@@ -29,6 +29,7 @@ class cumulative_plotter:
                              start_hour, end_hour,  ylim, color_by,
                              volume_unit=None, font_scale=1.5,
                              height=10, width=10, palette=None,
+                             return_plot_data=False,
                              timebin='5min', gridlines=True):
 
         import sys
@@ -132,14 +133,18 @@ class cumulative_plotter:
         sns.set() # reset style.
 
         # End and return the FacetGrid.
-        return g
+        if return_plot_data:
+            return g, df_win
+        else:
+            return g
+
 
 
     def consumption(self, row, col, color_by,
                     end_hour, start_hour=0,
                     ylim=None, palette=None,
                     timebin='5min', volume_unit='nanoliter',
-                    height=10, width=10,
+                    height=10, width=10, return_plot_data=False,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total volume
@@ -187,6 +192,9 @@ class cumulative_plotter:
         height, width: float, default 10, 10
             The height and width of each panel in inches.
 
+        return_plot_data: boolean, False
+            If true, the data used for plotting is returned after the plot.
+
         gridlines boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
 
@@ -196,7 +204,7 @@ class cumulative_plotter:
         """
         from . import plot_helpers as plothelp
 
-        out = self.__cumulative_plotter(yvar='Cumulative Volume (µl)',
+        return self.__cumulative_plotter(yvar='Cumulative Volume (µl)',
                                         col=col,
                                         row=row,
                                         color_by=color_by,
@@ -207,14 +215,15 @@ class cumulative_plotter:
                                         palette=palette,
                                         timebin=timebin,
                                         ylim=ylim, height=height, width=width,
+                                        return_plot_data=return_plot_data,
                                         gridlines=gridlines)
-        return out
 
 
     def feed_count(self, row, col, color_by,
                     end_hour, start_hour=0,
                     ylim=None, palette=None,
                     timebin='5min', height=10, width=10,
+                    return_plot_data=False,
                     gridlines=True):
         """
         Produces a cumulative line plot depicting the average total feed count
@@ -252,6 +261,9 @@ class cumulative_plotter:
         height, width: float, default 10, 10
             The height and width of each panel in inches.
 
+        return_plot_data: boolean, False
+            If true, the data used for plotting is returned after the plot.
+
         gridlines: boolean, default True
             Whether or not vertical gridlines are displayed at each hour.
 
@@ -260,7 +272,7 @@ class cumulative_plotter:
         seaborn FacetGrid object
         """
 
-        out = self.__cumulative_plotter(yvar='Cumulative Feed Count',
+        return self.__cumulative_plotter(yvar='Cumulative Feed Count',
                                         col=col,
                                         row=row,
                                         color_by=color_by,
@@ -271,5 +283,5 @@ class cumulative_plotter:
                                         palette=palette,
                                         timebin=timebin,
                                         ylim=ylim, height=height, width=width,
+                                        return_plot_data=return_plot_data,
                                         gridlines=gridlines)
-        return out
