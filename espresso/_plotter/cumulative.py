@@ -43,23 +43,25 @@ class cumulative_plotter:
         warnings.filterwarnings("ignore", category=FutureWarning) # from scipy
         warnings.filterwarnings("ignore", category=UserWarning) # from matplotlib
 
+        sys.stdout.write('Munging')
         # Handle the group_by and color_by keywords.
-        sys.stdout.write('Munging.')
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
+        sys.stdout.write('.')
+
+        gbp_cols = [c for c in [col, row, color_by] if c is not None]
 
         # Resample (aka bin by time).
+        resamp_feeds = munge.groupby_resamp_sum(self.__feeds, gbp_cols, timebin)
         sys.stdout.write('.')
-        resamp_feeds = munge.groupby_resamp_sum(self.__feeds, timebin)
 
         # Perform cumulative summation.
+        plotdf = munge.cumsum_for_cumulative(resamp_feeds, gbp_cols)
         sys.stdout.write('.')
-        plotdf = munge.cumsum_for_cumulative(resamp_feeds)
 
-        # merge with metadata.
-        sys.stdout.write('.')
-        plotdf = merge(left=self.__flies, right=plotdf,
-                       left_on='FlyID', right_on='FlyID')
-
+        # # merge with metadata.
+        # plotdf = merge(left=self.__flies, right=plotdf,
+        #                left_on='FlyID', right_on='FlyID')
+        # sys.stdout.write('.')
 
         if volume_unit is not None:
             if volume_unit.strip().split('lit')[0] == 'micro':
@@ -82,14 +84,14 @@ class cumulative_plotter:
         max_time_sec = end_hour * 3600
 
         # Filter the cumsum dataframe for the desired time window.
-        sys.stdout.write('.')
         df_win = plotdf[(plotdf.time_s >= min_time_sec) &
                         (plotdf.time_s <= max_time_sec)]
+        sys.stdout.write('.')
 
         # initialise FacetGrid.
+        sys.stdout.write('\nPlotting')
         sns.set(style='ticks', context='poster')
 
-        sys.stdout.write('\nPlotting.')
         g = sns.FacetGrid(df_win, row=row, col=col,
                           hue=color_by, legend_out=True,
                           palette=palette,
@@ -110,9 +112,9 @@ class cumulative_plotter:
             g.set_titles("{row_var} = {row_name}\n{col_var} = {col_name}")
 
         g.add_legend()
+        sys.stdout.write('.')
 
         # Aesthetic tweaks.
-        sys.stdout.write('.')
         for j, ax in enumerate(g.axes.flat):
 
             plothelp.format_timecourse_xaxis(ax, min_time_sec, max_time_sec)
@@ -127,10 +129,11 @@ class cumulative_plotter:
                 ax.xaxis.grid(True, which='major',
                               linestyle='dotted',
                               alpha=0.75)
-
         sys.stdout.write('.')
+
         sns.despine(fig=g.fig, offset={'left':5, 'bottom': 5})
         sns.set() # reset style.
+        sys.stdout.write('.')
 
         # End and return the FacetGrid.
         if return_plot_data:

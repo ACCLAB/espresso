@@ -299,6 +299,7 @@ def make_categorical_columns(df, added_labels=None):
             pass
 
 
+
 def check_column(col, df):
     """
     Convenience function to check if a dataframe has a column of interest.
@@ -318,7 +319,6 @@ def check_column(col, df):
 def check_group_by_color_by(col, row, color_by, df):
     """
     Check to see if `row`, `col` and `color_by` (if supplied) are columns in `df`.
-    If not, assign them default values of "Genotype" and "FoodChoice" respectively.
     """
     not_none = [c for c in [col, row, color_by] if c is not None]
 
@@ -344,7 +344,7 @@ def check_group_by_color_by(col, row, color_by, df):
 
 
 
-def groupby_resamp_sum(feeds, resample_by='10min'):
+def groupby_resamp_sum(feeds, group_by_cols, resample_by='10min'):
     """
     Convenience function to groupby and then resample a feedlog DataFrame.
     """
@@ -355,15 +355,14 @@ def groupby_resamp_sum(feeds, resample_by='10min'):
     #             *[a for a in added_labels if a in feeds.columns],
     #             ]
 
+
     # Convert RelativeTime_s to datetime if not done so already.
     if feeds.RelativeTime_s.dtype == 'float64':
         feeds.loc[:,'RelativeTime_s'] = to_datetime(feeds['RelativeTime_s'],
                                                     unit='s')
 
-    # df_groupby_resamp_sum = feeds.groupby(gbp_cols)\
-    #                              .resample(resample_by, on='RelativeTime_s')\
-    #                              .sum()
-    df_groupby_resamp_sum = feeds.groupby('FlyID')\
+    gbp_cols  = group_by_cols + ["FlyID"]
+    df_groupby_resamp_sum = feeds.groupby(gbp_cols)\
                                  .resample(resample_by, on='RelativeTime_s')\
                                  .sum()
     df_groupby_resamp_sum.reset_index(inplace=True)
@@ -424,43 +423,54 @@ def groupby_sum_for_timecourse(resampdf, row, col, color_by):
 
 
 
-def cumsum_for_cumulative(df):
+def cumsum_for_cumulative(df, group_by_cols):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
-    from pandas import merge
-    # from . import __static as static
 
-    temp = df.copy()
-    # grpby_cols = [a for a in static.grpby_cols + added_labels
-    #               if a is not None]
+    grp_by = df.groupby(group_by_cols + ['FlyID', 'RelativeTime_s'])
+    temp1 = grp_by.sum().fillna(0)
+
+    grp_by2 = temp1.groupby(group_by_cols + ['FlyID'])
+    temp2 = grp_by2.cumsum().reset_index()
 
     # Rename for facility in plotting.
-    temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
-                          'AverageFeedCountPerFly':'Cumulative Feed Count'},
+    temp2.rename(columns={'AverageFeedVolumePerFly_µl': 'Cumulative Volume (µl)',
+                          'AverageFeedCountPerFly':     'Cumulative Feed Count'},
                 inplace=True)
 
-    temp['Cumulative Volume (µl)']
+    return __add_time_column(temp2)
 
-    # Select only relevant columns.
-    relevant_cols = ['RelativeTime_s', 'FlyID', 'Cumulative Feed Count',
-                     'Cumulative Volume (µl)']
-    temp_selection = temp[relevant_cols]
-
-    # Compute the cumulative sum, by Fly.
-    grs_cumsum_a = temp_selection.groupby('FlyID').cumsum()
-
-    # Combine metadata with cumsum.
-    grs_cumsum = merge(temp[['RelativeTime_s', 'FlyID']],
-                          grs_cumsum_a,
-                          left_index=True,
-                          right_index=True)
-
+    # from pandas import merge
+    # # from . import __static as static
+    #
+    # temp = df.copy()
+    # # grpby_cols = [a for a in static.grpby_cols + added_labels
+    # #               if a is not None]
+    #
+    # # Rename for facility in plotting.
+    # temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
+    #                       'AverageFeedCountPerFly':'Cumulative Feed Count'},
+    #             inplace=True)
+    #
+    # # Select only relevant columns.
+    # relevant_cols = ['RelativeTime_s', 'FlyID', 'Cumulative Feed Count',
+    #                  'Cumulative Volume (µl)'] + group_by_cols
+    # temp_selection = temp[relevant_cols]
+    #
+    # # Compute the cumulative sum, by Fly.
+    # gbp_cols  = group_by_cols + ["RelativeTime_s", "FlyID"]
+    # grs_cumsum = temp_selection.groupby(gbp_cols).cumsum()
+    #
+    # # Combine metadata with cumsum.
+    # grs_cumsum = merge(temp_selection, grs_cumsum,
+    #                    left_index=True, right_index=True)
+    #
     # Add time column to facilitate plotting.
-    grs_cumsum = __add_time_column(grs_cumsum)
-
-
-    return grs_cumsum
+    # out = __add_time_column(grs_cumsum)
+    # return out
+    #
+    # return grs_cumsum
 
 
 
@@ -474,6 +484,7 @@ def assign_food_choice(flyid, choiceid, mapper):
         return nan
 
 
+
 def assign_status_from_genotype(genotype):
     """ Convenience function to map genotype to status."""
     if 'w1118' in genotype.lower():
@@ -482,6 +493,7 @@ def assign_status_from_genotype(genotype):
         status = 'Offspring'
 
     return status
+
 
 
 def join_cols(df, cols, sep='; '):
