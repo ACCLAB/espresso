@@ -434,8 +434,8 @@ class espresso_plotter():
         for z in facets:
             if z not in all_feeds.columns:
                 raise KeyError('{} is not a column in FeedLog. Please check'.format(z))
-            if z not in all_flies.columns:
-                raise KeyError('{} is not a column in CountLog. Please check'.format(z))
+            # if z not in all_flies.columns:
+            #     raise KeyError('{} is not a column in CountLog. Please check'.format(z))
 
         if plot_along not in ["row", "column"]:
             err1 = "You specified plot_along={}".format(plot_along)
@@ -564,15 +564,13 @@ class espresso_plotter():
         f.suptitle(title, y=1.04)
 
         # Add custom legend and title.
-        legend_kwargs = {'frameon': False,
-                         'borderaxespad': 1,
-                         'loc': 'center',
+        legend_kwargs = {'frameon': False, 'borderaxespad': 1, 'loc': 'center',
                          'edgecolor': 'white'}
 
         if rotate_ticks is True:
-            yanchor = -0.87
-        else:
             yanchor = -0.3
+        else:
+            yanchor = -0.1
 
         if plot_along == 'column':
             nc = len(subplots)
@@ -580,9 +578,9 @@ class espresso_plotter():
                 # If we have an odd number of columns,
                 # find the middle axes, and xposition the legend in its middle.
                 if rotate_ticks:
-                    xanchor = 0.6
+                    xanchor = 0.3
                 else:
-                    xanchor = 0.5
+                    xanchor = 0.1
                 legend_ax = int((nc + 1) / 2 - 1)
             else:
                 xanchor = 1
@@ -601,9 +599,9 @@ class espresso_plotter():
 
         elif plot_along == 'row':
             if rotate_ticks:
-                xanchor = 0.6
+                xanchor = 0.3
             else:
-                xanchor = 0.5
+                xanchor = 0.1
             axx[-1].legend(handles=legend_elements, ncol=1,
                           bbox_to_anchor=(xanchor, yanchor), **legend_kwargs)
 
