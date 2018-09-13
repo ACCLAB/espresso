@@ -195,6 +195,12 @@ class espresso_plotter():
         # Check that col, row and color_by keywords are Attributes of the feeds.
         munge.check_group_by_color_by(col, row, color_by, allfeeds)
 
+        if row is None and col is None:
+            err1 = "Either `row` or `col` must be specified. "
+            err2 = "If you do not want to facet along the rows or columns, "
+            err3 = "supply one of the single-category variables (eg. Sex)."
+            raise ValueError(err1 + err2 + err3)
+
         if row is not None:
             # print("Plotting rows by {0}".format(row))
             row_count = int(len(allfeeds[row].cat.categories))
@@ -319,7 +325,6 @@ class espresso_plotter():
                 else:
                     plot_ax = axx
                 print("Plotting {}".format(dim_))
-                plot_ax = axx[j] # the axes to plot on.
                 current_facet_feeds = faceted_feeds[(faceted_feeds.index == dim_) &
                                                     (faceted_feeds.Valid)]
                 current_facet_flies = faceted_flies[faceted_flies.index == dim_]
@@ -334,7 +339,7 @@ class espresso_plotter():
         # Note the we remove the left spine (set to True).
         grid_kwargs = dict(alpha=0.75, which='major', linewidth=1)
         despine_kwargs = dict(left=True, trim=False, offset=5)
-        if len(axx) > 1:
+        if more_than_one_panel:
             for a in axx.flatten():
                 # Plot vertical grid lines if desired.
                 if gridlines:
