@@ -74,12 +74,13 @@ def feedlog(path_to_csv):
     feedlog_csv = read_csv(path_to_csv)
 
     # Rename columns.
-    feedlog_csv.rename(columns={"Food 1":"Tube1",
-                                "Food 2":"Tube2",
-                                'Volume-mm3':'FeedVol_µl',
-                                'Duration-ms':'FeedDuration_ms',
-                                'RelativeTime-s':'RelativeTime_s'},
-                        inplace = True)
+    feedlog_csv.rename(columns={"FlyID"             :    "ChamberID",
+                                "Food 1"            :    "Tube1",
+                                "Food 2"            :    "Tube2",
+                                'Volume-mm3'        :   'FeedVol_µl',
+                                'Duration-ms'       :   'FeedDuration_ms',
+                                'RelativeTime-s'    :   'RelativeTime_s'},
+                        inplace=True)
 
     # Check that the feedlog has a nonzero number of rows.
     if len(feedlog_csv) == 0:
@@ -92,9 +93,9 @@ def feedlog(path_to_csv):
     feedlog_csv.drop(feedlog_csv[feedlog_csv['RelativeTime_s'] < 0].index,
                      inplace = True)
 
-    # You have to ADD 1 to match the feedlog FlyID with the corresponding FlyID
+    # You have to ADD 1 to match the feedlog ChamberID with the corresponding ChamberID
     #  in `metadata_csv`.
-    feedlog_csv.FlyID = feedlog_csv.FlyID + 1
+    feedlog_csv.ChamberID = feedlog_csv.ChamberID + 1
 
     return feedlog_csv
 
@@ -103,7 +104,7 @@ def feedlog(path_to_csv):
 def add_padrows(metadata, feedlog, time_end, time_start=0):
     """
     Define 2 padrows per fly, per food choice. This will ensure that feedlogs
-    for each FlyID fully capture the entire experiment duration.
+    for each ChamberID fully capture the entire experiment duration.
 
     Keywords
     --------
@@ -129,13 +130,13 @@ def add_padrows(metadata, feedlog, time_end, time_start=0):
 
     f = feedlog.copy()
 
-    feed_cols = feedlog.columns
+    feed_cols = f.columns
     ncols = len(feed_cols)
     end_time = time_end + 289 # 289 seconds = 4 min, 49 sec.
 
     all_padrows = []
 
-    for flyid in metadata.FlyID.unique():
+    for chamberid in metadata.ChamberID.unique():
         for choice in feedlog.FoodChoice.unique().tolist():
 
             padrow1 = Series(repeat(npnan, ncols), index=feed_cols)
@@ -148,7 +149,7 @@ def add_padrows(metadata, feedlog, time_end, time_start=0):
 
             for padrow in padrows:
                 padrow.loc['FoodChoice'] = choice
-                padrow.loc['FlyID'] = flyid
+                padrow.loc['ChamberID'] = chamberid
                 padrow.loc['Valid'] = False
                 padrow.loc['ExperimentState'] = 'PAD'
 
@@ -156,9 +157,7 @@ def add_padrows(metadata, feedlog, time_end, time_start=0):
                 # padrow.loc['AverageFeedCountPerFly'] = 0
 
             all_padrows = all_padrows + padrows
-
-    f = f.append(all_padrows, ignore_index=True, sort=False)
-    return f
+    return f.append(all_padrows, ignore_index=True, sort=False)
 
 
 
@@ -251,8 +250,8 @@ def detect_non_feeding_flies(metadata_df,feedlog_df):
     Pass along a munged metadata and corresponding munged feedlog.
     Returns the non-feeding flies as a list.
     """
-    non_feeding_flies = [flyid for flyid in metadata_df.FlyID.unique()
-                        if flyid not in feedlog_df.dropna().FlyID.unique()]
+    non_feeding_flies = [chamberid for chamberid in metadata_df.ChamberID.unique()
+                        if chamberid not in feedlog_df.dropna().ChamberID.unique()]
     return non_feeding_flies
 
 
@@ -361,7 +360,7 @@ def groupby_resamp_sum(feeds, group_by_cols, resample_by='10min'):
         feeds.loc[:,'RelativeTime_s'] = to_datetime(feeds['RelativeTime_s'],
                                                     unit='s')
 
-    gbp_cols  = group_by_cols + ["FlyID"]
+    gbp_cols  = group_by_cols + ["ChamberID"]
     df_groupby_resamp_sum = feeds.groupby(gbp_cols)\
                                  .resample(resample_by, on='RelativeTime_s')\
                                  .sum()
@@ -386,7 +385,7 @@ def sum_for_timecourse(resamp_feeds):
     #             *[a for a in added_labels if a in temp_sum.columns]
     #             ]
 
-    cols_of_interest = ['FlyID', 'RelativeTime_s',
+    cols_of_interest = ['ChamberID', 'RelativeTime_s',
                         'AverageFeedVolumePerFly_µl',
                         'AverageFeedCountPerFly',
                         'AverageFeedSpeedPerFly_µl/s'
@@ -428,10 +427,10 @@ def cumsum_for_cumulative(df, group_by_cols):
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
 
-    grp_by = df.groupby(group_by_cols + ['FlyID', 'RelativeTime_s'])
+    grp_by = df.groupby(group_by_cols + ['ChamberID', 'RelativeTime_s'])
     temp1 = grp_by.sum().fillna(0)
 
-    grp_by2 = temp1.groupby(group_by_cols + ['FlyID'])
+    grp_by2 = temp1.groupby(group_by_cols + ['ChamberID'])
     temp2 = grp_by2.cumsum().reset_index()
 
     # Rename for facility in plotting.
@@ -454,12 +453,12 @@ def cumsum_for_cumulative(df, group_by_cols):
     #             inplace=True)
     #
     # # Select only relevant columns.
-    # relevant_cols = ['RelativeTime_s', 'FlyID', 'Cumulative Feed Count',
+    # relevant_cols = ['RelativeTime_s', 'ChamberID', 'Cumulative Feed Count',
     #                  'Cumulative Volume (µl)'] + group_by_cols
     # temp_selection = temp[relevant_cols]
     #
     # # Compute the cumulative sum, by Fly.
-    # gbp_cols  = group_by_cols + ["RelativeTime_s", "FlyID"]
+    # gbp_cols  = group_by_cols + ["RelativeTime_s", "ChamberID"]
     # grs_cumsum = temp_selection.groupby(gbp_cols).cumsum()
     #
     # # Combine metadata with cumsum.
@@ -474,11 +473,11 @@ def cumsum_for_cumulative(df, group_by_cols):
 
 
 
-def assign_food_choice(flyid, choiceid, mapper):
+def assign_food_choice(chamberid, choiceid, mapper):
     """ Convenience function used to assign the food choice. """
     from numpy import nan
     try:
-        return mapper.loc[flyid, 'Tube{}'.format(choiceid)]
+        return mapper.loc[chamberid, 'Tube{}'.format(choiceid)]
 
     except KeyError:
         return nan
@@ -574,19 +573,19 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
 
     df = feeds.copy()
     flies_ = flies.copy()
-    flies_indexed = flies_.set_index('FlyID')
+    flies_indexed = flies_.set_index('ChamberID')
 
     if isinstance(group_by, str):
         if group_by == compare_by:
             raise ValueError("`group_by` and `compare_by` cannot be identical.")
-        gby = ["FlyID", compare_by, color_by, group_by]
+        gby = ["ChamberID", compare_by, color_by, group_by]
         cat_cols = [compare_by, color_by, group_by]
 
     elif isinstance(group_by, (tuple, list)):
         if compare_by in group_by:
             raise ValueError("`compare_by` cannot be one of the factors" +
                              " in `group_by.`")
-        gby = ["FlyID", compare_by, color_by, *group_by]
+        gby = ["ChamberID", compare_by, color_by, *group_by]
         cat_cols = [compare_by, color_by, *group_by]
 
     for c in cat_cols:
@@ -608,15 +607,15 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
     # the time window.
     spacer_timepont = ((end_hour + start_hour) / 2) * 3600
     padrows = []
-    for flyid in flies_.FlyID.unique():
+    for chamberid in flies_.ChamberID.unique():
         for choice in df.FoodChoice.unique().tolist():
             padrow = Series(repeat(npnan, len(df.columns)),
                             index=df.columns)
             padrow.loc['FoodChoice'] = choice
-            padrow.loc['FlyID'] = flyid
+            padrow.loc['ChamberID'] = chamberid
             for g in [c for c in gby
                       if c in flies_indexed.columns]:
-                padrow.loc[g] = flies_indexed.loc[flyid, g]
+                padrow.loc[g] = flies_indexed.loc[chamberid, g]
             padrows.append(padrow)
     df_in_window = df_in_window.append(padrows, ignore_index=True,
                                         sort=False)
@@ -631,8 +630,8 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
         g.sort_values(gby, inplace=True)
     # Merge.
     grouped = merge(left=grouped_sum.drop("RelativeTime_s", axis=1),
-                    right=grouped_min[['FlyID', 'RelativeTime_s']],
-                    left_on='FlyID', right_on='FlyID'
+                    right=grouped_min[['ChamberID', 'RelativeTime_s']],
+                    left_on='ChamberID', right_on='ChamberID'
                       )
 
     # Handle numerical columns properly.
@@ -649,7 +648,7 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
 
     # merge the data for plotting.
     plot_df = merge(left=grouped, right=metadata_for_merge,
-                       left_on="FlyID", right_on="FlyID")
+                       left_on="ChamberID", right_on="ChamberID")
     # Drop superfluous columns.
     plot_df.drop(["Valid"], axis=1, inplace=True)
 

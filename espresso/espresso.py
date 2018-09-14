@@ -78,32 +78,25 @@ class espresso(object):
             datetime_exptname = '_'.join(feedlog.strip('.csv').split('_')[1:3])
 
             # Read in metadata.
-            path_to_metadata = os.path.join(folder,
-                                            feedlog.replace('FeedLog',
-                                                            'MetaData'))
+            path_to_metadata = os.path.join(folder, feedlog.replace('FeedLog',
+                                                                    'MetaData'))
             metadata_csv = munge.metadata(path_to_metadata)
-            metadata_csv['FlyID'] = datetime_exptname + '_Fly' + \
-                                    metadata_csv.ID.astype(str)
+            metadata_csv['ChamberID'] = datetime_exptname + '_Chamber' + \
+                                        metadata_csv.ID.astype(str)
 
             # Save the munged metadata.
             metadata_list.append(metadata_csv)
             # Save the fly IDs.
-            allflies.append(metadata_csv.loc[:,'FlyID'].copy())
+            allflies.append(metadata_csv.loc[:,'ChamberID'].copy())
 
             # Read in feedlog.
             path_to_feedlog = os.path.join(folder,feedlog)
             feedlog_csv = munge.feedlog(path_to_feedlog)
-            feedlog_csv.loc[:,'FlyID'] = datetime_exptname + '_Fly' + feedlog_csv.FlyID.astype(str)
+            feedlog_csv.loc[:,'ChamberID'] = datetime_exptname + '_Chamber' + feedlog_csv.ChamberID.astype(str)
 
             # Detect non-feeding flies, add to the appropriate list.
             non_feeding_flies = non_feeding_flies + munge.detect_non_feeding_flies(metadata_csv,
                 feedlog_csv)
-
-            # # Define 2 padrows per fly, per food choice (in this case, only one),
-            # # that will ensure feedlogs for each FlyID fully capture the entire
-            # # experiment duration.
-            # feedlog_csv = munge.add_padrows(metadata_csv, feedlog_csv,
-            #                                 expt_duration_minutes * 60)
 
             # Add columns in nanoliters.
             feedlog_csv = munge.compute_nanoliter_cols(feedlog_csv)
@@ -120,24 +113,24 @@ class espresso(object):
 
         # Assign feed choice to the allfeeds DataFrame.
         food_choice_cols = allflies.filter(regex='Tube').columns.tolist()
-        food_choice_cols.append('FlyID')
+        food_choice_cols.append('ChamberID')
 
         food_choice_df = allflies[food_choice_cols]
-        food_choice_df.set_index('FlyID', inplace=True)
+        food_choice_df.set_index('ChamberID', inplace=True)
         allfeeds['FoodChoice'] = allfeeds.apply(lambda x:
-                                    munge.assign_food_choice(x['FlyID'],
-                                                         x['ChoiceIdx']+1,
-                                                         food_choice_df),
-                                               axis=1)
+                                    munge.assign_food_choice(x['ChamberID'],
+                                                             x['ChoiceIdx']+1,
+                                                             food_choice_df),
+                                    axis=1)
 
         # Drop row if unable to assign feed choice to the row.
         allfeeds.dropna(axis=0, how='any', inplace=True)
 
         # Define 2 padrows per fly, per food choice (in this case, only one),
-        # that will ensure feedlogs for each FlyID fully capture the entire
+        # that will ensure feedlogs for each ChamberID fully capture the entire
         # experiment duration.
         allfeeds = munge.add_padrows(allflies, allfeeds,
-                                     expt_duration_minutes * 60)
+                                     expt_duration_minutes*60)
 
         # Turn Food Choice into categorical.
         food_choice_col = allfeeds.FoodChoice
@@ -154,7 +147,7 @@ class espresso(object):
 
         # merge metadata with feedlogs.
         allfeeds = pd.merge(allfeeds, allflies,
-                            left_on='FlyID', right_on='FlyID')
+                            left_on='ChamberID', right_on='ChamberID')
 
         # Discard superfluous columns.
         cols_to_drop = ['StartTime', 'StartFrame', 'FeedTubeIdx', 'ChoiceIdx',
@@ -175,12 +168,12 @@ class espresso(object):
         allflies.reset_index(drop=True, inplace=True)
         allfeeds.reset_index(drop=True, inplace=True)
 
-        # Sort by FlyID, then by RelativeTime
-        allfeeds.sort_values(['FlyID', 'RelativeTime_s'], inplace=True)
+        # Sort by ChamberID, then by RelativeTime
+        allfeeds.sort_values(['ChamberID', 'RelativeTime_s'], inplace=True)
 
         # Record which flies did not feed.
         allflies['AtLeastOneFeed'] = np.repeat(True,len(allflies))
-        non_feeding_flies_idx = allflies[allflies.FlyID.isin(non_feeding_flies)].index
+        non_feeding_flies_idx = allflies[allflies.ChamberID.isin(non_feeding_flies)].index
         allflies.loc[non_feeding_flies_idx, 'AtLeastOneFeed'] = False
 
 

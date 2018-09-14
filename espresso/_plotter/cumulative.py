@@ -60,7 +60,7 @@ class cumulative_plotter:
 
         # # merge with metadata.
         # plotdf = merge(left=self.__flies, right=plotdf,
-        #                left_on='FlyID', right_on='FlyID')
+        #                left_on='ChamberID', right_on='ChamberID')
         # sys.stdout.write('.')
 
         if volume_unit is not None:

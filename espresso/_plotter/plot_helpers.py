@@ -82,14 +82,12 @@ def compute_percent_feeding(all_feeds, all_flies, facets, start_hour, end_hour):
     if isinstance(facets, list):
         grpby = facets
         feed_boolean_grpby = grpby.copy()
-        feed_boolean_grpby.append('FlyID')
+        feed_boolean_grpby.append('ChamberID')
     else:
         raise TypeError('`facet` needs to be a list.')
     try:
         flies_group_by = [a for a in facets if a in all_flies.columns]
-        fly_counts = all_flies.groupby(flies_group_by)\
-                              .count()\
-                              .FlyID
+        fly_counts = all_flies.groupby(flies_group_by).count().ChamberID
     except ValueError: # flies_group_by is []
         fly_counts = len(all_flies)
 
