@@ -172,22 +172,22 @@ def format_timecourse_xaxis(ax, min_x_seconds, max_x_seconds,
 
 def prep_feeds_for_contrast_plot(feeds, flies, added_labels,
                                 group_by, compare_by, color_by,
-                                start_hour, end_hour, type):
+                                start_hour, end_hour):
     """Convenience function to munge the feeds for contrast plotting."""
 
     import pandas as pd
     from .._munger import munger as munge
 
-    import warnings
-    if start_hour > 0.:
-        err = ("Selecting a time slice not starting from 0 " +
-               "currently leads to nonfeeders getting dropped. " +
-               "A patch will be available in v0.4.2.")
-        warnings.warn(err)
+    # import warnings
+    # if start_hour > 0.:
+    #     err = ("Selecting a time slice not starting from 0 " +
+    #            "currently leads to nonfeeders getting dropped. " +
+    #            "A patch will be available in v0.4.2.")
+    #     warnings.warn(err)
 
     plot_df = munge.contrast_plot_munger(feeds, flies, added_labels,
                                          group_by, compare_by, color_by,
-                                         start_hour, end_hour, type)
+                                         start_hour, end_hour)
 
     if isinstance(group_by, str):
         to_make_cat = [group_by, compare_by]
@@ -322,8 +322,7 @@ def get_new_prefix(unit):
 
 
 
-def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
-                             palette=None, title=None, contrastplot_kwargs=None):
+def dabest_plotter(plot_df, yvar, color_by, **kwargs):
 
     import numpy as np
     import dabest
@@ -331,32 +330,25 @@ def generic_contrast_plotter(plot_df, yvar, color_by, fig_size=None,
     import warnings
     warnings.filterwarnings("ignore", module='mpl_toolkits')
 
-    # Handle contrastplot keyword arguments.
-    default_kwargs = dict(float_contrast=False, font_scale=1.)
-    if contrastplot_kwargs is None:
-        contrastplot_kwargs = default_kwargs
-    else:
-        contrastplot_kwargs = munge.merge_two_dicts(default_kwargs,
-            contrastplot_kwargs)
-
-    if palette is None:
-        palette = 'tab10'
-    plot_groups = plot_df[color_by].unique()
-    custom_pal = create_palette(palette, plot_groups)
-
     # Properly arrange idx for grouping.
     unique_ids = plot_df.plot_groups_with_contrast.unique()
     split_idxs = np.array_split(unique_ids, len(plot_df.plot_groups.unique()))
     idx = [tuple(i) for i in split_idxs]
 
+    # Set palette.
+    if 'custom_palette' not in kwargs.keys():
+        color_groups = plot_df[color_by].unique()
+        kwargs['custom_palette'] = create_palette('tab10', color_groups)
+
     # Make sure the ylims don't stretch below zero but still capture all
     # the datapoints.
-    ymax = np.max(plot_df[yvar]) * 1.1
+    if 'swarm_ylim' not in kwargs.keys():
+        ymin = np.min(plot_df[yvar])
+        if ymin == 0.:
+            ymin = -1
+        kwargs['swarm_ylim'] = (ymin, np.max(plot_df[yvar]) * 1.1)
 
     f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
                       y=yvar, idx=idx, color_col=color_by,
-                      custom_palette=custom_pal,
-                      fig_size=fig_size,
-                      swarm_ylim=(-ymax/10, ymax),
-                      **contrastplot_kwargs)
+                      **kwargs)
     return f, b

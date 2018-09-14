@@ -136,7 +136,8 @@ class espresso(object):
         # Define 2 padrows per fly, per food choice (in this case, only one),
         # that will ensure feedlogs for each FlyID fully capture the entire
         # experiment duration.
-        allfeeds = munge.add_padrows(allflies, allfeeds, expt_duration_minutes)
+        allfeeds = munge.add_padrows(allflies, allfeeds,
+                                     expt_duration_minutes * 60)
 
         # Turn Food Choice into categorical.
         food_choice_col = allfeeds.FoodChoice

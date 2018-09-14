@@ -100,7 +100,7 @@ def feedlog(path_to_csv):
 
 
 
-def add_padrows(metadata, feedlog, expt_duration_minutes):
+def add_padrows(metadata, feedlog, time_end, time_start=0):
     """
     Define 2 padrows per fly, per food choice. This will ensure that feedlogs
     for each FlyID fully capture the entire experiment duration.
@@ -113,8 +113,8 @@ def add_padrows(metadata, feedlog, expt_duration_minutes):
     feedlog_df: pandas DataFrame
         The corresponding (munged) Espresso feedlog.
 
-    expt_duration_seconds: int
-        The total length of the experiment, in seconds.
+    time_end, time_start: int
+        In seconds. The timepoints at which to add padrows.
 
     Returns
     -------
@@ -131,7 +131,7 @@ def add_padrows(metadata, feedlog, expt_duration_minutes):
 
     feed_cols = feedlog.columns
     ncols = len(feed_cols)
-    end_time = (expt_duration_minutes * 60) + 289 # 289 seconds = 4 min, 49 sec.
+    end_time = time_end + 289 # 289 seconds = 4 min, 49 sec.
 
     all_padrows = []
 
@@ -141,7 +141,7 @@ def add_padrows(metadata, feedlog, expt_duration_minutes):
             padrow1 = Series(repeat(npnan, ncols), index=feed_cols)
             padrow2 = Series(repeat(npnan, ncols), index=feed_cols)
 
-            padrow1.loc['RelativeTime_s'] = 0.5
+            padrow1.loc['RelativeTime_s'] = time_start + 0.5
             padrow2.loc['RelativeTime_s'] = end_time
 
             padrows = [padrow1, padrow2]
@@ -562,42 +562,40 @@ def cat_categorical_columns(df, group_by, compare_by):
 
 
 
-def contrast_plot_munger(feeds, flies, added_labels,
-                         group_by, compare_by, color_by, start_hour, end_hour,
-                         type):
+def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
+                         color_by, start_hour, end_hour):
     """Convenience Function for munging before contrast plotting."""
 
+    from numpy import unique, repeat
+    from numpy import nan as npnan
+    from pandas import Series, DataFrame, concat, merge
+    # from . import __static as static
 
-    from numpy import unique
-    from pandas import concat, DataFrame
-    from . import __static as static
 
-
-    grpby_cols = static.grpby_cols.copy()
     df = feeds.copy()
+    flies_ = flies.copy()
+    flies_indexed = flies_.set_index('FlyID')
 
     if isinstance(group_by, str):
         if group_by == compare_by:
             raise ValueError("`group_by` and `compare_by` cannot be identical.")
-        to_check = [compare_by, color_by, group_by]
+        gby = ["FlyID", compare_by, color_by, group_by]
+        cat_cols = [compare_by, color_by, group_by]
 
     elif isinstance(group_by, (tuple, list)):
         if compare_by in group_by:
             raise ValueError("`compare_by` cannot be one of the factors" +
                              " in `group_by.`")
-        to_check = [compare_by, color_by, *group_by]
+        gby = ["FlyID", compare_by, color_by, *group_by]
+        cat_cols = [compare_by, color_by, *group_by]
 
-    for c in to_check:
+    for c in cat_cols:
         check_column(c, df)
 
-    if len(df[compare_by].unique())<2:
+    if len(df[compare_by].unique()) < 2:
         err = '{} has less than 2 categories'.format(compare_by) + \
               ' and cannot be used for `compare_by`.'
         raise ValueError(err)
-
-
-    gby = [*to_check, *grpby_cols]
-    grpby_cols_all = unique(gby).tolist()
 
 
     # Select feeds in time window
@@ -606,72 +604,78 @@ def contrast_plot_munger(feeds, flies, added_labels,
     df_in_window = df[after_start & before_end].copy()
 
 
-    if type == 'volume_duration':
-        for col in ['AverageFeedVolumePerFly_µl','FeedDuration_ms']:
-            df_in_window[col].fillna(value=0, inplace=True)
-
-        cols_of_interest = grpby_cols_all + ['AverageFeedCountPerFly',
-                                             'AverageFeedVolumePerFly_µl',
-                                             'FeedDuration_ms']
-
-        df_grouped = df_in_window[cols_of_interest]\
-                        .groupby(grpby_cols_all).sum()
-
-    elif type == 'latency':
-        cols_of_interest = grpby_cols_all + ['RelativeTime_s']
-
-        df_grouped = df_in_window.dropna()[cols_of_interest]\
-                                 .groupby(grpby_cols_all).min()
-
-
-    # for some reason, groupby produces NaN rows..
-    plot_df = DataFrame(df_grouped.to_records()).dropna()
-    plot_df.reset_index(drop=True, inplace=True)
-
-    # Create zero rows for inactive flies.
-    inactive_flies = [a for a in flies.FlyID.unique()
-                      if a not in plot_df.FlyID.unique()]
-    cols_from_metadata = ['FlyCountInChamber', 'Genotype','Sex',
-                          'Status','Temperature', *[a for a in added_labels
-                                                    if a in flies.columns]
-                         ]
-    inactive_rows = flies.set_index('FlyID')\
-                         .loc[inactive_flies, cols_from_metadata]\
-                         .reset_index()
-    plot_df = concat([inactive_rows, plot_df], sort=True)
-    plot_df.fillna(0, inplace=True)
+    # Add padrows for food choices that did not get fed upon within
+    # the time window.
+    spacer_timepont = ((end_hour + start_hour) / 2) * 3600
+    padrows = []
+    for flyid in flies_.FlyID.unique():
+        for choice in df.FoodChoice.unique().tolist():
+            padrow = Series(repeat(npnan, len(df.columns)),
+                            index=df.columns)
+            padrow.loc['FoodChoice'] = choice
+            padrow.loc['FlyID'] = flyid
+            for g in [c for c in gby
+                      if c in flies_indexed.columns]:
+                padrow.loc[g] = flies_indexed.loc[flyid, g]
+            padrows.append(padrow)
+    df_in_window = df_in_window.append(padrows, ignore_index=True,
+                                        sort=False)
 
 
-    if type == 'volume_duration':
-        plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
-        plot_df['FeedDuration_second'] = plot_df['FeedDuration_min'] * 60
+    # Groupby and sum.
+    grouped_sum = df_in_window.groupby(gby).sum()
+    # Groupby and min for latency to first feed.
+    grouped_min = df_in_window.dropna().groupby(gby).min()
+    for g in [grouped_sum, grouped_min]:
+        g.reset_index(inplace=True)
+        g.sort_values(gby, inplace=True)
+    # Merge.
+    grouped = merge(left=grouped_sum.drop("RelativeTime_s", axis=1),
+                    right=grouped_min[['FlyID', 'RelativeTime_s']],
+                    left_on='FlyID', right_on='FlyID'
+                      )
 
-        av = plot_df['AverageFeedVolumePerFly_µl']
-        t = plot_df['FeedDuration_ms']
-        plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
+    # Handle numerical columns properly.
+    for col in ['AverageFeedSpeedPerFly_µl/s']:
+        grouped[col].replace(to_replace=0, value=npnan, inplace=True)
 
-        rename_cols = {
-                'AverageFeedCountPerFly':'Total\nFeed Count\nPer Fly',
-                'AverageFeedVolumePerFly_µl':'Total\nFeed Volume\nPer Fly (µl)',
+    # Handle categorical columns.
+    # Have to do this because something like Temperature
+    to_drop = [c for c in cat_cols if c in flies_.columns]
+    grouped.drop(to_drop, inplace=True, axis=1)
+    # Add the categories columns
+    to_add = [c for c in gby if c in flies_.columns]
+    metadata_for_merge = flies_[to_add]
 
-                'FeedDuration_min':'Total Time\nFeeding\nPer Fly (min)',
-                'FeedDuration_second':'Total Time\nFeeding\nPer Fly (sec)',
-                      }
+    # merge the data for plotting.
+    plot_df = merge(left=grouped, right=metadata_for_merge,
+                       left_on="FlyID", right_on="FlyID")
+    # Drop superfluous columns.
+    plot_df.drop(["Valid"], axis=1, inplace=True)
 
-        plot_df.rename(columns=rename_cols, inplace=True)
+    # Rename columns for easy plotting.
+    plot_df['RelativeTime_min'] = plot_df['RelativeTime_s'] / 60
+    plot_df['RelativeTime_hour'] = plot_df['RelativeTime_min'] / 60
 
-    elif type == 'latency':
-        plot_df['RelativeTime_min'] = plot_df['RelativeTime_s'] / 60
-        plot_df['RelativeTime_hour'] = plot_df['RelativeTime_min'] / 60
+    plot_df['FeedDuration_min'] = plot_df['FeedDuration_ms'] / 60000
 
-        rename_cols = {'RelativeTime_min':'Latency to\nFirst Feed (min)',
-                       'RelativeTime_sec':'Latency to\nFirst Feed (sec)',
-                       'RelativeTime_hour':'Latency to\nFirst Feed (hr)'}
-        plot_df.rename(columns=rename_cols, inplace=True)
+    av = plot_df['AverageFeedVolumePerFly_µl']
+    t = plot_df['FeedDuration_ms']
+    plot_df['Feed Speed\nPer Fly (nl/s)'] = (av / t) * 1000000
 
+    rename_cols = {
+        'AverageFeedCountPerFly'     :  'Total\nFeed Count\nPer Fly',
+        'AverageFeedVolumePerFly_µl' :  'Total\nFeed Volume\nPer Fly (µl)',
+
+        'FeedDuration_min'           :  'Total Time\nFeeding\nPer Fly (min)',
+        'FeedDuration_s'             :  'Total Time\nFeeding\nPer Fly (sec)',
+
+        'RelativeTime_min'           :    'Latency to\nFirst Feed (min)',
+        'RelativeTime_sec'           :    'Latency to\nFirst Feed (sec)',
+        'RelativeTime_hour'          :    'Latency to\nFirst Feed (hr)'}
+    plot_df.rename(columns=rename_cols, inplace=True)
 
     plot_df = cat_categorical_columns(plot_df, group_by, compare_by)
-
 
     return plot_df
 
