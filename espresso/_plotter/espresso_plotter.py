@@ -337,7 +337,8 @@ class espresso_plotter():
         # Plot gridlines.
         # Position the raster color legend, and despine accordingly.
         # Note the we remove the left spine (set to True).
-        grid_kwargs = dict(alpha=0.75, which='major', linewidth=1)
+        grid_kwargs = dict(alpha=0.75, which='major',
+                           linestyle='solid', linewidth=1)
         despine_kwargs = dict(left=True, trim=False, offset=5)
         if row_count + col_count > 2:
             for a in axx.flatten():
