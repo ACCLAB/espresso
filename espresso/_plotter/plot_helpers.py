@@ -343,7 +343,7 @@ def dabest_plotter(plot_df, yvar, color_by, **kwargs):
     if 'swarm_ylim' not in kwargs.keys():
         ymin = np.min(plot_df[yvar])
         if ymin == 0.:
-            ymin = -1
+            ymin = -5
         kwargs['swarm_ylim'] = (ymin, np.max(plot_df[yvar]) * 1.1)
 
     f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
