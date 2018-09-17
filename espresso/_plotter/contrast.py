@@ -82,7 +82,7 @@ class contrast_plotter:
         from . import plot_helpers as plothelp
 
         start, end = plothelp.check_time_window(start_hour, end_hour,
-                                               self.__expt_end_hour)
+                                                self.__expt_end_hour)
 
         plot_df = plothelp.prep_feeds_for_contrast_plot(self.__feeds,
                                                         self.__flies,
