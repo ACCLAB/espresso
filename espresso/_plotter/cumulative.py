@@ -43,6 +43,12 @@ class cumulative_plotter:
         warnings.filterwarnings("ignore", category=FutureWarning) # from scipy
         warnings.filterwarnings("ignore", category=UserWarning) # from matplotlib
 
+        if row is None and col is None:
+            err1 = "Either `row` or `col` must be specified. "
+            err2 = "If you do not want to facet along the rows or columns, "
+            err3 = "supply one of the single-category variables (eg. Sex)."
+            raise ValueError(err1 + err2 + err3)
+
         sys.stdout.write('Munging')
         # Handle the group_by and color_by keywords.
         munge.check_group_by_color_by(col, row, color_by, self.__feeds)
@@ -143,8 +149,7 @@ class cumulative_plotter:
 
 
 
-    def consumption(self, row, col, color_by,
-                    end_hour, start_hour=0,
+    def consumption(self, color_by, end_hour, row=None, col=None, start_hour=0,
                     ylim=None, palette=None,
                     timebin='5min', volume_unit='nanoliter',
                     height=10, width=10, return_plot_data=False,
@@ -222,8 +227,7 @@ class cumulative_plotter:
                                         gridlines=gridlines)
 
 
-    def feed_count(self, row, col, color_by,
-                    end_hour, start_hour=0,
+    def feed_count(self, color_by, end_hour, row=None, col=None, start_hour=0,
                     ylim=None, palette=None,
                     timebin='5min', height=10, width=10,
                     return_plot_data=False,
