@@ -143,11 +143,14 @@ class espresso(object):
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('W','w')
         allflies.loc[:,'Genotype'] = allflies.Genotype.str.replace('iii','111')
 
-        munge.make_categorical_columns(allflies)
-
         # merge metadata with feedlogs.
         allfeeds = pd.merge(allfeeds, allflies,
                             left_on='ChamberID', right_on='ChamberID')
+
+        # Set relevant columns as Categorical
+        munge.make_categorical_columns(allflies)
+        munge.make_categorical_columns(allfeeds)
+
 
         # Discard superfluous columns.
         cols_to_drop = ['StartTime', 'StartFrame', 'FeedTubeIdx', 'ChoiceIdx',

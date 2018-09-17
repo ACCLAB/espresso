@@ -293,9 +293,13 @@ def make_categorical_columns(df, added_labels=None):
         try:
             c = df[col]
             df.loc[:, col] = pd.Categorical(c, categories=np.sort(c.unique()),
-                                                  ordered=True)
+                                            ordered=True)
         except KeyError:
             pass
+
+    # Remove unused categories.
+    for c in ['Status', 'Genotype', *cols]:
+        df.loc[:, c].cat.remove_unused_categories(inplace=True)
 
 
 
