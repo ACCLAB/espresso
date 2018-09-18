@@ -60,7 +60,7 @@ class espresso_plotter():
 
     def __plot_rasters(self, current_facet_feeds, current_facet_flies,
                        maxflycount, color_by, palette,
-                       plot_ax, add_flyid_labels):
+                       plot_ax, add_chamberid_labels):
         """
         Helper function that actually plots the rasters.
         """
@@ -69,13 +69,13 @@ class espresso_plotter():
 
         # Identify legitimate feeds; sort by time of first feed.
         _feeding_flies = current_facet_feeds.sort_values(['RelativeTime_s','FeedDuration_s'])\
-                                            .FlyID.drop_duplicates()\
+                                            .ChamberID.drop_duplicates()\
                                             .tolist()
-        # Index the current faceted feeds by FlyID.
-        _current_facet_fly_index = current_facet_feeds.reset_index().set_index('FlyID')
+        # Index the current faceted feeds by ChamberID.
+        _current_facet_fly_index = current_facet_feeds.reset_index().set_index('ChamberID')
 
         # Next, identify which flies did not feed (aka not in list above.)
-        _non_feeding_flies = current_facet_flies[current_facet_flies.AtLeastOneFeed == False].FlyID.tolist()
+        _non_feeding_flies = current_facet_flies[current_facet_flies.AtLeastOneFeed == False].ChamberID.tolist()
         _flies_in_order = _feeding_flies + _non_feeding_flies
 
         for k, fly in enumerate(_flies_in_order):
@@ -119,7 +119,7 @@ class espresso_plotter():
             except KeyError:
                 pass
 
-            if add_flyid_labels:
+            if add_chamberid_labels:
                 if fly in _non_feeding_flies:
                     label_color = 'grey'
                 else:
@@ -134,7 +134,7 @@ class espresso_plotter():
 
 
     def rasters(self, start_hour, end_hour, color_by=None, col=None, row=None,
-                height=10, width=10, add_flyid_labels=True, palette=None,
+                height=10, width=10, add_chamberid_labels=True, palette=None,
                 ax=None, gridlines=True):
         """
         Produces a raster plot of feed events.
@@ -153,8 +153,8 @@ class espresso_plotter():
             Accepts a categorical column in the espresso object. Each group in
             this column will be plotted on along the desired axis.
 
-        add_flyid_labels: boolean, default True
-            If True, the FlyIDs for each fly will be displayed on the left of each raster row.
+        add_chamberid_labels: boolean, default True
+            If True, the ChamberIDs will be displayed on the left of each raster row.
 
         height, width: float, default 10, 10
             The height and width of each panel in inches.
@@ -195,6 +195,12 @@ class espresso_plotter():
         # Check that col, row and color_by keywords are Attributes of the feeds.
         munge.check_group_by_color_by(col, row, color_by, allfeeds)
 
+        if row is None and col is None:
+            err1 = "Either `row` or `col` must be specified. "
+            err2 = "If you do not want to facet along the rows or columns, "
+            err3 = "supply one of the single-category variables (eg. Sex)."
+            raise ValueError(err1 + err2 + err3)
+
         if row is not None:
             # print("Plotting rows by {0}".format(row))
             row_count = int(len(allfeeds[row].cat.categories))
@@ -228,13 +234,13 @@ class espresso_plotter():
         # the most numerous group. This is then used to scale the individual
         # facets.
         allflies_grpby = allflies.groupby(facets_metadata)
-        maxflycount = allflies_grpby.count().FlyID.max()
+        maxflycount = allflies_grpby.count().ChamberID.max()
 
         # Get the total flycount.
         try:
             in_allflies = [a for a in facets if a in allflies.columns]
             allflies_grpby = allflies.groupby(in_allflies)
-            maxflycount = allflies_grpby.count().FlyID.max()
+            maxflycount = allflies_grpby.count().ChamberID.max()
         except KeyError:
             # group_by is not a column in the metadata,
             # so we assume that the number of flies in the raster plot
@@ -302,7 +308,7 @@ class espresso_plotter():
                     current_facet_feeds = current_facet_feeds[current_facet_feeds.Valid]
                     self.__plot_rasters(current_facet_feeds, current_facet_flies,
                                         maxflycount, color_by, color_pal,
-                                        plot_ax, add_flyid_labels)
+                                        plot_ax, add_chamberid_labels)
                     plot_ax.set_title("{}; {}".format(col_, row_))
 
         else:
@@ -319,22 +325,22 @@ class espresso_plotter():
                 else:
                     plot_ax = axx
                 print("Plotting {}".format(dim_))
-                plot_ax = axx[j] # the axes to plot on.
                 current_facet_feeds = faceted_feeds[(faceted_feeds.index == dim_) &
                                                     (faceted_feeds.Valid)]
                 current_facet_flies = faceted_flies[faceted_flies.index == dim_]
                 self.__plot_rasters(current_facet_feeds, current_facet_flies,
                                     maxflycount, color_by, color_pal,
-                                    plot_ax, add_flyid_labels)
+                                    plot_ax, add_chamberid_labels)
                 plot_ax.set_title(dim_)
 
 
         # Plot gridlines.
         # Position the raster color legend, and despine accordingly.
         # Note the we remove the left spine (set to True).
-        grid_kwargs = dict(alpha=0.75, which='major', linewidth=1)
+        grid_kwargs = dict(alpha=0.75, which='major',
+                           linestyle='solid', linewidth=1)
         despine_kwargs = dict(left=True, trim=False, offset=5)
-        if len(axx) > 1:
+        if row_count + col_count > 2:
             for a in axx.flatten():
                 # Plot vertical grid lines if desired.
                 if gridlines:
@@ -429,8 +435,8 @@ class espresso_plotter():
         for z in facets:
             if z not in all_feeds.columns:
                 raise KeyError('{} is not a column in FeedLog. Please check'.format(z))
-            if z not in all_flies.columns:
-                raise KeyError('{} is not a column in CountLog. Please check'.format(z))
+            # if z not in all_flies.columns:
+            #     raise KeyError('{} is not a column in CountLog. Please check'.format(z))
 
         if plot_along not in ["row", "column"]:
             err1 = "You specified plot_along={}".format(plot_along)
@@ -559,15 +565,13 @@ class espresso_plotter():
         f.suptitle(title, y=1.04)
 
         # Add custom legend and title.
-        legend_kwargs = {'frameon': False,
-                         'borderaxespad': 1,
-                         'loc': 'center',
+        legend_kwargs = {'frameon': False, 'borderaxespad': 1, 'loc': 'center',
                          'edgecolor': 'white'}
 
         if rotate_ticks is True:
-            yanchor = -0.87
-        else:
             yanchor = -0.3
+        else:
+            yanchor = -0.1
 
         if plot_along == 'column':
             nc = len(subplots)
@@ -575,9 +579,9 @@ class espresso_plotter():
                 # If we have an odd number of columns,
                 # find the middle axes, and xposition the legend in its middle.
                 if rotate_ticks:
-                    xanchor = 0.6
+                    xanchor = 0.3
                 else:
-                    xanchor = 0.5
+                    xanchor = 0.1
                 legend_ax = int((nc + 1) / 2 - 1)
             else:
                 xanchor = 1
@@ -596,9 +600,9 @@ class espresso_plotter():
 
         elif plot_along == 'row':
             if rotate_ticks:
-                xanchor = 0.6
+                xanchor = 0.3
             else:
-                xanchor = 0.5
+                xanchor = 0.1
             axx[-1].legend(handles=legend_elements, ncol=1,
                           bbox_to_anchor=(xanchor, yanchor), **legend_kwargs)
 

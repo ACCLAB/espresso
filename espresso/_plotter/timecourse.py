@@ -5,6 +5,7 @@
 
 """
 timecourse plot functions for espresso objects.
+CURRENTLY DEPRECATED.
 """
 
 
