@@ -19,7 +19,7 @@ class contrast_plotter:
     feed_speed_per_fly
 
     feed_duration_per_fly
-    latency_to_feed_per_fly
+    latency_to_feed
     """
 
 
