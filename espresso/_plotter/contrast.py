@@ -91,7 +91,8 @@ class contrast_plotter:
                                                         color_by, start, end)
 
         yvar = 'Total\nFeed Count\nPer Fly'
-        kwargs['float_contrast'] = False # Fix this as False!
+        if 'float_contrast' not in kwargs.keys():
+            kwargs['float_contrast'] = False
         fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -258,7 +259,8 @@ class contrast_plotter:
             yvar = 'Feed Speed\nPer Fly ({}l/s)'.format(new_unit)
             plot_df[yvar] = plot_df[plot_col] * multiplier
 
-        kwargs['float_contrast'] = False # Fix this as False!
+        if 'float_contrast' not in kwargs.keys():
+            kwargs['float_contrast'] = False
         fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -335,7 +337,8 @@ class contrast_plotter:
                             .format(time_unit, [a for a in time_dict.keys()])
                             )
         yvar = 'Total Time\nFeeding\nPer Fly ({})'.format(time_dict[time_unit])
-        kwargs['float_contrast'] = False # Fix this as False!
+        if 'float_contrast' not in kwargs.keys():
+            kwargs['float_contrast'] = False
         fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
 
         title = '{} hr to {} hr'.format(start, end)
@@ -348,9 +351,9 @@ class contrast_plotter:
 
 
 
-    def latency_to_feed_per_fly(self, group_by, compare_by, time_unit='minute',
-                                color_by='Genotype', return_plot_data=False,
-                                **kwargs):
+    def latency_to_feed(self, group_by, compare_by, time_unit='minute',
+                        color_by='Genotype', return_plot_data=False,
+                        **kwargs):
 
         """
         Produces a contrast plot depicting the mean differences in the latency
@@ -413,7 +416,8 @@ class contrast_plotter:
                             .format(time_unit, [a for a in time_dict.keys()])
                             )
         yvar = 'Latency to\nFirst Feed ({})'.format(time_dict[time_unit])
-        kwargs['float_contrast'] = False # Fix this as False!
+        if 'float_contrast' not in kwargs.keys():
+            kwargs['float_contrast'] = False
         fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
 
         title = '{} hr to {} hr'.format(0, end_hr)
