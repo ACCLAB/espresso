@@ -430,50 +430,38 @@ def cumsum_for_cumulative(df, group_by_cols):
     """
     Convenience function to sum a resampled feedlog for timecourse plotting.
     """
+    from pandas import merge
 
-    grp_by = df.groupby(group_by_cols + ['ChamberID', 'RelativeTime_s'])
-    temp1 = grp_by.sum().fillna(0)
+    """
+    Convenience function to sum a resampled feedlog for timecourse plotting.
+    """
+    from pandas import merge
 
-    grp_by2 = temp1.groupby(group_by_cols + ['ChamberID'])
-    temp2 = grp_by2.cumsum().reset_index()
+    temp = df.copy()
 
     # Rename for facility in plotting.
-    temp2.rename(columns={'AverageFeedVolumePerFly_µl': 'Cumulative Volume (µl)',
-                          'AverageFeedCountPerFly':     'Cumulative Feed Count'},
+    temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
+                          'AverageFeedCountPerFly':'Cumulative Feed Count'},
                 inplace=True)
 
-    return __add_time_column(temp2)
 
-    # from pandas import merge
-    # # from . import __static as static
-    #
-    # temp = df.copy()
-    # # grpby_cols = [a for a in static.grpby_cols + added_labels
-    # #               if a is not None]
-    #
-    # # Rename for facility in plotting.
-    # temp.rename(columns={'AverageFeedVolumePerFly_µl':'Cumulative Volume (µl)',
-    #                       'AverageFeedCountPerFly':'Cumulative Feed Count'},
-    #             inplace=True)
-    #
-    # # Select only relevant columns.
-    # relevant_cols = ['RelativeTime_s', 'ChamberID', 'Cumulative Feed Count',
-    #                  'Cumulative Volume (µl)'] + group_by_cols
-    # temp_selection = temp[relevant_cols]
-    #
-    # # Compute the cumulative sum, by Fly.
-    # gbp_cols  = group_by_cols + ["RelativeTime_s", "ChamberID"]
-    # grs_cumsum = temp_selection.groupby(gbp_cols).cumsum()
-    #
-    # # Combine metadata with cumsum.
-    # grs_cumsum = merge(temp_selection, grs_cumsum,
-    #                    left_index=True, right_index=True)
-    #
+    # Select only relevant columns.
+    for_cumsum = ['RelativeTime_s', 'ChamberID',
+                  'Cumulative Feed Count',
+                  'Cumulative Volume (µl)']
+
+    # Compute the cumulative sum, by Chamber.
+    grs_cumsum = temp[for_cumsum].groupby('ChamberID').cumsum()
+
+    # Combine metadata with cumsum.
+    out = merge(grs_cumsum,
+                temp[group_by_cols + ['RelativeTime_s', 'ChamberID']],
+                left_index=True, right_index=True)
+
     # Add time column to facilitate plotting.
-    # out = __add_time_column(grs_cumsum)
-    # return out
-    #
-    # return grs_cumsum
+    out = __add_time_column(out)
+
+    return out
 
 
 
@@ -684,7 +672,7 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
             missing = concat(missing_rows)
             plotdf = plotdf.reset_index().append(missing, ignore_index=True, sort=False)
             plotdf.sort_values(gby, inplace=True)
-            
+
         else:
             plotdf.reset_index(inplace=True)
 
