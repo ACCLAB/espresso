@@ -188,7 +188,7 @@ def compute_time_cols(feedlog_df):
     return f
 
 
-def __add_time_column(df):
+def add_time_column(df):
     """
     Convenience function to add a non DateTime column representing the time.
     """
@@ -398,7 +398,7 @@ def sum_for_timecourse(resamp_feeds):
     temp_sum = temp_sum[cols_of_interest]
 
     temp_sum.fillna(0, inplace=True)
-    # temp_sum = __add_time_column(temp_sum)
+    # temp_sum = add_time_column(temp_sum)
 
     return temp_sum
 
@@ -459,7 +459,7 @@ def cumsum_for_cumulative(df, group_by_cols):
                 left_index=True, right_index=True)
 
     # Add time column to facilitate plotting.
-    out = __add_time_column(out)
+    out = add_time_column(out)
 
     return out
 
@@ -598,7 +598,8 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
     # the time window.
     inactive_chambers_in_time_window = [c for c in flies_.ChamberID.unique()
                                         if c not in df_in_window.ChamberID.unique()]
-    spacer_timepont = ((end_hour + start_hour) / 2) * 3600
+    # spacer_timepont = ((end_hour + start_hour) / 2) * 3600
+
     padrows = []
     for chamberid in inactive_chambers_in_time_window:
         for choice in df.FoodChoice.unique().tolist():
