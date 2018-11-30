@@ -60,14 +60,20 @@ class cumulative_plotter:
         resamp_feeds = munge.groupby_resamp_sum(self.__feeds, gbp_cols, timebin)
         sys.stdout.write('.')
 
-        # Perform cumulative summation.
-        plotdf = munge.cumsum_for_cumulative(resamp_feeds, gbp_cols)
+        # Convert hour input to seconds.
+        min_time_sec = start_hour * 3600
+        max_time_sec = end_hour * 3600
+        # Filter the cumsum dataframe for the desired time window.
+        resamp_feeds = munge.add_time_column(resamp_feeds)
+        resamp_feeds_win = resamp_feeds[
+                        (resamp_feeds.time_s >= min_time_sec) &
+                        (resamp_feeds.time_s <= max_time_sec)]
         sys.stdout.write('.')
 
-        # # merge with metadata.
-        # plotdf = merge(left=self.__flies, right=plotdf,
-        #                left_on='ChamberID', right_on='ChamberID')
-        # sys.stdout.write('.')
+
+        # Perform cumulative summation.
+        plotdf = munge.cumsum_for_cumulative(resamp_feeds_win, gbp_cols)
+        sys.stdout.write('.')
 
         if volume_unit is not None:
             if volume_unit.strip().split('lit')[0] == 'micro':
@@ -85,20 +91,20 @@ class cumulative_plotter:
         if palette is None:
             palette = 'tab10'
 
-        # Convert hour input to seconds.
-        min_time_sec = start_hour * 3600
-        max_time_sec = end_hour * 3600
-
-        # Filter the cumsum dataframe for the desired time window.
-        df_win = plotdf[(plotdf.time_s >= min_time_sec) &
-                        (plotdf.time_s <= max_time_sec)]
-        sys.stdout.write('.')
+        # # Convert hour input to seconds.
+        # min_time_sec = start_hour * 3600
+        # max_time_sec = end_hour * 3600
+        #
+        # # Filter the cumsum dataframe for the desired time window.
+        # df_win = plotdf[(plotdf.time_s >= min_time_sec) &
+        #                 (plotdf.time_s <= max_time_sec)]
+        # sys.stdout.write('.')
 
         # initialise FacetGrid.
         sys.stdout.write('\nPlotting')
         sns.set(style='ticks', context='poster')
 
-        g = sns.FacetGrid(df_win, row=row, col=col,
+        g = sns.FacetGrid(plotdf, row=row, col=col,
                           hue=color_by, legend_out=True,
                           palette=palette,
                           xlim=(min_time_sec, max_time_sec),
@@ -143,7 +149,7 @@ class cumulative_plotter:
 
         # End and return the FacetGrid.
         if return_plot_data:
-            return g, df_win
+            return g, plotdf
         else:
             return g
 
