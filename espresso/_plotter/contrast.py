@@ -36,8 +36,7 @@ class contrast_plotter:
 
 
     def feed_count_per_fly(self, group_by, compare_by, color_by='Genotype',
-                           start_hour=0, end_hour=None, return_plot_data=False,
-                           **kwargs):
+                           start_hour=0, end_hour=None):
 
         """
         Produces a contrast plot depicting the mean differences in the average
@@ -74,9 +73,7 @@ class contrast_plotter:
 
         Returns
         -------
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        If `return_plot_data` is True, a second DataFrame will be returned as
-        well, consisting of the data used to produce the plot.
+        A dabest object for further plotting and analyses.
         """
 
         from . import plot_helpers as plothelp
@@ -89,25 +86,29 @@ class contrast_plotter:
                                                         self.__added_labels,
                                                         group_by, compare_by,
                                                         color_by, start, end)
+                                                        
+        
 
         yvar = 'Total\nFeed Count\nPer Fly'
-        if 'float_contrast' not in kwargs.keys():
-            kwargs['float_contrast'] = False
-        fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
-
-        title = '{} hr to {} hr'.format(start, end)
-        fig.suptitle(title, fontsize=36)
-
-        if return_plot_data:
-            return fig, stats, plot_df
-        else:
-            return fig, stats
+        
+        return plothelp.dabest_parser(plot_df, yvar)
+        
+        # if 'float_contrast' not in kwargs.keys():
+        #     kwargs['float_contrast'] = False
+        # fig, stats =  plothelp.dabest_parser(plot_df, yvar, color_by, **kwargs)
+        # 
+        # title = '{} hr to {} hr'.format(start, end)
+        # fig.suptitle(title, fontsize=36)
+        # 
+        # if return_plot_data:
+        #     return fig, stats, plot_df
+        # else:
+        #     return fig, stats
 
 
 
     def feed_volume_per_fly(self, group_by, compare_by, color_by='Genotype',
-                            start_hour=0, end_hour=None, return_plot_data=False,
-                            volume_unit='nanoliter', **kwargs):
+                            start_hour=0, end_hour=None, volume_unit='nanoliter'):
 
         """
         Produces a contrast plot depicting the mean differences in the average
@@ -134,24 +135,14 @@ class contrast_plotter:
             The time window of the experiment to plot. If end_hour is None,
             all feeds until the end of the experiment will be included.
 
-        return_plot_data: boolean, default False
-            If True, the dataframe will be returned after the bootstrap
-            statistics.
-
         volume_unit: string, default 'nanoliter'
             Accepts 'centiliter' (10^-2 liters), 'milliliter (10^-3 liters)',
             'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
             'picoliter' (10^-12 liters).
 
-        kwargs: "keyword=value" pairings
-            Any keywords that `dabest.plot()` accepts can be used.
-            See https://acclab.github.io/DABEST-python-docs/api.html
-
         Returns
         -------
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        If `return_plot_data` is True, a second DataFrame will be returned as
-        well, consisting of the data used to produce the plot.
+        A dabest object for further plotting and analyses.
         """
 
         from . import plot_helpers as plothelp
@@ -175,22 +166,23 @@ class contrast_plotter:
             new_unit = plothelp.get_new_prefix(volume_unit)
             yvar = 'Total\nFeed Volume\nPer Fly ({}l)'.format(new_unit)
             plot_df[yvar] = plot_df[plot_col] * multiplier
+            
+        return plothelp.dabest_parser(plot_df, yvar)
 
-        kwargs['float_contrast'] = False # Fix this as False!
-        fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
-
-        title = '{} hr to {} hr'.format(start, end)
-        fig.suptitle(title, fontsize=36)
-
-        if return_plot_data:
-            return fig, stats, plot_df
-        else:
-            return fig, stats
+        # kwargs['float_contrast'] = False # Fix this as False!
+        # fig, stats =  plothelp.dabest_parser(plot_df, yvar, color_by, **kwargs)
+        # 
+        # title = '{} hr to {} hr'.format(start, end)
+        # fig.suptitle(title, fontsize=36)
+        # 
+        # if return_plot_data:
+        #     return fig, stats, plot_df
+        # else:
+        #     return fig, stats
 
 
     def feed_speed_per_fly(self, group_by, compare_by, color_by='Genotype',
-                           start_hour=0, end_hour=None, return_plot_data=False,
-                           volume_unit='nanoliter', **kwargs):
+                           start_hour=0, end_hour=None, volume_unit='nanoliter'):
 
         """
         Produces a contrast plot depicting the mean differences in the average
@@ -217,24 +209,14 @@ class contrast_plotter:
             The time window of the experiment to plot. If end_hour is None,
             all feeds until the end of the experiment will be included.
 
-        return_plot_data: boolean, default False
-            If True, the dataframe will be returned after the bootstrap
-            statistics.
-
         volume_unit: string, default 'nanoliter'
             Accepts 'centiliter' (10^-2 liters), 'milliliter (10^-3 liters)',
             'microliter'(10^-6 liters), 'nanoliter' (10^-9 liters), and
             'picoliter' (10^-12 liters).
 
-        kwargs: "keyword=value" pairings
-            Any keywords that `dabest.plot()` accepts can be used.
-            See https://acclab.github.io/DABEST-python-docs/api.html
-
         Returns
         -------
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        If `return_plot_data` is True, a second DataFrame will be returned as
-        well, consisting of the data used to produce the plot.
+        A dabest object for further plotting and analyses.
         """
 
         from . import plot_helpers as plothelp
@@ -258,25 +240,26 @@ class contrast_plotter:
             new_unit = plothelp.get_new_prefix(volume_unit)
             yvar = 'Feed Speed\nPer Fly ({}l/s)'.format(new_unit)
             plot_df[yvar] = plot_df[plot_col] * multiplier
+            
+        return plothelp.dabest_parser(plot_df, yvar)
 
-        if 'float_contrast' not in kwargs.keys():
-            kwargs['float_contrast'] = False
-        fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
-
-        title = '{} hr to {} hr'.format(start, end)
-        fig.suptitle(title, fontsize=36)
-
-        if return_plot_data:
-            return fig, stats, plot_df
-        else:
-            return fig, stats
+        # if 'float_contrast' not in kwargs.keys():
+        #     kwargs['float_contrast'] = False
+        # fig, stats =  plothelp.dabest_parser(plot_df, yvar, color_by, **kwargs)
+        # 
+        # title = '{} hr to {} hr'.format(start, end)
+        # fig.suptitle(title, fontsize=36)
+        # 
+        # if return_plot_data:
+        #     return fig, stats, plot_df
+        # else:
+        #     return fig, stats
 
 
 
     def feed_duration_per_fly(self, group_by, compare_by, start_hour=0,
                            end_hour=None, time_unit='minute',
-                           color_by='Genotype', return_plot_data=False,
-                           **kwargs):
+                           color_by='Genotype'):
 
         """
         Produces a contrast plot depicting the mean differences in the average
@@ -303,22 +286,12 @@ class contrast_plotter:
             The time window of the experiment to plot. If end_hour is None,
             all feeds until the end of the experiment will be included.
 
-        return_plot_data: boolean, default False
-            If True, the dataframe will be returned after the bootstrap
-            statistics.
-
         time_unit: string, default 'minute'
             Accepts 'second', or 'minute'.
 
-        kwargs: "keyword=value" pairings
-            Any keywords that `dabest.plot()` accepts can be used.
-            See https://acclab.github.io/DABEST-python-docs/api.html
-
         Returns
         -------
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        If `return_plot_data` is True, a second DataFrame will be returned as
-        well, consisting of the data used to produce the plot.
+        A dabest object for further plotting and analyses.
         """
 
         from . import plot_helpers as plothelp
@@ -337,17 +310,20 @@ class contrast_plotter:
                             .format(time_unit, [a for a in time_dict.keys()])
                             )
         yvar = 'Total Time\nFeeding\nPer Fly ({})'.format(time_dict[time_unit])
-        if 'float_contrast' not in kwargs.keys():
-            kwargs['float_contrast'] = False
-        fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
-
-        title = '{} hr to {} hr'.format(start, end)
-        fig.suptitle(title, fontsize=36)
-
-        if return_plot_data:
-            return fig, stats, plot_df
-        else:
-            return fig, stats
+        
+        return plothelp.dabest_parser(plot_df, yvar)
+        
+        # if 'float_contrast' not in kwargs.keys():
+        #     kwargs['float_contrast'] = False
+        # fig, stats =  plothelp.dabest_parser(plot_df, yvar, color_by, **kwargs)
+        # 
+        # title = '{} hr to {} hr'.format(start, end)
+        # fig.suptitle(title, fontsize=36)
+        # 
+        # if return_plot_data:
+        #     return fig, stats, plot_df
+        # else:
+        #     return fig, stats
 
 
 
@@ -378,23 +354,13 @@ class contrast_plotter:
         color_by: string, default 'Genotype'
             Accepts a categorical column in the espresso object. Each group in
             this column will be colored seperately.
-
-        return_plot_data: boolean, default False
-            If True, the dataframe will be returned after the bootstrap
-            statistics.
-
+            
         time_unit: string, default 'minute'
             Accepts 'second', 'minute', 'hour'.
 
-        kwargs: "keyword=value" pairings
-            Any keywords that `dabest.plot()` accepts can be used.
-            See https://acclab.github.io/DABEST-python-docs/api.html
-
         Returns
         -------
-        A matplotlib Figure, and a pandas DataFrame with the statistics.
-        If `return_plot_data` is True, a second DataFrame will be returned as
-        well, consisting of the data used to produce the plot.
+        A dabest object for further plotting and analyses.
         """
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
@@ -416,14 +382,18 @@ class contrast_plotter:
                             .format(time_unit, [a for a in time_dict.keys()])
                             )
         yvar = 'Latency to\nFirst Feed ({})'.format(time_dict[time_unit])
-        if 'float_contrast' not in kwargs.keys():
-            kwargs['float_contrast'] = False
-        fig, stats =  plothelp.dabest_plotter(plot_df, yvar, color_by, **kwargs)
-
-        title = '{} hr to {} hr'.format(0, end_hr)
-        fig.suptitle(title, fontsize=36)
-
-        if return_plot_data:
-            return fig, stats, plot_df
-        else:
-            return fig, stats
+        
+        return plothelp.dabest_parser(plot_df, yvar)
+        
+        
+        # if 'float_contrast' not in kwargs.keys():
+        #     kwargs['float_contrast'] = False
+        # fig, stats =  plothelp.dabest_parser(plot_df, yvar, color_by, **kwargs)
+        # 
+        # title = '{} hr to {} hr'.format(0, end_hr)
+        # fig.suptitle(title, fontsize=36)
+        # 
+        # if return_plot_data:
+        #     return fig, stats, plot_df
+        # else:
+        #     return fig, stats
