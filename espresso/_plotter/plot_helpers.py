@@ -320,33 +320,39 @@ def get_new_prefix(unit):
 
 
 
-def dabest_plotter(plot_df, yvar, color_by, **kwargs):
+def dabest_parser(plot_df, yvar):
 
     import numpy as np
     import dabest
     from .._munger import munger as munge
     import warnings
-    warnings.filterwarnings("ignore", module='mpl_toolkits')
+    # warnings.filterwarnings("ignore", module='mpl_toolkits')
 
     # Properly arrange idx for grouping.
     unique_ids = plot_df.plot_groups_with_contrast.unique()
     split_idxs = np.array_split(unique_ids, len(plot_df.plot_groups.unique()))
     idx = [tuple(i) for i in split_idxs]
+    
+    out = dabest.load(plot_df, x='plot_groups_with_contrast', y=yvar, idx=idx)
+    return out
 
-    # Set palette.
-    if 'custom_palette' not in kwargs.keys():
-        color_groups = plot_df[color_by].unique()
-        kwargs['custom_palette'] = create_palette('tab10', color_groups)
-
-    # Make sure the ylims don't stretch below zero but still capture all
-    # the datapoints.
-    if 'swarm_ylim' not in kwargs.keys():
-        ymin = np.min(plot_df[yvar])
-        if ymin == 0.:
-            ymin = -5
-        kwargs['swarm_ylim'] = (ymin, np.max(plot_df[yvar]) * 1.1)
-
-    f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
-                      y=yvar, idx=idx, color_col=color_by,
-                      **kwargs)
-    return f, b
+    # # Set palette.
+    # if 'custom_palette' not in plot_kwargs.keys():
+    #     color_groups = plot_df[color_by].unique()
+    #     plot_kwargs['custom_palette'] = create_palette('tab10', color_groups)
+    # 
+    # # Make sure the ylims don't stretch below zero but still capture all
+    # # the datapoints.
+    # if 'swarm_ylim' not in plot_kwargs.keys():
+    #     ymin = np.min(plot_df[yvar])
+    #     if ymin == 0.:
+    #         ymin = -5
+    #     plot_kwargs['swarm_ylim'] = (ymin, np.max(plot_df[yvar]) * 1.1)
+    # 
+    # 
+    # 
+    # 
+    # f,b = dabest.plot(plot_df, x='plot_groups_with_contrast',
+    #                   y=yvar, idx=idx, color_col=color_by,
+    #                   **plot_kwargs)
+    # return f, b
