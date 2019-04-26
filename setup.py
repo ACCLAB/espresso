@@ -45,6 +45,9 @@ def need_to_install(module, version):
     elif INSTALLED_VERSION_MAJOR == desired_major_version and \
          INSTALLED_VERSION_MINOR < desired_minor_version:
         return True
+    
+    elif patch_stated is True and INSTALLED_VERSION_PATCH < desired_patch:
+        return True
 
     else:
         return False
@@ -83,7 +86,7 @@ if __name__=="__main__":
         name='espresso',
         author='Joses Ho',
         author_email='joseshowh@gmail.com',
-        version='0.7.0',
+        version='0.7.1',
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
