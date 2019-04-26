@@ -26,9 +26,18 @@ except ImportError:
 def need_to_install(module, version):
     desired_major_version = int(version.split('.')[0])
     desired_minor_version = int(version.split('.')[1])
+    try:
+        desired_patch = int(version.split('.')[2])
+        patch_stated = True
+    except IndexError:
+        patch_stated = False
 
     INSTALLED_VERSION_MAJOR = int(module.__version__.split('.')[0])
     INSTALLED_VERSION_MINOR = int(module.__version__.split('.')[1])
+    try:
+        INSTALLED_VERSION_PATCH = int(version.split('.')[2])
+    except IndexError:
+        pass
 
     if INSTALLED_VERSION_MAJOR < desired_major_version:
         return True
