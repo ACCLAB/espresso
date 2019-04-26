@@ -50,7 +50,7 @@ def check_dependencies():
                'pandas'     : '0.24',
                'matplotlib' : '3.0',
                'seaborn'    : '0.9',
-               'dabest'     : '0.2'}
+               'dabest'     : '0.2.2'}
     to_install = []
 
     for module, version in modules.items():
