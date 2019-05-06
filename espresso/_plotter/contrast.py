@@ -39,8 +39,8 @@ class contrast_plotter:
                            start_hour=0, end_hour=None):
 
         """
-        Produces a contrast plot depicting the mean differences in the average
-        feed count per fly between groups.
+        Produces a dabest object that can be manipulated to produce the 
+        differences in the average feed count per fly between groups.
 
         Chambers that did not have a single feed in the time window will have
         a value of 0.
@@ -111,8 +111,8 @@ class contrast_plotter:
                             start_hour=0, end_hour=None, volume_unit='nanoliter'):
 
         """
-        Produces a contrast plot depicting the mean differences in the average
-        feed volume per fly, between groups.
+        Produces a dabest object that can be manipulated to produce the 
+        differences in the average feed volume per fly, between groups.
 
         Chambers that did not have a single feed in the time window will have
         a value of 0.
@@ -185,8 +185,8 @@ class contrast_plotter:
                            start_hour=0, end_hour=None, volume_unit='nanoliter'):
 
         """
-        Produces a contrast plot depicting the mean differences in the average
-        feed speeds per fly between groups.
+        Produces a dabest object that can be manipulated to produce the 
+        differences in the average feed speeds per fly between groups.
 
         Flies that did not have a single feed within the time window will not
         be included in the plot.
@@ -262,8 +262,8 @@ class contrast_plotter:
                            color_by='Genotype'):
 
         """
-        Produces a contrast plot depicting the mean differences in the average
-        feed duration per fly between groups.
+        Produces a dabest object that can be manipulated to produce the 
+        differences in the average feed duration per fly between groups.
 
         Chambers that did not record a single feed during the time window will
         have a feed duration of zero.
@@ -332,8 +332,8 @@ class contrast_plotter:
                         **kwargs):
 
         """
-        Produces a contrast plot depicting the mean differences in the latency
-        to first feed between groups.
+        Produces a dabest object that can be manipulated to produce the 
+        differences in the latency to first feed between groups.
 
         This plot displays the first feed recorded for each chamber, and performs
         estimation statistics on these latencies.

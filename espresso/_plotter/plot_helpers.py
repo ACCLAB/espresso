@@ -199,6 +199,8 @@ def prep_feeds_for_contrast_plot(feeds, flies, added_labels,
                                             ordered=True)
 
     plot_df.sort_values(to_make_cat, axis=0, ascending=True, inplace=True)
+    
+    plot_df.loc[:, "plot_groups_with_contrast"] = plot_df.plot_groups_with_contrast.astype(str)
 
     return plot_df
 
