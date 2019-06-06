@@ -44,7 +44,7 @@ class espresso(object):
         from ._munger import munger as munge
 
 
-        self.version = '0.7.1'
+        self.version = '0.7.2'
 
         allflies = []
         allfeeds = []
