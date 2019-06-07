@@ -34,7 +34,7 @@ class cumulative_plotter:
 
         import sys
         import matplotlib.pyplot as plt
-        from pandas import merge
+        from pandas import concat, merge
         import seaborn as sns
         from . import plot_helpers as plothelp
         from .._munger import munger as munge
@@ -56,8 +56,13 @@ class cumulative_plotter:
 
         gbp_cols = [c for c in [col, row, color_by] if c is not None]
 
+        # Select only valid feeds.
+        all_pads = self.__feeds[self.__feeds.ExperimentState == "PAD"].copy()
+        real_feeds = self.__feeds[self.__feeds.Valid].copy()
+        for_cumplot = concat([all_pads, real_feeds])
+        
         # Resample (aka bin by time).
-        resamp_feeds = munge.groupby_resamp_sum(self.__feeds, gbp_cols, timebin)
+        resamp_feeds = munge.groupby_resamp_sum(for_cumplot, gbp_cols, timebin)
         sys.stdout.write('.')
 
         # Convert hour input to seconds.
