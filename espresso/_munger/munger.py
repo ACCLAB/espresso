@@ -562,8 +562,8 @@ def contrast_plot_munger(feeds, flies, added_labels, group_by, compare_by,
     from pandas import Series, DataFrame, concat, merge
     # from . import __static as static
 
-
-    df = feeds.copy()
+    # Drop invalid feeds.
+    df = feeds[feeds.Valid].copy()
     flies_ = flies.copy()
     flies_indexed = flies_.set_index('ChamberID')
 

@@ -2,4 +2,4 @@ from .espresso import *
 from ._plotter.plot_helpers import create_palette
 
 
-__version__='0.7.1'
+__version__='0.7.2'
