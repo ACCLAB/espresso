@@ -432,11 +432,6 @@ def cumsum_for_cumulative(df, group_by_cols):
     """
     from pandas import merge
 
-    """
-    Convenience function to sum a resampled feedlog for timecourse plotting.
-    """
-    from pandas import merge
-
     temp = df.copy()
 
     # Rename for facility in plotting.
