@@ -432,11 +432,6 @@ def cumsum_for_cumulative(df, group_by_cols):
     """
     from pandas import merge
 
-    """
-    Convenience function to sum a resampled feedlog for timecourse plotting.
-    """
-    from pandas import merge
-
     temp = df.copy()
 
     # Rename for facility in plotting.
@@ -446,16 +441,20 @@ def cumsum_for_cumulative(df, group_by_cols):
 
 
     # Select only relevant columns.
-    for_cumsum = ['RelativeTime_s', 'ChamberID',
-                  'Cumulative Feed Count',
-                  'Cumulative Volume (µl)']
+    cols_of_interest = ['RelativeTime_s', 'ChamberID',
+                        'Cumulative Feed Count',
+                        'Cumulative Volume (µl)'] + group_by_cols
+
+    # Carefully curate sets of columns for selection and GroupBy...
+    group_by_cols_chamberID = group_by_cols+['ChamberID']
+    group_by_cols_chamberID_RelativeTime = group_by_cols + ['RelativeTime_s', 'ChamberID']
 
     # Compute the cumulative sum, by Chamber.
-    grs_cumsum = temp[for_cumsum].groupby('ChamberID').cumsum()
+    grs_cumsum = temp[cols_of_interest].groupby(group_by_cols_chamberID).cumsum()
 
     # Combine metadata with cumsum.
     out = merge(grs_cumsum,
-                temp[group_by_cols + ['RelativeTime_s', 'ChamberID']],
+                temp[group_by_cols_chamberID_RelativeTime],
                 left_index=True, right_index=True)
 
     # Add time column to facilitate plotting.
